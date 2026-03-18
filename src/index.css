@@ -194,7 +194,6 @@ body {
 .date-scroll-wrapper {
   display: flex;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }

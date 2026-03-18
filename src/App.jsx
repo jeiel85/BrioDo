@@ -765,43 +765,37 @@ function App() {
   // 주간 스크롤 ref 및 초기 위치 설정
   const weekScrollRef = useRef(null)
   const hasScrolledInit = useRef(false)
+  const [isSnapEnabled, setIsSnapEnabled] = useState(false)
 
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date') {
-      let retryCount = 0
       const alignScroll = () => {
         const container = weekScrollRef.current
-        const targetWeek = document.getElementById('current-week-page')
-        if (!container || !targetWeek) return
+        if (!container) return
         
-        // 요소가 아직 화면에 반영되지 않았거나 사이즈가 없을 때 재시도
-        if (targetWeek.offsetWidth < 50 && retryCount < 10) {
-          retryCount++
-          setTimeout(alignScroll, 50)
+        const w = container.clientWidth
+        // 렌더링 직후 width가 0이거나 너무 작을 때 재시도
+        if (w < 50) {
+          requestAnimationFrame(alignScroll)
           return
         }
         
         hasScrolledInit.current = false
-        // 기존 scroll-snap 때문에 바로 이동 안되는 이슈를 위해 스타일 임시 해제
-        container.style.scrollSnapType = 'none'
+        setIsSnapEnabled(false) // 스냅 효과를 리액트 차원에서 꺼둔 상태로 강제 주입
         
-        // 네이티브 API를 통해 확실하게 포커스 지정
-        targetWeek.scrollIntoView({ inline: 'start', block: 'nearest' })
+        // 부드러운 스크롤 충돌 없이 즉시 이동
+        container.scrollTo({ left: w * 2, behavior: 'auto' })
         
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            if (weekScrollRef.current) {
-              // 한 번 더 확실하게 고정
-              targetWeek.scrollIntoView({ inline: 'start', block: 'nearest' })
-              weekScrollRef.current.style.scrollSnapType = 'x mandatory'
-            }
-            setTimeout(() => {
-              hasScrolledInit.current = true
-            }, 50)
-          }, 50)
-        })
+        // 이동 성공 후 약간의 딜레이 뒤 스냅 재활성화 및 이벤트 처리 복구
+        setTimeout(() => {
+          if (weekScrollRef.current) {
+            weekScrollRef.current.scrollTo({ left: w * 2, behavior: 'auto' })
+            setIsSnapEnabled(true)
+            hasScrolledInit.current = true
+          }
+        }, 150)
       }
-      alignScroll()
+      requestAnimationFrame(alignScroll)
     }
   }, [baseDate, viewMode])
 
@@ -881,7 +875,7 @@ function App() {
           
           {viewMode === 'date' && (
             <div className="date-nav-container">
-              <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll}>
+              <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll} style={{scrollSnapType: isSnapEnabled ? 'x mandatory' : 'none'}}>
                 {[0, 1, 2, 3, 4].map(weekIdx => (
                   <div key={weekIdx} className="date-week-page" id={weekIdx === 2 ? 'current-week-page' : ''}>
                     {dateRange.filter(d => d.weekIndex === weekIdx).map((date) => (
