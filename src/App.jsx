@@ -518,17 +518,10 @@ function App() {
           scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
         })
         
-        alert("Native login result:\n" + JSON.stringify(result, null, 2))
-        
         if (result.credential) {
-          // Google Calendar API용 Access Token 저장 (핵심!)
           if (result.credential.accessToken) {
             localStorage.setItem('googleAccessToken', result.credential.accessToken)
-            alert("Google Access Token saved successfully!")
-          } else {
-            alert("Warning: No accessToken found in result.credential!")
           }
-          
           const credential = GoogleAuthProvider.credential(result.credential.idToken)
           await signInWithCredential(auth, credential)
         }
