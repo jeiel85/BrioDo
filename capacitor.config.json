@@ -7,5 +7,9 @@
       "skipNativeAuth": true,
       "providers": ["google.com"]
     }
+  },
+  "server": {
+    "androidScheme": "https",
+    "hostname": "todoest-e560b.firebaseapp.com"
   }
 }
