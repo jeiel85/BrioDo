@@ -517,7 +517,20 @@ function App() {
         const result = await FirebaseAuthentication.signInWithGoogle({
           scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
         })
+        console.log("Native login result:", JSON.stringify(result?.credential ? { 
+          hasIdToken: !!result.credential.idToken,
+          hasAccessToken: !!result.credential.accessToken 
+        } : 'no credential'))
+        
         if (result.credential) {
+          // Google Calendar API용 Access Token 저장 (핵심!)
+          if (result.credential.accessToken) {
+            localStorage.setItem('googleAccessToken', result.credential.accessToken)
+            console.log("Google Access Token saved successfully")
+          } else {
+            console.warn("No accessToken in credential - calendar sync will not work")
+          }
+          
           const credential = GoogleAuthProvider.credential(result.credential.idToken)
           await signInWithCredential(auth, credential)
         }
@@ -527,7 +540,13 @@ function App() {
       }
     } else {
       try {
-        await signInWithPopup(auth, googleProvider)
+        const result = await signInWithPopup(auth, googleProvider)
+        // 웹 환경에서도 Access Token 저장
+        const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
+        if (oauthCredential?.accessToken) {
+          localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
+          console.log("Web Google Access Token saved")
+        }
       } catch (e) {
         console.error("Web login error:", e)
       }
