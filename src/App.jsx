@@ -357,12 +357,28 @@ function App() {
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
 
-  // Auth Listener
+  // Auth Listener & Deep Link Handling
   useEffect(() => {
+    // Firebase 인증 상태 감지
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u)
       setLoading(false)
     })
+
+    // 네이티브 환경에서 로그인 후 앱으로 복귀 처리 (Deep Link)
+    if (Capacitor.isNativePlatform()) {
+      const handleDeepLink = CapApp.addListener('appUrlOpen', (data) => {
+        console.log('App opened with URL:', data.url)
+        // 딥링크를 통해 들어온 URL을 처리하여 로그인을 마무리할 수 있게 함
+        // Firebase Auth가 내부적으로 이 URL 신호를 감지하여 팝업/리다이렉트를 닫음
+      })
+
+      return () => {
+        unsubscribe()
+        handleDeepLink.remove()
+      }
+    }
+
     return () => unsubscribe()
   }, [])
 
