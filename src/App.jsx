@@ -776,37 +776,37 @@ function App() {
         const container = weekScrollRef.current
         if (!container) return
         
-        const cw = container.clientWidth
-        const sw = container.scrollWidth
-        
-        // 레이아웃 인식 대기 (충분한 너비 확보 체크)
-        if (cw < 50 || sw < cw * 4) {
-          if (Date.now() - startTime < 3000) { // 최대 3초 대기
-            retryTimer = setTimeout(alignScroll, 40)
+        // 초기 레이아웃 대기
+        if (container.clientWidth < 50 || container.scrollWidth < container.clientWidth * 4) {
+          if (Date.now() - startTime < 3000) {
+            retryTimer = setTimeout(alignScroll, 50)
           }
           return
         }
         
         hasScrolledInit.current = false
-        // Snap 완전히 끄기
+        // Snap을 확실히 꺼두고 시작
         container.style.scrollSnapType = 'none'
         
-        const targetX = cw * 2
-        
-        // 2초 동안 주기적으로 계속 밀어넣기 (모바일 브라우저의 초기화 방지)
+        // 2초 동안 "실시간 화면 너비"를 계속 체크하며 중앙으로 밀기
         forceTimer = setInterval(() => {
-          if (weekScrollRef.current) {
-            weekScrollRef.current.scrollLeft = targetX
+          const c = weekScrollRef.current
+          if (c) {
+            const currentCW = c.clientWidth
+            if (currentCW > 50) {
+              c.scrollLeft = currentCW * 2
+            }
           }
-          // 충분히 시간이 지났고 위치가 타겟 근처라면 종료
-          const elapsed = Date.now() - startTime;
-          if (elapsed > 2000) {
+          
+          if (Date.now() - startTime > 2000) {
             clearInterval(forceTimer)
             if (weekScrollRef.current) {
+              const finalCW = weekScrollRef.current.clientWidth
+              weekScrollRef.current.scrollLeft = finalCW * 2
               weekScrollRef.current.style.scrollSnapType = 'x mandatory'
             }
             hasScrolledInit.current = true
-            console.log("Scroll Alignment Completed")
+            console.log("Scroll Fix Applied (vFinal)")
           }
         }, 30)
       }
