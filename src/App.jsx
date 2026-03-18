@@ -28,6 +28,7 @@ import {
   serverTimestamp,
   setDoc
 } from "firebase/firestore"
+import { syncEventToGoogle, deleteEventFromGoogle, fetchEventsFromGoogle } from './calendar'
 import './index.css'
 
 // --- Translation Data ---
@@ -140,6 +141,8 @@ const fbApp = initializeApp(firebaseConfig)
 const auth = getAuth(fbApp)
 const db = getFirestore(fbApp)
 const googleProvider = new GoogleAuthProvider()
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
+googleProvider.addScope('https://www.googleapis.com/auth/calendar')
 
 // --- Gemini AI Setup ---
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
@@ -179,7 +182,8 @@ function App() {
   const [showInputModal, setShowInputModal] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
-  const [newTodo, setNewTodo] = useState({ text: '', date: todayStr, time: '', tagInput: '' })
+  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '' })
+  const [showDescInput, setShowDescInput] = useState(false)
   const [editingTodoId, setEditingTodoId] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -350,7 +354,38 @@ function App() {
         // 2. 백그라운드에서 Firestore와 실시간 연동 시작
         const q = query(collection(db, "todos"), where("uid", "==", user.uid))
         unsubscribe = onSnapshot(q, async (snapshot) => {
-          const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+          let list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+          
+          // Google Calendar에서 역동기화 적용 (선택사항 등급)
+          try {
+            const events = await fetchEventsFromGoogle()
+            if (events && events.length > 0) {
+              for (const ev of events) {
+                const matchIndex = list.findIndex(t => t.googleEventId === ev.id)
+                if (matchIndex >= 0) {
+                  const match = list[matchIndex]
+                  const evUpdated = new Date(ev.updated).getTime()
+                  const localUpdated = match.updatedAt?.toMillis ? match.updatedAt.toMillis() : (match.createdAt?.toMillis ? match.createdAt.toMillis() : 0)
+                  
+                  // Google 캘린더 수정본이 훨씬 최신이면(1분 이상 차이) 업데이트 반영
+                  if (evUpdated > localUpdated + 60000) {
+                    const dt = ev.start?.date || ev.start?.dateTime?.split('T')[0]
+                    const time = ev.start?.dateTime ? ev.start.dateTime.substring(11, 16) : ''
+                    const updatedTodo = {
+                      text: ev.summary || '제목 없음',
+                      description: ev.description || '',
+                      date: dt || match.date,
+                      time: time,
+                      updatedAt: serverTimestamp()
+                    }
+                    await updateDoc(doc(db, "todos", match.id), updatedTodo)
+                    list[matchIndex] = { ...match, ...updatedTodo }
+                  }
+                }
+              }
+            }
+          } catch (calErr) { console.error('Calendar sync error during load:', calErr) }
+
           const sortedList = list.sort((a, b) => {
             const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
             const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
@@ -446,7 +481,9 @@ function App() {
     console.log("Login button clicked, native:", Capacitor.isNativePlatform())
     if (Capacitor.isNativePlatform()) {
       try {
-        const result = await FirebaseAuthentication.signInWithGoogle()
+        const result = await FirebaseAuthentication.signInWithGoogle({
+          scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
+        })
         if (result.credential) {
           const credential = GoogleAuthProvider.credential(result.credential.idToken)
           await signInWithCredential(auth, credential)
@@ -480,6 +517,7 @@ function App() {
     
     const inputTags = newTodo.tagInput.split(/[,#\s]+/).map(tag => tag.trim().replace('#', '')).filter(Boolean)
     const savedText = newTodo.text
+    const savedDesc = newTodo.description
     const savedDate = newTodo.date
     const savedTime = newTodo.time || ''
     const isEdit = !!editingTodoId
@@ -497,6 +535,7 @@ function App() {
         const initialData = {
           uid: user.uid,
           text: savedText,
+          description: savedDesc,
           date: savedDate,
           time: savedTime,
           tags: inputTags,
@@ -510,6 +549,10 @@ function App() {
 
         if (isOnline) {
           await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
+          setTimeout(async () => {
+             const gId = await syncEventToGoogle(localPayload)
+             if (gId) await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
+          }, 100)
         } else {
           await addSyncQueue('set', newId, initialData)
         }
@@ -528,8 +571,15 @@ function App() {
             setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...merged } : t))
             await saveLocalTodo({ ...localPayload, ...merged })
             
-            if (isOnline) await setDoc(newDocRef, merged, { merge: true })
-            else await addSyncQueue('set', newId, merged)
+            if (isOnline) {
+              await setDoc(newDocRef, merged, { merge: true })
+              setTimeout(async () => {
+                const gId = await syncEventToGoogle({ ...localPayload, ...merged })
+                if (gId) await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
+              }, 100)
+            } else {
+              await addSyncQueue('set', newId, merged)
+            }
           }
         } catch (aiErr) {
           console.error("AI refinement failed:", aiErr)
@@ -538,6 +588,7 @@ function App() {
         // ===== 수정 =====
         const updateData = {
           text: savedText,
+          description: savedDesc,
           date: savedDate,
           time: savedTime,
           tags: inputTags
@@ -548,8 +599,18 @@ function App() {
         setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...updateData } : t))
         await saveLocalTodo({ ...oldTodo, ...updateData })
 
-        if (isOnline) await setDoc(doc(db, "todos", editId), updateData, { merge: true })
-        else await addSyncQueue('set', editId, updateData)
+        if (isOnline) {
+          await setDoc(doc(db, "todos", editId), { ...updateData, updatedAt: serverTimestamp() }, { merge: true })
+          setTimeout(async () => {
+             const targetToSync = { ...oldTodo, ...updateData }
+             const gId = await syncEventToGoogle(targetToSync)
+             if (gId && !targetToSync.googleEventId) {
+               await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
+             }
+          }, 100)
+        } else {
+          await addSyncQueue('set', editId, updateData)
+        }
         console.log("Todo updated:", editId)
 
         // AI 비동기 개선
@@ -565,8 +626,18 @@ function App() {
             setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...merged } : t))
             await saveLocalTodo({ ...oldTodo, ...updateData, ...merged })
 
-            if (isOnline) await setDoc(doc(db, "todos", editId), merged, { merge: true })
-            else await addSyncQueue('set', editId, merged)
+            if (isOnline) {
+              await setDoc(doc(db, "todos", editId), { ...merged, updatedAt: serverTimestamp() }, { merge: true })
+              setTimeout(async () => {
+                const targetToSync = { ...oldTodo, ...updateData, ...merged }
+                const gId = await syncEventToGoogle(targetToSync)
+                if (gId && !targetToSync.googleEventId) {
+                  await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
+                }
+             }, 100)
+            } else {
+              await addSyncQueue('set', editId, merged)
+            }
             console.log("AI refinement applied (edit):", merged)
           }
         } catch (aiErr) {
@@ -593,11 +664,18 @@ function App() {
   const deleteTodo = async (e, id) => {
     e.stopPropagation()
     try {
+      const target = todos.find(t => t.id === id)
       setTodos(prev => prev.filter(t => t.id !== id))
       await deleteLocalTodo(id)
 
-      if (isOnline) await deleteDoc(doc(db, "todos", id))
-      else await addSyncQueue('delete', id)
+      if (isOnline) {
+        await deleteDoc(doc(db, "todos", id))
+        if (target && target.googleEventId) {
+          setTimeout(() => deleteEventFromGoogle(target.googleEventId), 100)
+        }
+      } else {
+        await addSyncQueue('delete', id)
+      }
     } catch (e) { console.error(e) }
   }
 
@@ -605,16 +683,19 @@ function App() {
     setEditingTodoId(todo.id)
     setNewTodo({
       text: todo.text,
+      description: todo.description || '',
       date: todo.date,
       time: formatTime(todo.time, t.noTime),
       tagInput: (todo.tags || []).map(tg => '#' + tg).join(' ')
     })
+    setShowDescInput(!!todo.description)
     setShowInputModal(true)
     document.body.classList.add('modal-open')
   }
 
   const resetForm = () => {
-    setNewTodo({ text: '', date: todayStr, time: '', tagInput: '' })
+    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '' })
+    setShowDescInput(false)
     setEditingTodoId(null)
     setShowInputModal(false)
     document.body.classList.remove('modal-open')
@@ -730,7 +811,8 @@ function App() {
     }
 
     setEditingTodoId(null)
-    setNewTodo({ text: '', date: defaultDate, time: defaultTime, tagInput: '' })
+    setNewTodo({ text: '', description: '', date: defaultDate, time: defaultTime, tagInput: '' })
+    setShowDescInput(false)
     setShowInputModal(true)
     document.body.classList.add('modal-open')
   }
@@ -824,6 +906,9 @@ function App() {
                       )}
                     </div>
                   </div>
+                  {todo.description && (
+                    <div className="todo-desc">{todo.description}</div>
+                  )}
                   {todo.tags?.length > 0 && (
                     <div className="tags-row">
                       {todo.tags.map(tag => <span key={tag} className="tag-pill">#{tag}</span>)}
@@ -856,6 +941,9 @@ function App() {
                           )}
                         </div>
                       </div>
+                      {todo.description && (
+                        <div className="todo-desc">{todo.description}</div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -874,7 +962,20 @@ function App() {
       {showInputModal && (
         <div className="input-overlay" onClick={resetForm}>
           <div className="input-modal" onClick={e => e.stopPropagation()}>
-            <input className="main-input" type="text" placeholder={t.placeholder} autoFocus value={newTodo.text} onChange={e => setNewTodo({...newTodo, text: e.target.value})} />
+            <div style={{display:'flex', gap:'8px'}}>
+              <input className="main-input" style={{flex:1}} type="text" placeholder={t.placeholder} autoFocus value={newTodo.text} onChange={e => setNewTodo({...newTodo, text: e.target.value})} />
+              <button className="desc-toggle-btn" onClick={() => setShowDescInput(!showDescInput)}>
+                {showDescInput ? '📝설명숨기기' : '📝설명작성'}
+              </button>
+            </div>
+            {showDescInput && (
+              <textarea 
+                className="desc-input"
+                placeholder={lang === 'ko' ? '일정의 상세 내용이나 메모를 적어보세요' : 'Add details or notes...'}
+                value={newTodo.description}
+                onChange={e => setNewTodo({...newTodo, description: e.target.value})}
+              />
+            )}
             {isAiAnalyzing && <div style={{fontSize: '11px', color: 'var(--primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px'}}>
               <span className="pulse-dot"></span> {t.aiThinking}
             </div>}
