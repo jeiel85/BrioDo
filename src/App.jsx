@@ -769,43 +769,43 @@ function App() {
 
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date') {
-      let timer;
+      let retryTimer;
+      let forceTimer;
+      
       const alignScroll = () => {
         const container = weekScrollRef.current
         if (!container) return
         
         const cw = container.clientWidth
         const sw = container.scrollWidth
-        // 화면이 충분히 그려지기 전이면 재시도
+        // 화면이 충분히 그려지기 전이면 재시도 (5개 주간 확보 확인)
         if (cw < 50 || sw < cw * 4) {
-          timer = setTimeout(alignScroll, 50)
+          retryTimer = setTimeout(alignScroll, 40)
           return
         }
         
         hasScrolledInit.current = false
-        setIsSnapEnabled(false) // 스냅 꺼둠
+        setIsSnapEnabled(false) // 자석 효과 OFF
         
-        // 0.5초 동안 거의 매 프레임마다 강제로 밀어넣기 (튕김 방지)
-        let startTime = Date.now()
-        const forcePush = () => {
-          if (container && Date.now() - startTime < 500) {
-            container.scrollLeft = container.clientWidth * 2
-            requestAnimationFrame(forcePush)
-          }
-        }
-        forcePush()
-        
-        // 충분히 시간이 흐른 뒤(이동이 완료된 뒤)에 스냅 다시 켜기
-        setTimeout(() => {
+        // 0.6초 동안 끈질기게 중앙 위치(cw * 2)로 강제 고정
+        const startTime = Date.now()
+        forceTimer = setInterval(() => {
           if (weekScrollRef.current) {
             weekScrollRef.current.scrollLeft = weekScrollRef.current.clientWidth * 2
-            setIsSnapEnabled(true)
+          }
+          if (Date.now() - startTime > 600) {
+            clearInterval(forceTimer)
+            setIsSnapEnabled(true) // 이동 완료 후 자석 효과 ON
             hasScrolledInit.current = true
           }
-        }, 600)
+        }, 30) // 30ms 마다 주입
       }
+      
       alignScroll()
-      return () => clearTimeout(timer)
+      return () => {
+        clearTimeout(retryTimer)
+        clearInterval(forceTimer)
+      }
     }
   }, [baseDate, viewMode])
 
