@@ -176,7 +176,13 @@ function App() {
   const [todos, setTodos] = useState([])
   const [viewMode, setViewMode] = useState('date')
   const [selectedTag, setSelectedTag] = useState(null)
-  const todayStr = new Date().toISOString().split('T')[0]
+  
+  // Local Timezone 기준 YYYY-MM-DD 구하기
+  const getLocalDateString = (d) => {
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+  }
+  const todayStr = getLocalDateString(new Date())
+  
   const [selectedDate, setSelectedDate] = useState(todayStr)
   const [baseDate, setBaseDate] = useState(new Date())
   const [showInputModal, setShowInputModal] = useState(false)
@@ -703,7 +709,7 @@ function App() {
 
   const handleGoToToday = () => {
     const today = new Date()
-    setSelectedDate(today.toISOString().split('T')[0])
+    setSelectedDate(getLocalDateString(today))
     setBaseDate(today)
     setViewMode('date')
     setSelectedTag(null)
@@ -747,7 +753,7 @@ function App() {
     for (let i = 0; i < 35; i++) {
       const d = new Date(rangeStart); d.setDate(rangeStart.getDate() + i)
       dates.push({
-        full: d.toISOString().split('T')[0],
+        full: getLocalDateString(d),
         dayName: d.toLocaleDateString(locale, { weekday: 'short' }),
         dayNumber: d.getDate(),
         weekIndex: Math.floor(i / 7) // 0~4
@@ -1044,7 +1050,7 @@ function App() {
             <div className="settings-section">
               <h3>{lang === 'ko' ? '기본 보기' : 'Default View'}</h3>
               <div className="font-size-selector">
-                <button className={viewMode === 'date' ? 'active' : ''} onClick={() => { setViewMode('date'); setSelectedDate(todayStr); setBaseDate(new Date()) }}>
+                <button className={viewMode === 'date' ? 'active' : ''} onClick={() => { setViewMode('date'); setSelectedDate(getLocalDateString(new Date())); setBaseDate(new Date()) }}>
                   <span>📅</span>
                   <span>{lang === 'ko' ? '날짜별' : 'By Date'}</span>
                 </button>
@@ -1054,6 +1060,20 @@ function App() {
                 </button>
               </div>
             </div>
+
+            {user && (
+              <div className="settings-section">
+                <h3>{lang === 'ko' ? '구글 캘린더 동기화' : 'Google Calendar Sync'}</h3>
+                <p style={{fontSize: '12px', color: 'var(--text-time)', marginBottom: '10px', lineHeight: '1.4'}}>
+                  {lang === 'ko' 
+                    ? '일정을 구글 캘린더와 양방향 동기화하려면 추가 권한 승인이 필요합니다. 기존 계정 그대로 버튼을 누르시면 됩니다.' 
+                    : 'Required to sync events bidirectionally with Google Calendar.'}
+                </p>
+                <button className="login-btn" style={{width:'100%', textAlign:'center', background: 'transparent', border: '2px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold'}} onClick={() => { setShowSettings(false); handleLogin(); }}>
+                  {lang === 'ko' ? '캘린더 권한 업데이트 🔄' : 'Grant Calendar Permissions 🔄'}
+                </button>
+              </div>
+            )}
 
             <div className="settings-section" style={{borderBottom:'none'}}>
               {user ? (
