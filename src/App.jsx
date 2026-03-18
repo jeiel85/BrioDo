@@ -10,6 +10,8 @@ import { Network } from '@capacitor/network'
 import { 
   getAuth, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signInWithCredential,
   GoogleAuthProvider, 
   onAuthStateChanged, 
@@ -357,20 +359,38 @@ function App() {
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
 
-  // Auth Listener & Deep Link Handling
+  // Auth Listener & Deep Link Handling & Redirect Results
   useEffect(() => {
-    // Firebase 인증 상태 감지
+    // 1. Firebase 인증 상태 감지
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u)
       setLoading(false)
     })
 
-    // 네이티브 환경에서 로그인 후 앱으로 복귀 처리 (Deep Link)
+    // 2. 리다이렉트 로그인 결과 처리 (안드로이드 복귀 시 핵심)
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth)
+        if (result) {
+          const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
+          if (oauthCredential?.accessToken) {
+            localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
+            console.log("Access Token saved from Redirect result")
+            alert("로그인 성공! 캘린더 연동이 준비되었습니다.")
+          }
+        }
+      } catch (e) {
+        console.error("Redirect result error:", e)
+      }
+    }
+    checkRedirect()
+
+    // 3. 네이티브 환경에서 딥링크 감지 (브라우저가 앱을 깨울 때)
     if (Capacitor.isNativePlatform()) {
       const handleDeepLink = CapApp.addListener('appUrlOpen', (data) => {
         console.log('App opened with URL:', data.url)
-        // 딥링크를 통해 들어온 URL을 처리하여 로그인을 마무리할 수 있게 함
-        // Firebase Auth가 내부적으로 이 URL 신호를 감지하여 팝업/리다이렉트를 닫음
+        // 리다이렉트 방식에서는 시스템이 앱을 다시 띄우면 
+        // Firebase가 내부적으로 주소창의 파라미터를 읽어 인증을 완료함
       })
 
       return () => {
@@ -527,24 +547,15 @@ function App() {
 
   // --- Handlers ---
   const handleLogin = async () => {
-    console.log("Starting Web-based Login for Calendar Access")
+    console.log("Starting Web Redirect Login for Calendar Access")
     try {
-      // 안드로이드에서도 인앱 브라우저를 띄우기 위해 웹용 googleProvider 사용
       googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
       googleProvider.addScope('https://www.googleapis.com/auth/calendar')
       
-      const result = await signInWithPopup(auth, googleProvider)
-      
-      // 웹 방식 로그인 결과에서 Access Token 추출
-      const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
-      if (oauthCredential?.accessToken) {
-        localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
-        console.log("Access Token saved successfully from In-App Browser")
-      }
-      
-      alert("로그인 성공! 이제 캘린더 동기화가 가능합니다.")
+      // 안드로이드에서 가장 안정적인 리다이렉트 방식 사용
+      await signInWithRedirect(auth, googleProvider)
     } catch (e) {
-      console.error("Login hybrid error:", e)
+      console.error("Login redirect error:", e)
       alert("Login failed: " + (e.message || "알 수 없는 오류"))
     }
   }
