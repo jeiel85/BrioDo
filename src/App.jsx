@@ -768,18 +768,36 @@ function App() {
 
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date') {
-      // 렌더링 직후 scrollWidth가 0으로 계산되는 것을 방지하기 위해 지연
-      setTimeout(() => {
+      let retryCount = 0
+      const alignScroll = () => {
         const container = weekScrollRef.current
         if (!container) return
-        const weekWidth = container.scrollWidth / 5
-        container.scrollLeft = weekWidth * 2
         
-        // 스크롤 이동이 끝난 후 무한스크롤 이벤트 감지 시작
+        const pageW = container.clientWidth
+        // 렌더링 직후 width가 0이거나 너무 작을 때 재시도
+        if (pageW < 50 && retryCount < 10) {
+          retryCount++
+          setTimeout(alignScroll, 50)
+          return
+        }
+        
+        hasScrolledInit.current = false
+        // 부드러운 스크롤 충돌(iOS, 특정 브라우저)을 막기 위해 snap 속성을 잠시 해제
+        const prevSnap = container.style.scrollSnapType
+        container.style.scrollSnapType = 'none'
+        container.style.scrollBehavior = 'auto'
+        
+        container.scrollLeft = pageW * 2
+        
+        // 스크롤 이동이 확실히 적용된 후 무한 스크롤 이벤트 감지 시작 및 snap 원상복구
         setTimeout(() => {
+          if (weekScrollRef.current) {
+            weekScrollRef.current.style.scrollSnapType = prevSnap || 'x mandatory'
+          }
           hasScrolledInit.current = true
-        }, 50)
-      }, 50)
+        }, 100)
+      }
+      alignScroll()
     }
   }, [baseDate, viewMode])
 
