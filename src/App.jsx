@@ -512,35 +512,25 @@ function App() {
   // --- Handlers ---
   const handleLogin = async () => {
     console.log("Login button clicked, native:", Capacitor.isNativePlatform())
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const result = await FirebaseAuthentication.signInWithGoogle({
-          scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
-        })
+    try {
+      const result = await FirebaseAuthentication.signInWithGoogle({
+        scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
+      })
+      
+      if (result.credential) {
+        // Access Token 저장
+        if (result.credential.accessToken) {
+          localStorage.setItem('googleAccessToken', result.credential.accessToken)
+          console.log("Google Access Token saved successfully")
+        }
         
-        if (result.credential) {
-          if (result.credential.accessToken) {
-            localStorage.setItem('googleAccessToken', result.credential.accessToken)
-          }
-          const credential = GoogleAuthProvider.credential(result.credential.idToken)
-          await signInWithCredential(auth, credential)
-        }
-      } catch (e) {
-        console.error("Native login error:", e)
-        alert("Login failed: " + (e.message || JSON.stringify(e)))
+        // Firebase Auth 인증 완료
+        const credential = GoogleAuthProvider.credential(result.credential.idToken)
+        await signInWithCredential(auth, credential)
       }
-    } else {
-      try {
-        const result = await signInWithPopup(auth, googleProvider)
-        // 웹 환경에서도 Access Token 저장
-        const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
-        if (oauthCredential?.accessToken) {
-          localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
-          console.log("Web Google Access Token saved")
-        }
-      } catch (e) {
-        console.error("Web login error:", e)
-      }
+    } catch (e) {
+      console.error("Login Error:", e)
+      alert("Login failed: " + (e.message || JSON.stringify(e)))
     }
   }
 
