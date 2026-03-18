@@ -174,7 +174,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [todos, setTodos] = useState([])
-  const [viewMode, setViewMode] = useState('date')
+  const [viewMode, setViewMode] = useState('') // 초기 모드를 비워둠
   const [selectedTag, setSelectedTag] = useState(null)
   
   // Local Timezone 기준 YYYY-MM-DD 구하기
@@ -184,7 +184,7 @@ function App() {
   const todayStr = getLocalDateString(new Date())
   
   const [selectedDate, setSelectedDate] = useState(todayStr)
-  const [baseDate, setBaseDate] = useState(new Date())
+  const [baseDate, setBaseDate] = useState(null) // 초기값을 null로 설정해 변경을 감지하게 함
   const [showInputModal, setShowInputModal] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
@@ -715,6 +715,13 @@ function App() {
     setSelectedTag(null)
   }
 
+  // 로딩 완료 후 "오늘로 가기" 처리 시점 조정 (상태 변화를 태우기 위한 순서 조정)
+  useEffect(() => {
+    if (!loading && !baseDate) {
+      handleGoToToday()
+    }
+  }, [loading, baseDate])
+
   // --- Filtering & Formatting ---
   const allUsedTags = useMemo(() => {
     const tags = new Set()
@@ -767,7 +774,7 @@ function App() {
   const hasScrolledInit = useRef(false)
 
   useEffect(() => {
-    if (weekScrollRef.current && viewMode === 'date') {
+    if (weekScrollRef.current && viewMode === 'date' && baseDate) {
       let retryTimer;
       let forceTimer;
       let startTime = Date.now();
