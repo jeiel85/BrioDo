@@ -514,7 +514,8 @@ function App() {
     console.log("Login button clicked, native:", Capacitor.isNativePlatform())
     try {
       const result = await FirebaseAuthentication.signInWithGoogle({
-        scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
+        scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar'],
+        skipNativeAuth: true
       })
       
       if (result.credential) {
