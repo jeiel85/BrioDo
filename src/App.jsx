@@ -511,27 +511,25 @@ function App() {
 
   // --- Handlers ---
   const handleLogin = async () => {
-    console.log("Login button clicked, native:", Capacitor.isNativePlatform())
+    console.log("Starting Web-based Login for Calendar Access")
     try {
-      const result = await FirebaseAuthentication.signInWithGoogle({
-        scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar'],
-        skipNativeAuth: true
-      })
+      // 안드로이드에서도 인앱 브라우저를 띄우기 위해 웹용 googleProvider 사용
+      googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
+      googleProvider.addScope('https://www.googleapis.com/auth/calendar')
       
-      if (result.credential) {
-        // Access Token 저장
-        if (result.credential.accessToken) {
-          localStorage.setItem('googleAccessToken', result.credential.accessToken)
-          console.log("Google Access Token saved successfully")
-        }
-        
-        // Firebase Auth 인증 완료
-        const credential = GoogleAuthProvider.credential(result.credential.idToken)
-        await signInWithCredential(auth, credential)
+      const result = await signInWithPopup(auth, googleProvider)
+      
+      // 웹 방식 로그인 결과에서 Access Token 추출
+      const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
+      if (oauthCredential?.accessToken) {
+        localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
+        console.log("Access Token saved successfully from In-App Browser")
       }
+      
+      alert("로그인 성공! 이제 캘린더 동기화가 가능합니다.")
     } catch (e) {
-      console.error("Login Error:", e)
-      alert("Login failed: " + (e.message || JSON.stringify(e)))
+      console.error("Login hybrid error:", e)
+      alert("Login failed: " + (e.message || "알 수 없는 오류"))
     }
   }
 
