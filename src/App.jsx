@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { getLocalTodos, saveLocalTodosBatch, saveLocalTodo, deleteLocalTodo, addSyncQueue, getSyncQueue, clearSyncQueue } from './db'
 import { GoogleGenAI } from '@google/genai'
 import { initializeApp } from "firebase/app"
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
+import { Network } from '@capacitor/network'
 import { 
   getAuth, 
   signInWithPopup, 
@@ -23,7 +25,8 @@ import {
   doc, 
   updateDoc, 
   deleteDoc,
-  serverTimestamp
+  serverTimestamp,
+  setDoc
 } from "firebase/firestore"
 import './index.css'
 
@@ -191,6 +194,42 @@ function App() {
     return saved ? JSON.parse(saved) : null
   })
 
+  // --- Network & Offline Sync State ---
+  const [isOnline, setIsOnline] = useState(true)
+
+  const processSyncQueue = async () => {
+    if (!user) return
+    try {
+      const queue = await getSyncQueue()
+      for (const item of queue) {
+        if (item.action === 'set') {
+          const finalPayload = { ...item.payload }
+          // Firestore timestamp 복구
+          if (!finalPayload.createdAt || typeof finalPayload.createdAt === 'number') {
+            finalPayload.createdAt = serverTimestamp()
+          }
+          await setDoc(doc(db, "todos", item.todoId), finalPayload, { merge: true })
+        } else if (item.action === 'delete') {
+          await deleteDoc(doc(db, "todos", item.todoId))
+        }
+        await clearSyncQueue(item.id)
+      }
+    } catch(e) { console.error('Sync process error:', e) }
+  }
+
+  useEffect(() => {
+    Network.getStatus().then(status => {
+      setIsOnline(status.connected)
+      if (status.connected && user) processSyncQueue()
+    })
+    const handleNetworkChange = async (status) => {
+      setIsOnline(status.connected)
+      if (status.connected && user) await processSyncQueue()
+    }
+    const listener = Network.addListener('networkStatusChange', handleNetworkChange)
+    return () => { listener.then(l => l.remove()) }
+  }, [user])
+
   // 랜덤 테마 생성
   const generateRandomTheme = () => {
     const hue = Math.floor(Math.random() * 360)
@@ -290,28 +329,52 @@ function App() {
     return () => unsubscribe()
   }, [])
 
-  // Firestore Sync
+  // IndexedDB (Offline First) & Firestore Sync
   useEffect(() => {
-    if (!user) {
-      setTodos([])
-      return
+    let unsubscribe = null
+
+    const loadLocalAndSync = async () => {
+      // 1. 인터넷 확인 전, 무조건 로컬 DB에 있는 데이터를 우선 즉시 그려줌 (초고속 화면 표시)
+      if (user) {
+        const localData = await getLocalTodos()
+        if (localData && localData.length > 0) {
+          const sortedList = localData.sort((a, b) => {
+            const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
+            const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
+            return dtA - dtB
+          })
+          setTodos(sortedList)
+          setLoading(false)
+        }
+        
+        // 2. 백그라운드에서 Firestore와 실시간 연동 시작
+        const q = query(collection(db, "todos"), where("uid", "==", user.uid))
+        unsubscribe = onSnapshot(q, async (snapshot) => {
+          const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+          const sortedList = list.sort((a, b) => {
+            const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
+            const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
+            return dtA - dtB
+          })
+          
+          // 새로 받은 데이터로 UI 렌더링 + 로컬 DB도 최신화 동기화
+          setTodos(sortedList)
+          setLoading(false)
+          
+          try {
+            await saveLocalTodosBatch(list)
+          } catch (e) { console.error("Local DB Sync error:", e) }
+        }, (error) => {
+          console.error("Firestore sync error:", error)
+          setLoading(false) // 오프라인이어도 무한 로딩 풀림
+        })
+      } else {
+        setTodos([])
+      }
     }
-    const q = query(
-      collection(db, "todos"), 
-      where("uid", "==", user.uid)
-    )
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-      const sortedList = list.sort((a, b) => {
-        const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
-        const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
-        return dtA - dtB
-      })
-      setTodos(sortedList)
-    }, (error) => {
-      console.error("Firestore sync error:", error)
-    })
-    return () => unsubscribe()
+    
+    loadLocalAndSync()
+    return () => { if (unsubscribe) unsubscribe() }
   }, [user])
 
   // --- AI Logic ---
@@ -428,6 +491,9 @@ function App() {
     try {
       if (!isEdit) {
         // ===== 신규 생성 =====
+        const newDocRef = doc(collection(db, "todos"))
+        const newId = newDocRef.id
+        
         const initialData = {
           uid: user.uid,
           text: savedText,
@@ -435,12 +501,21 @@ function App() {
           time: savedTime,
           tags: inputTags,
           completed: false,
-          createdAt: serverTimestamp()
         }
-        const docRef = await addDoc(collection(db, "todos"), initialData)
-        console.log("Todo created:", docRef.id)
+        
+        // Optimistic UI (오프라인 화면 즉시 반영 및 로컬 저장)
+        const localPayload = { ...initialData, id: newId, createdAt: Date.now() }
+        setTodos(prev => [...prev, localPayload])
+        await saveLocalTodo(localPayload)
 
-        // AI 비동기 개선
+        if (isOnline) {
+          await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
+        } else {
+          await addSyncQueue('set', newId, initialData)
+        }
+        console.log("Todo created:", newId)
+
+        // AI 비동기 개선 (온라인/오프라인 처리)
         try {
           const ai = await getAiFullAnalysis(savedText)
           if (ai) {
@@ -450,10 +525,14 @@ function App() {
               time: ai.time || savedTime,
               tags: [...new Set([...inputTags, ...(ai.categories || [])])]
             }
-            await updateDoc(doc(db, "todos", docRef.id), merged)
+            setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...merged } : t))
+            await saveLocalTodo({ ...localPayload, ...merged })
+            
+            if (isOnline) await setDoc(newDocRef, merged, { merge: true })
+            else await addSyncQueue('set', newId, merged)
           }
         } catch (aiErr) {
-          console.error("AI refinement failed (non-blocking):", aiErr)
+          console.error("AI refinement failed:", aiErr)
         }
       } else {
         // ===== 수정 =====
@@ -463,7 +542,14 @@ function App() {
           time: savedTime,
           tags: inputTags
         }
-        await updateDoc(doc(db, "todos", editId), updateData)
+        
+        // 로컬 업데이트
+        const oldTodo = todos.find(t => t.id === editId) || {}
+        setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...updateData } : t))
+        await saveLocalTodo({ ...oldTodo, ...updateData })
+
+        if (isOnline) await setDoc(doc(db, "todos", editId), updateData, { merge: true })
+        else await addSyncQueue('set', editId, updateData)
         console.log("Todo updated:", editId)
 
         // AI 비동기 개선
@@ -476,11 +562,15 @@ function App() {
               time: ai.time || savedTime,
               tags: [...new Set([...inputTags, ...(ai.categories || [])])]
             }
-            await updateDoc(doc(db, "todos", editId), merged)
+            setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...merged } : t))
+            await saveLocalTodo({ ...oldTodo, ...updateData, ...merged })
+
+            if (isOnline) await setDoc(doc(db, "todos", editId), merged, { merge: true })
+            else await addSyncQueue('set', editId, merged)
             console.log("AI refinement applied (edit):", merged)
           }
         } catch (aiErr) {
-          console.error("AI refinement failed (non-blocking):", aiErr)
+          console.error("AI refinement failed:", aiErr)
         }
       }
     } catch (e) { 
@@ -490,12 +580,25 @@ function App() {
 
   const toggleComplete = async (e, id, completed) => {
     e.stopPropagation()
-    try { await updateDoc(doc(db, "todos", id), { completed: !completed }) } catch (e) { console.error(e) }
+    try {
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t))
+      const target = todos.find(t => t.id === id)
+      if (target) await saveLocalTodo({ ...target, completed: !completed })
+
+      if (isOnline) await setDoc(doc(db, "todos", id), { completed: !completed }, { merge: true })
+      else await addSyncQueue('set', id, { completed: !completed })
+    } catch (e) { console.error(e) }
   }
 
   const deleteTodo = async (e, id) => {
     e.stopPropagation()
-    try { await deleteDoc(doc(db, "todos", id)) } catch (e) { console.error(e) }
+    try {
+      setTodos(prev => prev.filter(t => t.id !== id))
+      await deleteLocalTodo(id)
+
+      if (isOnline) await deleteDoc(doc(db, "todos", id))
+      else await addSyncQueue('delete', id)
+    } catch (e) { console.error(e) }
   }
 
   const openEditModal = (todo) => {
