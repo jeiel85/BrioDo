@@ -663,3 +663,49 @@ body.modal-open {
   background: rgba(94, 120, 255, 0.08);
   color: var(--primary);
 }
+
+.desc-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0 8px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.desc-toggle-btn:hover { opacity: 1; }
+
+.desc-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-main);
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 15px;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.desc-input:focus {
+  border-color: var(--primary);
+}
+
+.todo-desc {
+  font-size: 13px;
+  color: var(--text-time);
+  margin-top: 4px;
+  margin-bottom: 6px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
