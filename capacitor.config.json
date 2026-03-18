@@ -1,0 +1,11 @@
+{
+  "appId": "biz.todoest.app",
+  "appName": "BlendDo",
+  "webDir": "dist",
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": ["google.com"]
+    }
+  }
+}

@@ -1,0 +1,872 @@
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { GoogleGenAI } from '@google/genai'
+import { initializeApp } from "firebase/app"
+import { Capacitor } from '@capacitor/core'
+import { StatusBar, Style } from '@capacitor/status-bar'
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
+import { 
+  getAuth, 
+  signInWithPopup, 
+  signInWithCredential,
+  GoogleAuthProvider, 
+  onAuthStateChanged, 
+  signOut 
+} from "firebase/auth"
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  query, 
+  where, 
+  orderBy, 
+  doc, 
+  updateDoc, 
+  deleteDoc,
+  serverTimestamp
+} from "firebase/firestore"
+import './index.css'
+
+// --- Translation Data ---
+const translations = {
+  ko: {
+    reminders: 'BlendDo',
+    incomplete: '개의 미완료 항목',
+    doneAll: '일정을 모두 마쳤습니다!',
+    completed: '완료됨',
+    noTime: '시간 지정 없음',
+    placeholder: '무엇을 도와드릴까요?',
+    date: '날짜',
+    time: '시간',
+    tags: '태그 (#으로 여러 개 입력)',
+    cancel: '취소',
+    save: '저장',
+    delete: '삭제',
+    aiThinking: 'AI가 분석 중...',
+    viewDaily: '날짜별',
+    viewAll: '전체',
+    allTags: '모든 태그',
+    today: '오늘',
+    langName: '한국어',
+    login: '로그인',
+    logout: '로그아웃',
+    loading: '연결 중...'
+  },
+  en: {
+    reminders: 'BlendDo',
+    incomplete: ' incomplete',
+    doneAll: 'Everything done!',
+    completed: 'Completed',
+    noTime: 'No time',
+    placeholder: 'What do you want to remind?',
+    date: 'Date',
+    time: 'Time',
+    tags: 'Tags (use # for multiple)',
+    cancel: 'Cancel',
+    save: 'Save',
+    delete: 'Delete',
+    aiThinking: 'AI refining...',
+    viewDaily: 'Daily',
+    viewAll: 'All',
+    allTags: 'All Tags',
+    today: 'Today',
+    langName: 'English',
+    login: 'Login',
+    logout: 'Logout',
+    loading: 'Connecting...'
+  },
+  ja: {
+    reminders: 'BlendDo',
+    incomplete: ' 개의 미완료',
+    doneAll: '予定はすべて完了しました!',
+    completed: '完了済み',
+    noTime: '時間指定なし',
+    placeholder: '何を思い出させますか？',
+    date: '日付',
+    time: '時間',
+    tags: 'タグ（#を使用して複数）',
+    cancel: 'キャンセル',
+    save: '保存',
+    delete: '削除',
+    aiThinking: 'AIが整理しています...',
+    viewDaily: '日別',
+    viewAll: 'すべて',
+    allTags: 'すべてのタグ',
+    today: '今日',
+    langName: '日本語',
+    login: 'ログイン',
+    logout: 'ログアウト',
+    loading: '接続中...'
+  },
+  zh: {
+    reminders: 'BlendDo',
+    incomplete: ' 个待办事项',
+    doneAll: '完成！',
+    completed: '已完成',
+    noTime: '未设置时间',
+    placeholder: '您想提醒什么？',
+    date: '日期',
+    time: '时间',
+    tags: '标签（使用 #）',
+    cancel: '取消',
+    save: '保存',
+    delete: '删除',
+    aiThinking: 'AI正在整理...',
+    viewDaily: '按日',
+    viewAll: '全部',
+    allTags: '所有标签',
+    today: '今天',
+    langName: '中文',
+    login: '登录',
+    logout: '登出',
+    loading: '同步中...'
+  }
+}
+
+// --- Firebase Setup ---
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+}
+
+const fbApp = initializeApp(firebaseConfig)
+const auth = getAuth(fbApp)
+const db = getFirestore(fbApp)
+const googleProvider = new GoogleAuthProvider()
+
+// --- Gemini AI Setup ---
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
+const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null
+
+// 시간 표시 포맷: HH:MM 만 보여주기
+const formatTime = (timeStr, noTimeLabel) => {
+  if (!timeStr || timeStr === noTimeLabel) return ''
+  // 이미 HH:MM 형식이면 그대로 반환
+  if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr
+  // HH:MM:SS 등이면 앞 5글자만
+  if (/^\d{2}:\d{2}/.test(timeStr)) return timeStr.slice(0, 5)
+  return timeStr
+}
+
+function App() {
+  const [lang, setLang] = useState('ko')
+  const t = useMemo(() => translations[lang] || translations.ko, [lang])
+
+  useEffect(() => {
+    const sysLang = navigator.language.split('-')[0]
+    if (['en', 'ja', 'zh'].includes(sysLang)) setLang(sysLang)
+    else setLang('ko')
+  }, [])
+
+
+
+  // --- Auth & Data States ---
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [todos, setTodos] = useState([])
+  const [viewMode, setViewMode] = useState('date')
+  const [selectedTag, setSelectedTag] = useState(null)
+  const todayStr = new Date().toISOString().split('T')[0]
+  const [selectedDate, setSelectedDate] = useState(todayStr)
+  const [baseDate, setBaseDate] = useState(new Date())
+  const [showInputModal, setShowInputModal] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(false)
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
+  const [newTodo, setNewTodo] = useState({ text: '', date: todayStr, time: '', tagInput: '' })
+  const [editingTodoId, setEditingTodoId] = useState(null)
+  const [tagExpanded, setTagExpanded] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [fontScale, setFontScale] = useState(() => {
+    return localStorage.getItem('blenddo-font-scale') || 'medium'
+  })
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('blenddo-theme') || 'light'
+  })
+  const [randomColors, setRandomColors] = useState(() => {
+    const saved = localStorage.getItem('blenddo-random-colors')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  // 랜덤 테마 생성
+  const generateRandomTheme = () => {
+    const hue = Math.floor(Math.random() * 360)
+    const isDark = Math.random() > 0.5
+    const colors = isDark ? {
+      primary: `hsl(${hue}, 70%, 65%)`,
+      bgColor: `hsl(${hue}, 15%, 10%)`,
+      cardBg: `hsl(${hue}, 15%, 14%)`,
+      textMain: `hsl(${hue}, 10%, 90%)`,
+      textTime: `hsl(${hue}, 10%, 60%)`,
+      borderColor: `hsl(${hue}, 15%, 22%)`,
+      checkboxBorder: `hsl(${hue}, 10%, 40%)`,
+      tagBg: `hsl(${hue}, 15%, 18%)`,
+      modalBg: `hsl(${hue}, 15%, 14%)`,
+    } : {
+      primary: `hsl(${hue}, 70%, 50%)`,
+      bgColor: `hsl(${hue}, 30%, 97%)`,
+      cardBg: `hsl(${hue}, 30%, 97%)`,
+      textMain: `hsl(${hue}, 20%, 15%)`,
+      textTime: `hsl(${hue}, 10%, 45%)`,
+      borderColor: `hsl(${hue}, 20%, 90%)`,
+      checkboxBorder: `hsl(${hue}, 10%, 70%)`,
+      tagBg: `hsl(${hue}, 25%, 93%)`,
+      modalBg: `hsl(${hue}, 30%, 97%)`,
+    }
+    setRandomColors(colors)
+    localStorage.setItem('blenddo-random-colors', JSON.stringify(colors))
+    setTheme('random')
+  }
+
+  // 테마 적용
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.remove('theme-light', 'theme-dark', 'theme-system')
+    // 랜덤 CSS 변수 제거
+    const props = ['--primary', '--bg-color', '--card-bg', '--text-main', '--text-time', '--border-color', '--checkbox-border', '--tag-bg', '--modal-bg']
+    props.forEach(p => root.style.removeProperty(p))
+
+    if (theme === 'random' && randomColors) {
+      root.style.setProperty('--primary', randomColors.primary)
+      root.style.setProperty('--bg-color', randomColors.bgColor)
+      root.style.setProperty('--card-bg', randomColors.cardBg)
+      root.style.setProperty('--text-main', randomColors.textMain)
+      root.style.setProperty('--text-time', randomColors.textTime)
+      root.style.setProperty('--border-color', randomColors.borderColor)
+      root.style.setProperty('--checkbox-border', randomColors.checkboxBorder)
+      root.style.setProperty('--tag-bg', randomColors.tagBg)
+      root.style.setProperty('--modal-bg', randomColors.modalBg)
+    } else {
+      root.classList.add(`theme-${theme}`)
+    }
+    localStorage.setItem('blenddo-theme', theme)
+
+    // 상태 표시줄(Status Bar) 동기화 (색상 및 스타일)
+    if (Capacitor.isNativePlatform()) {
+      setTimeout(async () => {
+        try {
+          const bodyBg = getComputedStyle(document.body).backgroundColor
+          const hexMatch = bodyBg.match(/\d+/g)
+          let hexColor = '#FFFFFF'
+          if (hexMatch && hexMatch.length >= 3) {
+            hexColor = '#' + hexMatch.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase()
+          }
+          await StatusBar.setBackgroundColor({ color: hexColor })
+          
+          // 밝기 계산 (YIQ 수식)
+          const [r, g, b] = hexMatch ? hexMatch.slice(0,3).map(Number) : [255, 255, 255]
+          const brightness = (r * 299 + g * 587 + b * 114) / 1000
+          
+          // 밝으면 어두운 아이콘(Light 모드용), 어두우면 밝은 아이콘(Dark 모드용) 적용
+          await StatusBar.setStyle({ style: brightness > 128 ? Style.Light : Style.Dark })
+        } catch (e) {
+          console.error("StatusBar error:", e)
+        }
+      }, 50)
+    }
+  }, [theme, randomColors])
+
+  // 글자 크기 CSS 변수 적용
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.remove('font-small', 'font-medium', 'font-large')
+    root.classList.add(`font-${fontScale}`)
+    localStorage.setItem('blenddo-font-scale', fontScale)
+  }, [fontScale])
+
+  // 스와이프 네비게이션 ref
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u)
+      setLoading(false)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  // Firestore Sync
+  useEffect(() => {
+    if (!user) {
+      setTodos([])
+      return
+    }
+    const q = query(
+      collection(db, "todos"), 
+      where("uid", "==", user.uid)
+    )
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      const sortedList = list.sort((a, b) => {
+        const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
+        const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
+        return dtA - dtB
+      })
+      setTodos(sortedList)
+    }, (error) => {
+      console.error("Firestore sync error:", error)
+    })
+    return () => unsubscribe()
+  }, [user])
+
+  // --- AI Logic ---
+  const getAiTagsOnly = async (text) => {
+    if (!genAI) return null
+    try {
+      setIsAiAnalyzing(true)
+      const prompt = `Analyze: "${text}". Extract ONLY 1-2 category tags in ${t.langName} (e.g., 업무, 개인, 건강, 학습). Return ONLY JSON: {"categories": ["tag1", "tag2"]}`
+      const response = await genAI.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt })
+      const rawText = response.text.replace(/```json|```/g, '').trim()
+      return JSON.parse(rawText.match(/\{.*\}/s)?.[0] || rawText)
+    } catch (error) { console.error('AI Tags Error:', error); return null } finally { setIsAiAnalyzing(false) }
+  }
+
+  const getAiFullAnalysis = async (text) => {
+    if (!genAI) {
+      return null
+    }
+    try {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+      const todayInfo = `${year}-${month}-${day} (${dayNames[now.getDay()]})`
+      
+      const prompt = `오늘: ${todayInfo}\n입력: "${text}"\n\n반드시 아래 JSON만 응답하세요:\n{"categories":["태그1"],"date":"YYYY-MM-DD","time":"HH:MM 또는 null","refinedText":"핵심 내용"}\n\n규칙:\n- categories: 할일 성격 태그 1~2개 (업무,개인,건강,학습 등)\n- date: 날짜(YYYY-MM-DD). 상대적 표현은 오늘 기준 계산\n- time: 시간 있으면 HH:MM, 없으면 null\n- refinedText: 날짜/시간 제외한 핵심 내용`
+      
+      const response = await genAI.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt })
+      const rawText = response.text.replace(/```json|```/g, '').trim()
+      const analysis = JSON.parse(rawText.match(/\{.*\}/s)?.[0] || rawText)
+      
+      if (analysis) {
+        if (!analysis.date || !/^\d{4}-\d{2}-\d{2}$/.test(analysis.date)) {
+          analysis.date = null
+        }
+      }
+      return analysis
+    } catch (error) { 
+      console.error("AI Analysis Error:", error)
+      return null 
+    }
+  }
+
+  // Hybrid AI tag suggestion (debounced)
+  const debounceTimer = useRef(null)
+  useEffect(() => {
+    if (showInputModal && newTodo.text.length > 3) {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current)
+      debounceTimer.current = setTimeout(async () => {
+        const analysis = await getAiTagsOnly(newTodo.text)
+        if (analysis && analysis.categories) {
+          const existingTags = newTodo.tagInput.split(/[,#\s]+/).map(tg => tg.trim().replace('#', '')).filter(Boolean)
+          const newUniqueTags = analysis.categories.filter(tag => !existingTags.includes(tag))
+          if (newUniqueTags.length > 0) {
+            setNewTodo(prev => ({ 
+              ...prev, 
+              tagInput: [...new Set([...existingTags, ...newUniqueTags])].map(tg => '#' + tg).join(' ')
+            }))
+          }
+        }
+      }, 1200)
+    }
+    return () => clearTimeout(debounceTimer.current)
+  }, [newTodo.text, showInputModal])
+
+  // --- Handlers ---
+  const handleLogin = async () => {
+    console.log("Login button clicked, native:", Capacitor.isNativePlatform())
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const result = await FirebaseAuthentication.signInWithGoogle()
+        if (result.credential) {
+          const credential = GoogleAuthProvider.credential(result.credential.idToken)
+          await signInWithCredential(auth, credential)
+        }
+      } catch (e) {
+        console.error("Native login error:", e)
+        alert("Login failed: " + (e.message || JSON.stringify(e)))
+      }
+    } else {
+      try {
+        await signInWithPopup(auth, googleProvider)
+      } catch (e) {
+        console.error("Web login error:", e)
+      }
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await FirebaseAuthentication.signOut()
+      }
+      await signOut(auth)
+    } catch (e) {
+      console.error("Logout error:", e)
+    }
+  }
+
+  const handleSaveTodo = async () => {
+    if (!user || newTodo.text.trim() === '') return
+    
+    const inputTags = newTodo.tagInput.split(/[,#\s]+/).map(tag => tag.trim().replace('#', '')).filter(Boolean)
+    const savedText = newTodo.text
+    const savedDate = newTodo.date
+    const savedTime = newTodo.time || ''
+    const isEdit = !!editingTodoId
+    const editId = editingTodoId
+
+    // Close modal immediately (optimistic UI)
+    resetForm()
+
+    try {
+      if (!isEdit) {
+        // ===== 신규 생성 =====
+        const initialData = {
+          uid: user.uid,
+          text: savedText,
+          date: savedDate,
+          time: savedTime,
+          tags: inputTags,
+          completed: false,
+          createdAt: serverTimestamp()
+        }
+        const docRef = await addDoc(collection(db, "todos"), initialData)
+        console.log("Todo created:", docRef.id)
+
+        // AI 비동기 개선
+        try {
+          const ai = await getAiFullAnalysis(savedText)
+          if (ai) {
+            const merged = {
+              text: ai.refinedText || savedText,
+              date: ai.date || savedDate,
+              time: ai.time || savedTime,
+              tags: [...new Set([...inputTags, ...(ai.categories || [])])]
+            }
+            await updateDoc(doc(db, "todos", docRef.id), merged)
+          }
+        } catch (aiErr) {
+          console.error("AI refinement failed (non-blocking):", aiErr)
+        }
+      } else {
+        // ===== 수정 =====
+        const updateData = {
+          text: savedText,
+          date: savedDate,
+          time: savedTime,
+          tags: inputTags
+        }
+        await updateDoc(doc(db, "todos", editId), updateData)
+        console.log("Todo updated:", editId)
+
+        // AI 비동기 개선
+        try {
+          const ai = await getAiFullAnalysis(savedText)
+          if (ai) {
+            const merged = {
+              text: ai.refinedText || savedText,
+              date: ai.date || savedDate,
+              time: ai.time || savedTime,
+              tags: [...new Set([...inputTags, ...(ai.categories || [])])]
+            }
+            await updateDoc(doc(db, "todos", editId), merged)
+            console.log("AI refinement applied (edit):", merged)
+          }
+        } catch (aiErr) {
+          console.error("AI refinement failed (non-blocking):", aiErr)
+        }
+      }
+    } catch (e) { 
+      console.error("Save Todo Error:", e) 
+    }
+  }
+
+  const toggleComplete = async (e, id, completed) => {
+    e.stopPropagation()
+    try { await updateDoc(doc(db, "todos", id), { completed: !completed }) } catch (e) { console.error(e) }
+  }
+
+  const deleteTodo = async (e, id) => {
+    e.stopPropagation()
+    try { await deleteDoc(doc(db, "todos", id)) } catch (e) { console.error(e) }
+  }
+
+  const openEditModal = (todo) => {
+    setEditingTodoId(todo.id)
+    setNewTodo({
+      text: todo.text,
+      date: todo.date,
+      time: formatTime(todo.time, t.noTime),
+      tagInput: (todo.tags || []).map(tg => '#' + tg).join(' ')
+    })
+    setShowInputModal(true)
+    document.body.classList.add('modal-open')
+  }
+
+  const resetForm = () => {
+    setNewTodo({ text: '', date: todayStr, time: '', tagInput: '' })
+    setEditingTodoId(null)
+    setShowInputModal(false)
+    document.body.classList.remove('modal-open')
+  }
+
+  const handleGoToToday = () => {
+    const today = new Date()
+    setSelectedDate(today.toISOString().split('T')[0])
+    setBaseDate(today)
+    setViewMode('date')
+    setSelectedTag(null)
+  }
+
+  // --- Filtering & Formatting ---
+  const allUsedTags = useMemo(() => {
+    const tags = new Set()
+    todos.forEach(todo => todo.tags?.forEach(tag => tags.add(tag)))
+    return Array.from(tags)
+  }, [todos])
+
+  const filteredTodos = useMemo(() => {
+    let list = [...todos]
+    if (viewMode === 'date') list = list.filter(todo => todo.date === selectedDate)
+    if (selectedTag) list = list.filter(todo => todo.tags?.includes(selectedTag))
+    return list.sort((a, b) => {
+      const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
+      const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
+      return dtA - dtB
+    })
+  }, [todos, viewMode, selectedDate, selectedTag])
+
+  const activeTodos = useMemo(() => filteredTodos.filter(todo => !todo.completed), [filteredTodos])
+  const completedTodos = filteredTodos.filter(todo => todo.completed)
+
+  const formattedHeaderDate = useMemo(() => {
+    const d = new Date(selectedDate)
+    const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+    return d.toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
+  }, [selectedDate, lang])
+
+  const dateRange = useMemo(() => {
+    const dates = []
+    const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+    const startOfWeek = new Date(baseDate)
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
+    // 5주 렌더 (이전2주 + 현재 + 다음2주)
+    const rangeStart = new Date(startOfWeek)
+    rangeStart.setDate(rangeStart.getDate() - 14)
+    for (let i = 0; i < 35; i++) {
+      const d = new Date(rangeStart); d.setDate(rangeStart.getDate() + i)
+      dates.push({
+        full: d.toISOString().split('T')[0],
+        dayName: d.toLocaleDateString(locale, { weekday: 'short' }),
+        dayNumber: d.getDate(),
+        weekIndex: Math.floor(i / 7) // 0~4
+      })
+    }
+    return dates
+  }, [baseDate, lang])
+
+  // 주간 스크롤 ref 및 초기 위치 설정
+  const weekScrollRef = useRef(null)
+  const hasScrolledInit = useRef(false)
+
+  useEffect(() => {
+    if (weekScrollRef.current && viewMode === 'date') {
+      // 렌더링 직후 scrollWidth가 0으로 계산되는 것을 방지하기 위해 지연
+      setTimeout(() => {
+        const container = weekScrollRef.current
+        if (!container) return
+        const weekWidth = container.scrollWidth / 5
+        container.scrollLeft = weekWidth * 2
+        
+        // 스크롤 이동이 끝난 후 무한스크롤 이벤트 감지 시작
+        setTimeout(() => {
+          hasScrolledInit.current = true
+        }, 50)
+      }, 50)
+    }
+  }, [baseDate, viewMode])
+
+  const handleWeekScroll = () => {
+    const container = weekScrollRef.current
+    if (!container || !hasScrolledInit.current) return
+    const weekWidth = container.scrollWidth / 5
+    // 왼쪽 끝 근처 → 이전 주로 baseDate 이동
+    if (container.scrollLeft < weekWidth * 0.3) {
+      hasScrolledInit.current = false
+      const d = new Date(baseDate)
+      d.setDate(d.getDate() - 7)
+      setBaseDate(d)
+    }
+    // 오른쪽 끝 근처 → 다음 주로 baseDate 이동
+    if (container.scrollLeft > weekWidth * 3.7) {
+      hasScrolledInit.current = false
+      const d = new Date(baseDate)
+      d.setDate(d.getDate() + 7)
+      setBaseDate(d)
+    }
+  }
+  const handleOpenAddModal = () => {
+    let defaultDate = ''
+    let defaultTime = ''
+
+    if (viewMode === 'date') {
+      defaultDate = selectedDate
+      // 현재 시간을 최근접한 10분 단위로 설정
+      const now = new Date()
+      now.setMinutes(Math.round(now.getMinutes() / 10) * 10)
+      const hh = String(now.getHours()).padStart(2, '0')
+      const mm = String(now.getMinutes()).padStart(2, '0')
+      defaultTime = `${hh}:${mm}`
+    }
+
+    setEditingTodoId(null)
+    setNewTodo({ text: '', date: defaultDate, time: defaultTime, tagInput: '' })
+    setShowInputModal(true)
+    document.body.classList.add('modal-open')
+  }
+
+  if (loading) return <div style={{height:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--primary)', fontWeight:600}}>{t.loading}</div>
+
+  return (
+    <div className="card">
+      {/* ===== 고정 헤더 영역 ===== */}
+      <div className="header-wrapper">
+        <header className="header">
+          <div className="header-top">
+            <div className="month-year-header clickable" onClick={handleGoToToday}>
+              {formattedHeaderDate}
+            </div>
+            <div className="auth-group">
+              {!user && (
+                <button className="login-btn" onClick={handleLogin}>
+                  {lang === 'ko' ? '로그인' : 'Login'}
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="title-row">
+            <h1>BlendDo</h1>
+            <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+              <div className="view-selector">
+                <button className={viewMode === 'date' ? 'active' : ''} onClick={() => { setViewMode('date'); setSelectedDate(todayStr); setBaseDate(new Date()) }}>
+                  {lang === 'ko' ? '날짜별' : 'By Date'}
+                </button>
+                <button className={viewMode === 'all' ? 'active' : ''} onClick={() => setViewMode('all')}>
+                  {lang === 'ko' ? '전체' : 'All'}
+                </button>
+              </div>
+              <button className="settings-btn" onClick={() => setShowSettings(true)}>⚙️</button>
+            </div>
+          </div>
+          
+          {viewMode === 'date' && (
+            <div className="date-nav-container">
+              <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll}>
+                {[0, 1, 2, 3, 4].map(weekIdx => (
+                  <div key={weekIdx} className="date-week-page">
+                    {dateRange.filter(d => d.weekIndex === weekIdx).map((date) => (
+                      <div key={date.full} className={`date-item ${selectedDate === date.full ? 'active' : ''}`} onClick={() => setSelectedDate(date.full)}>
+                        <span className="day-name">{date.dayName}</span>
+                        <span className="day-number">{date.dayNumber}</span>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="tag-filter-wrapper">
+            <div className={`tag-filter-bar ${tagExpanded ? 'expanded' : ''}`}>
+              <button className={!selectedTag ? 'active' : ''} onClick={() => setSelectedTag(null)}>{t.allTags}</button>
+              {allUsedTags.map(tag => (
+                <button key={tag} className={selectedTag === tag ? 'active' : ''} onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}>#{tag}</button>
+              ))}
+            </div>
+            {allUsedTags.length > 3 && (
+              <button className="tag-toggle-btn" onClick={() => setTagExpanded(!tagExpanded)}>
+                {tagExpanded ? '▲' : '▼'}
+              </button>
+            )}
+          </div>
+        </header>
+      </div>
+
+      {/* ===== 스크롤 가능한 할 일 목록 영역 ===== */}
+      <div className="todo-list-section">
+        {!user ? (
+          <div style={{textAlign:'center', padding:'60px 20px', color:'var(--text-time)'}}>
+            <p style={{marginBottom:'20px'}}>로그인하여 대기중인 일정을 클라우드에 백업하세요.</p>
+            <button style={{background:'var(--primary)', color:'white', padding:'10px 20px', border:'none', borderRadius:'12px', cursor:'pointer', fontWeight:600}} onClick={handleLogin}>Google 계정으로 시작하기</button>
+          </div>
+        ) : (
+          <div className="active-list">
+            {activeTodos.map(todo => (
+              <div key={todo.id} className="todo-item" onClick={() => openEditModal(todo)}>
+                <div className="checkbox" onClick={(e) => toggleComplete(e, todo.id, todo.completed)}></div>
+                <div className="todo-body">
+                  <div className="todo-main-row">
+                    <span className="todo-text">{todo.text}</span>
+                    <div className="right-group">
+                      {viewMode === 'all' && <span className="todo-date-badge">{todo.date.slice(5)}</span>}
+                      {formatTime(todo.time, t.noTime) && (
+                        <span className="todo-time">{formatTime(todo.time, t.noTime)}</span>
+                      )}
+                    </div>
+                  </div>
+                  {todo.tags?.length > 0 && (
+                    <div className="tags-row">
+                      {todo.tags.map(tag => <span key={tag} className="tag-pill">#{tag}</span>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {activeTodos.length === 0 && <p style={{textAlign:'center', padding:'40px', color:'var(--text-time)'}}>{t.doneAll}</p>}
+          </div>
+        )}
+
+        {user && completedTodos.length > 0 && (
+          <div style={{marginTop:'20px'}}>
+            <div onClick={() => setShowCompleted(!showCompleted)} style={{display:'flex', alignItems:'center', gap:'8px', cursor:'pointer', color: 'var(--text-time)', fontSize:'14px', fontWeight:'600', padding:'10px 0'}}>
+              <span style={{fontSize:'10px', transition:'transform 0.2s', transform: showCompleted ? 'rotate(90deg)' : 'rotate(0deg)'}}>▶</span>
+              <span>{t.completed} {completedTodos.length}</span>
+            </div>
+            {showCompleted && (
+              <div>
+                {completedTodos.map(todo => (
+                  <div key={todo.id} className="todo-item" onClick={() => openEditModal(todo)} style={{opacity: 0.6}}>
+                    <div className="checkbox checked" onClick={(e) => toggleComplete(e, todo.id, todo.completed)}></div>
+                    <div className="todo-body">
+                      <div className="todo-main-row">
+                        <span className="todo-text completed">{todo.text}</span>
+                        <div className="right-group">
+                          {formatTime(todo.time, t.noTime) && (
+                            <span className="todo-time">{formatTime(todo.time, t.noTime)}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ===== FAB 추가 버튼 (항상 우하단 고정) ===== */}
+      {user && <button className="add-fab" onClick={handleOpenAddModal}>
+        <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" /></svg>
+      </button>}
+
+      {/* ===== 입력/편집 모달 ===== */}
+      {showInputModal && (
+        <div className="input-overlay" onClick={resetForm}>
+          <div className="input-modal" onClick={e => e.stopPropagation()}>
+            <input className="main-input" type="text" placeholder={t.placeholder} autoFocus value={newTodo.text} onChange={e => setNewTodo({...newTodo, text: e.target.value})} />
+            {isAiAnalyzing && <div style={{fontSize: '11px', color: 'var(--primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px'}}>
+              <span className="pulse-dot"></span> {t.aiThinking}
+            </div>}
+            <div className="input-options">
+              <div className="input-option-item"><span>📅</span><input type="date" value={newTodo.date} onChange={e => setNewTodo({...newTodo, date: e.target.value})} /></div>
+              <div className="input-option-item"><span>⏰</span><input type="time" value={newTodo.time} onChange={e => setNewTodo({...newTodo, time: e.target.value})} /></div>
+              <div className="input-option-item" style={{flex: 1}}><span>🏷️</span><input type="text" placeholder={t.tags} value={newTodo.tagInput} onChange={e => setNewTodo({...newTodo, tagInput: e.target.value})} /></div>
+            </div>
+            <div className="modal-actions">
+              <button className="btn-cancel" onClick={resetForm}>{t.cancel}</button>
+              <button className="btn-save" onClick={handleSaveTodo}>{editingTodoId ? (lang === 'ko' ? '수정' : 'Update') : t.save}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== 설정 모달 ===== */}
+      {showSettings && (
+        <div className="input-overlay" onClick={() => setShowSettings(false)}>
+          <div className="settings-modal" onClick={e => e.stopPropagation()}>
+            <div className="settings-header">
+              <h2>{lang === 'ko' ? '설정' : 'Settings'}</h2>
+              <button className="settings-close" onClick={() => setShowSettings(false)}>✕</button>
+            </div>
+
+            <div className="settings-section">
+              <h3>{lang === 'ko' ? '글자 크기' : 'Font Size'}</h3>
+              <div className="font-size-selector">
+                <button className={fontScale === 'small' ? 'active' : ''} onClick={() => setFontScale('small')}>
+                  <span style={{fontSize:'13px'}}>A</span>
+                  <span>{lang === 'ko' ? '작게' : 'Small'}</span>
+                </button>
+                <button className={fontScale === 'medium' ? 'active' : ''} onClick={() => setFontScale('medium')}>
+                  <span style={{fontSize:'16px'}}>A</span>
+                  <span>{lang === 'ko' ? '중간' : 'Medium'}</span>
+                </button>
+                <button className={fontScale === 'large' ? 'active' : ''} onClick={() => setFontScale('large')}>
+                  <span style={{fontSize:'20px'}}>A</span>
+                  <span>{lang === 'ko' ? '크게' : 'Large'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-section">
+              <h3>{lang === 'ko' ? '테마' : 'Theme'}</h3>
+              <div className="font-size-selector" style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px'}}>
+                <button className={theme === 'light' ? 'active' : ''} onClick={() => setTheme('light')}>
+                  <span style={{fontSize:'18px'}}>☀️</span>
+                  <span>{lang === 'ko' ? '기본 (라이트)' : 'Light'}</span>
+                </button>
+                <button className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')}>
+                  <span style={{fontSize:'18px'}}>🌙</span>
+                  <span>{lang === 'ko' ? '다크 모드' : 'Dark'}</span>
+                </button>
+                <button className={theme === 'system' ? 'active' : ''} onClick={() => setTheme('system')}>
+                  <span style={{fontSize:'18px'}}>📱</span>
+                  <span>{lang === 'ko' ? '시스템' : 'System'}</span>
+                </button>
+                <button className={theme === 'random' ? 'active' : ''} onClick={generateRandomTheme}>
+                  <span style={{fontSize:'18px'}}>🎲</span>
+                  <span>{lang === 'ko' ? '랜덤' : 'Random'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-section">
+              <h3>{lang === 'ko' ? '기본 보기' : 'Default View'}</h3>
+              <div className="font-size-selector">
+                <button className={viewMode === 'date' ? 'active' : ''} onClick={() => { setViewMode('date'); setSelectedDate(todayStr); setBaseDate(new Date()) }}>
+                  <span>📅</span>
+                  <span>{lang === 'ko' ? '날짜별' : 'By Date'}</span>
+                </button>
+                <button className={viewMode === 'all' ? 'active' : ''} onClick={() => setViewMode('all')}>
+                  <span>📋</span>
+                  <span>{lang === 'ko' ? '전체' : 'All'}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="settings-section" style={{borderBottom:'none'}}>
+              {user ? (
+                <button className="logout-footer-btn" style={{width:'100%', textAlign:'center', marginTop:'10px'}} onClick={() => { setShowSettings(false); handleLogout() }}>
+                  {lang === 'ko' ? '로그아웃 / 계정 전환' : 'Logout / Change Account'}
+                </button>
+              ) : (
+                <button className="login-btn" style={{width:'100%', textAlign:'center', marginTop:'10px'}} onClick={() => { setShowSettings(false); handleLogin() }}>
+                  {lang === 'ko' ? 'Google 계정으로 로그인' : 'Login with Google'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default App

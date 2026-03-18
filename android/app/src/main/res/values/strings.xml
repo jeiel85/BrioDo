@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BlendDo</string>
+    <string name="title_activity_main">BlendDo</string>
+    <string name="package_name">biz.todoest.app</string>
+    <string name="custom_url_scheme">biz.todoest.app</string>
+    <string name="default_web_client_id">758825654936-hbi2uo4u34gqn8okvnnaqlm1ic43hfbc.apps.googleusercontent.com</string>
+</resources>

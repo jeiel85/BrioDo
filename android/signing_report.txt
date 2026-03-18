@@ -1,0 +1,56 @@
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:signingReport
+Variant: debug
+Config: debug
+Store: C:\Users\용은\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 8B:77:2D:77:1D:4A:56:A2:50:60:0C:1B:C7:52:60:1F
+SHA1: C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE
+SHA-256: D2:C6:42:68:C5:44:BF:B1:81:C2:DC:D7:39:5F:9C:85:54:2B:85:95:6C:F8:69:68:B1:17:01:4C:C6:48:F8:94
+Valid until: 2056년 3월 8일 수요일
+----------
+Variant: release
+Config: null
+Store: null
+Alias: null
+----------
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\용은\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 8B:77:2D:77:1D:4A:56:A2:50:60:0C:1B:C7:52:60:1F
+SHA1: C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE
+SHA-256: D2:C6:42:68:C5:44:BF:B1:81:C2:DC:D7:39:5F:9C:85:54:2B:85:95:6C:F8:69:68:B1:17:01:4C:C6:48:F8:94
+Valid until: 2056년 3월 8일 수요일
+----------
+
+> Task :capacitor-android:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\용은\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 8B:77:2D:77:1D:4A:56:A2:50:60:0C:1B:C7:52:60:1F
+SHA1: C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE
+SHA-256: D2:C6:42:68:C5:44:BF:B1:81:C2:DC:D7:39:5F:9C:85:54:2B:85:95:6C:F8:69:68:B1:17:01:4C:C6:48:F8:94
+Valid until: 2056년 3월 8일 수요일
+----------
+
+> Task :capacitor-cordova-android-plugins:signingReport
+Variant: debugAndroidTest
+Config: debug
+Store: C:\Users\용은\.android\debug.keystore
+Alias: AndroidDebugKey
+MD5: 8B:77:2D:77:1D:4A:56:A2:50:60:0C:1B:C7:52:60:1F
+SHA1: C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE
+SHA-256: D2:C6:42:68:C5:44:BF:B1:81:C2:DC:D7:39:5F:9C:85:54:2B:85:95:6C:F8:69:68:B1:17:01:4C:C6:48:F8:94
+Valid until: 2056년 3월 8일 수요일
+----------
+
+BUILD SUCCESSFUL in 1s
+3 actionable tasks: 3 executed
