@@ -184,7 +184,10 @@ function App() {
   const todayStr = getLocalDateString(new Date())
   
   const [selectedDate, setSelectedDate] = useState(todayStr)
-  const [baseDate, setBaseDate] = useState(new Date()) // 즉시 날짜 객체로 초기화
+  const [baseDate, setBaseDate] = useState(new Date()) 
+  
+  const weekScrollRef = useRef(null)
+  const hasScrolledInit = useRef(false)
   const [showInputModal, setShowInputModal] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
