@@ -196,6 +196,7 @@ body {
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
 }
 
 .date-scroll-wrapper::-webkit-scrollbar { display: none; }
