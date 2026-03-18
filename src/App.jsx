@@ -771,28 +771,30 @@ function App() {
       let retryCount = 0
       const alignScroll = () => {
         const container = weekScrollRef.current
-        if (!container) return
+        const targetWeek = document.getElementById('current-week-page')
+        if (!container || !targetWeek) return
         
-        const weekWidth = container.scrollWidth / 5
-        // 스크롤 영역이 렌더링되지 않았을 경우 재시도
-        if (weekWidth < 50 && retryCount < 10) {
+        // 요소가 아직 화면에 반영되지 않았거나 사이즈가 없을 때 재시도
+        if (targetWeek.offsetWidth < 50 && retryCount < 10) {
           retryCount++
           setTimeout(alignScroll, 50)
           return
         }
         
         hasScrolledInit.current = false
+        // 기존 scroll-snap 때문에 바로 이동 안되는 이슈를 위해 스타일 임시 해제
         container.style.scrollSnapType = 'none'
-        container.scrollLeft = weekWidth * 2
         
-        // 브라우저 렌더링 엔진이 snap을 강제로 0으로 되돌리는 현상을 방어하기 위해 2차 강제 지정
+        // 네이티브 API를 통해 확실하게 포커스 지정
+        targetWeek.scrollIntoView({ inline: 'start', block: 'nearest' })
+        
         requestAnimationFrame(() => {
           setTimeout(() => {
             if (weekScrollRef.current) {
-              weekScrollRef.current.scrollLeft = weekWidth * 2
+              // 한 번 더 확실하게 고정
+              targetWeek.scrollIntoView({ inline: 'start', block: 'nearest' })
               weekScrollRef.current.style.scrollSnapType = 'x mandatory'
             }
-            // 스크롤 이벤트 감지 시작은 완전히 안착한 뒤에
             setTimeout(() => {
               hasScrolledInit.current = true
             }, 50)
@@ -881,7 +883,7 @@ function App() {
             <div className="date-nav-container">
               <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll}>
                 {[0, 1, 2, 3, 4].map(weekIdx => (
-                  <div key={weekIdx} className="date-week-page">
+                  <div key={weekIdx} className="date-week-page" id={weekIdx === 2 ? 'current-week-page' : ''}>
                     {dateRange.filter(d => d.weekIndex === weekIdx).map((date) => (
                       <div key={date.full} className={`date-item ${selectedDate === date.full ? 'active' : ''}`} onClick={() => setSelectedDate(date.full)}>
                         <span className="day-name">{date.dayName}</span>
