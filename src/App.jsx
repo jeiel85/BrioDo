@@ -517,18 +517,16 @@ function App() {
         const result = await FirebaseAuthentication.signInWithGoogle({
           scopes: ['https://www.googleapis.com/auth/calendar.events', 'https://www.googleapis.com/auth/calendar']
         })
-        console.log("Native login result:", JSON.stringify(result?.credential ? { 
-          hasIdToken: !!result.credential.idToken,
-          hasAccessToken: !!result.credential.accessToken 
-        } : 'no credential'))
+        
+        alert("Native login result:\n" + JSON.stringify(result, null, 2))
         
         if (result.credential) {
           // Google Calendar API용 Access Token 저장 (핵심!)
           if (result.credential.accessToken) {
             localStorage.setItem('googleAccessToken', result.credential.accessToken)
-            console.log("Google Access Token saved successfully")
+            alert("Google Access Token saved successfully!")
           } else {
-            console.warn("No accessToken in credential - calendar sync will not work")
+            alert("Warning: No accessToken found in result.credential!")
           }
           
           const credential = GoogleAuthProvider.credential(result.credential.idToken)
