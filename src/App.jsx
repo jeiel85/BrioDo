@@ -770,6 +770,7 @@ function App() {
     if (weekScrollRef.current && viewMode === 'date') {
       let retryTimer;
       let forceTimer;
+      let startTime = Date.now();
       
       const alignScroll = () => {
         const container = weekScrollRef.current
@@ -778,32 +779,36 @@ function App() {
         const cw = container.clientWidth
         const sw = container.scrollWidth
         
-        // 화면 레이아웃이 아직 안 잡히면 재시도
+        // 레이아웃 인식 대기 (충분한 너비 확보 체크)
         if (cw < 50 || sw < cw * 4) {
-          retryTimer = setTimeout(alignScroll, 30)
+          if (Date.now() - startTime < 3000) { // 최대 3초 대기
+            retryTimer = setTimeout(alignScroll, 40)
+          }
           return
         }
         
         hasScrolledInit.current = false
-        // 리액트 상태가 아닌 DOM 스타일 직접 조작 (재랜더링 방지)
+        // Snap 완전히 끄기
         container.style.scrollSnapType = 'none'
         
         const targetX = cw * 2
         
-        // 0.7초 동안 20ms 간격으로 좌표 주입 (튕김 방지)
-        const startTime = Date.now()
+        // 2초 동안 주기적으로 계속 밀어넣기 (모바일 브라우저의 초기화 방지)
         forceTimer = setInterval(() => {
           if (weekScrollRef.current) {
             weekScrollRef.current.scrollLeft = targetX
           }
-          if (Date.now() - startTime > 700) {
+          // 충분히 시간이 지났고 위치가 타겟 근처라면 종료
+          const elapsed = Date.now() - startTime;
+          if (elapsed > 2000) {
             clearInterval(forceTimer)
             if (weekScrollRef.current) {
               weekScrollRef.current.style.scrollSnapType = 'x mandatory'
             }
             hasScrolledInit.current = true
+            console.log("Scroll Alignment Completed")
           }
-        }, 20)
+        }, 30)
       }
       
       alignScroll()
