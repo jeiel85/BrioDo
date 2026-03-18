@@ -184,7 +184,7 @@ function App() {
     return localStorage.getItem('blenddo-font-scale') || 'medium'
   })
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('blenddo-theme') || 'light'
+    return localStorage.getItem('blenddo-theme') || 'dark'
   })
   const [randomColors, setRandomColors] = useState(() => {
     const saved = localStorage.getItem('blenddo-random-colors')
