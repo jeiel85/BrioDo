@@ -750,95 +750,50 @@ function App() {
   }, [selectedDate, lang])
 
   const dateRange = useMemo(() => {
+    if (!baseDate) return []
     const dates = []
     const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+    
+    // 현재 baseDate가 속한 주의 일요일 구하기
     const startOfWeek = new Date(baseDate)
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
-    // 5주 렌더 (이전2주 + 현재 + 다음2주)
+    
+    // 현재 주 포함 총 3주 렌더 (현재주 + 다음2주) -> 스크롤 없이 현재주가 바로 보이도록
     const rangeStart = new Date(startOfWeek)
-    rangeStart.setDate(rangeStart.getDate() - 14)
-    for (let i = 0; i < 35; i++) {
+    for (let i = 0; i < 21; i++) {
       const d = new Date(rangeStart); d.setDate(rangeStart.getDate() + i)
       dates.push({
         full: getLocalDateString(d),
         dayName: d.toLocaleDateString(locale, { weekday: 'short' }),
         dayNumber: d.getDate(),
-        weekIndex: Math.floor(i / 7) // 0~4
+        weekIndex: Math.floor(i / 7) // 0~2
       })
     }
     return dates
   }, [baseDate, lang])
 
-  // 주간 스크롤 ref 및 초기 위치 설정
-  const weekScrollRef = useRef(null)
-  const hasScrolledInit = useRef(false)
-
+  // 주간 스크롤 관리 (이제 초기 스크롤 이동 로직은 제거)
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date' && baseDate) {
-      let retryTimer;
-      let forceTimer;
-      let startTime = Date.now();
-      
-      const alignScroll = () => {
-        const container = weekScrollRef.current
-        if (!container) return
-        
-        // 초기 레이아웃 대기
-        if (container.clientWidth < 50 || container.scrollWidth < container.clientWidth * 4) {
-          if (Date.now() - startTime < 3000) {
-            retryTimer = setTimeout(alignScroll, 50)
-          }
-          return
-        }
-        
-        hasScrolledInit.current = false
-        // Snap을 확실히 꺼두고 시작
-        container.style.scrollSnapType = 'none'
-        
-        // 2초 동안 "실시간 화면 너비"를 계속 체크하며 중앙으로 밀기
-        forceTimer = setInterval(() => {
-          const c = weekScrollRef.current
-          if (c) {
-            const currentCW = c.clientWidth
-            if (currentCW > 50) {
-              c.scrollLeft = currentCW * 2
-            }
-          }
-          
-          if (Date.now() - startTime > 2000) {
-            clearInterval(forceTimer)
-            if (weekScrollRef.current) {
-              const finalCW = weekScrollRef.current.clientWidth
-              weekScrollRef.current.scrollLeft = finalCW * 2
-              weekScrollRef.current.style.scrollSnapType = 'x mandatory'
-            }
-            hasScrolledInit.current = true
-            console.log("Scroll Fix Applied (vFinal)")
-          }
-        }, 30)
-      }
-      
-      alignScroll()
-      return () => {
-        clearTimeout(retryTimer)
-        if (forceTimer) clearInterval(forceTimer)
-      }
+      hasScrolledInit.current = true
+      weekScrollRef.current.scrollLeft = 0 // 무조건 맨 왼쪽(현재주)에서 시작
     }
   }, [baseDate, viewMode])
 
   const handleWeekScroll = () => {
     const container = weekScrollRef.current
     if (!container || !hasScrolledInit.current) return
-    const weekWidth = container.scrollWidth / 5
-    // 왼쪽 끝 근처 → 이전 주로 baseDate 이동
-    if (container.scrollLeft < weekWidth * 0.3) {
+    const weekWidth = container.clientWidth
+    
+    // 왼쪽 끝 근처 (0에 가까우면) → 이전 주로 baseDate 이동
+    if (container.scrollLeft < 10) {
       hasScrolledInit.current = false
       const d = new Date(baseDate)
       d.setDate(d.getDate() - 7)
       setBaseDate(d)
     }
-    // 오른쪽 끝 근처 → 다음 주로 baseDate 이동
-    if (container.scrollLeft > weekWidth * 3.7) {
+    // 오른쪽 끝 주 (3주 중 마지막주 영역) → 다음 주로 baseDate 이동
+    if (container.scrollLeft > weekWidth * 1.5) {
       hasScrolledInit.current = false
       const d = new Date(baseDate)
       d.setDate(d.getDate() + 7)
@@ -903,8 +858,8 @@ function App() {
           {viewMode === 'date' && (
             <div className="date-nav-container">
               <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll}>
-                {[0, 1, 2, 3, 4].map(weekIdx => (
-                  <div key={weekIdx} className="date-week-page" id={weekIdx === 2 ? 'current-week-page' : ''}>
+                {[0, 1, 2].map(weekIdx => (
+                  <div key={weekIdx} className="date-week-page" id={weekIdx === 0 ? 'current-week-page' : ''}>
                     {dateRange.filter(d => d.weekIndex === weekIdx).map((date) => (
                       <div key={date.full} className={`date-item ${selectedDate === date.full ? 'active' : ''}`} onClick={() => setSelectedDate(date.full)}>
                         <span className="day-name">{date.dayName}</span>
