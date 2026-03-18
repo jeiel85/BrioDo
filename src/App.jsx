@@ -174,7 +174,7 @@ function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [todos, setTodos] = useState([])
-  const [viewMode, setViewMode] = useState('') // 초기 모드를 비워둠
+  const [viewMode, setViewMode] = useState('date') // 다시 date로 기본값 설정
   const [selectedTag, setSelectedTag] = useState(null)
   
   // Local Timezone 기준 YYYY-MM-DD 구하기
@@ -184,7 +184,7 @@ function App() {
   const todayStr = getLocalDateString(new Date())
   
   const [selectedDate, setSelectedDate] = useState(todayStr)
-  const [baseDate, setBaseDate] = useState(null) // 초기값을 null로 설정해 변경을 감지하게 함
+  const [baseDate, setBaseDate] = useState(new Date()) // 즉시 날짜 객체로 초기화
   const [showInputModal, setShowInputModal] = useState(false)
   const [showCompleted, setShowCompleted] = useState(false)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
@@ -715,12 +715,12 @@ function App() {
     setSelectedTag(null)
   }
 
-  // 로딩 완료 후 "오늘로 가기" 처리 시점 조정 (상태 변화를 태우기 위한 순서 조정)
+  // 초기 로딩 완료 시점에 오늘로 오게 함 (이미 초기값이 오늘이지만, 데이터 정렬을 위해 한 번 더 호출)
   useEffect(() => {
-    if (!loading && !baseDate) {
+    if (!loading) {
       handleGoToToday()
     }
-  }, [loading, baseDate])
+  }, [loading])
 
   // --- Filtering & Formatting ---
   const allUsedTags = useMemo(() => {
@@ -754,29 +754,29 @@ function App() {
     const dates = []
     const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
     
-    // 현재 baseDate가 속한 주의 일요일 구하기
+    // 현재 baseDate가 속한 주의 일요일 구하기 (여기가 무조건 0번 인덱스 주간)
     const startOfWeek = new Date(baseDate)
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
     
-    // 현재 주 포함 총 3주 렌더 (현재주 + 다음2주) -> 스크롤 없이 현재주가 바로 보이도록
+    // 현재 주 포함 총 5주 렌더 (미래 지향적)
     const rangeStart = new Date(startOfWeek)
-    for (let i = 0; i < 21; i++) {
+    for (let i = 0; i < 35; i++) {
       const d = new Date(rangeStart); d.setDate(rangeStart.getDate() + i)
       dates.push({
         full: getLocalDateString(d),
         dayName: d.toLocaleDateString(locale, { weekday: 'short' }),
         dayNumber: d.getDate(),
-        weekIndex: Math.floor(i / 7) // 0~2
+        weekIndex: Math.floor(i / 7) // 0~4
       })
     }
     return dates
   }, [baseDate, lang])
 
-  // 주간 스크롤 관리 (이제 초기 스크롤 이동 로직은 제거)
+  // 주간 스크롤 관리 (무조건 맨 왼쪽 0px 고정)
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date' && baseDate) {
       hasScrolledInit.current = true
-      weekScrollRef.current.scrollLeft = 0 // 무조건 맨 왼쪽(현재주)에서 시작
+      weekScrollRef.current.scrollLeft = 0
     }
   }, [baseDate, viewMode])
 
@@ -785,18 +785,11 @@ function App() {
     if (!container || !hasScrolledInit.current) return
     const weekWidth = container.clientWidth
     
-    // 왼쪽 끝 근처 (0에 가까우면) → 이전 주로 baseDate 이동
-    if (container.scrollLeft < 10) {
+    // 오른쪽으로 3페이지 이상 넘어가면 baseDate를 2주 뒤로 밀고 스크롤 리셋 (무한 미래 스크롤)
+    if (container.scrollLeft > weekWidth * 3.5) {
       hasScrolledInit.current = false
       const d = new Date(baseDate)
-      d.setDate(d.getDate() - 7)
-      setBaseDate(d)
-    }
-    // 오른쪽 끝 주 (3주 중 마지막주 영역) → 다음 주로 baseDate 이동
-    if (container.scrollLeft > weekWidth * 1.5) {
-      hasScrolledInit.current = false
-      const d = new Date(baseDate)
-      d.setDate(d.getDate() + 7)
+      d.setDate(d.getDate() + 14)
       setBaseDate(d)
     }
   }
@@ -858,7 +851,7 @@ function App() {
           {viewMode === 'date' && (
             <div className="date-nav-container">
               <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll}>
-                {[0, 1, 2].map(weekIdx => (
+                {[0, 1, 2, 3, 4].map(weekIdx => (
                   <div key={weekIdx} className="date-week-page" id={weekIdx === 0 ? 'current-week-page' : ''}>
                     {dateRange.filter(d => d.weekIndex === weekIdx).map((date) => (
                       <div key={date.full} className={`date-item ${selectedDate === date.full ? 'active' : ''}`} onClick={() => setSelectedDate(date.full)}>
