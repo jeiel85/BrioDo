@@ -3,6 +3,7 @@ import { getLocalTodos, saveLocalTodosBatch, saveLocalTodo, deleteLocalTodo, add
 import { GoogleGenAI } from '@google/genai'
 import { initializeApp } from "firebase/app"
 import { Capacitor } from '@capacitor/core'
+import { App as CapApp } from '@capacitor/app'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication'
 import { Network } from '@capacitor/network'
@@ -209,6 +210,29 @@ function App() {
 
   // --- Network & Offline Sync State ---
   const [isOnline, setIsOnline] = useState(true)
+
+  // 뒤로가기 처리를 위한 Ref
+  const modalStateRef = useRef({ showInputModal, showSettings })
+  useEffect(() => {
+    modalStateRef.current = { showInputModal, showSettings }
+  }, [showInputModal, showSettings])
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const backListener = CapApp.addListener('backButton', () => {
+        const { showInputModal, showSettings } = modalStateRef.current
+        if (showInputModal) {
+          resetForm()
+        } else if (showSettings) {
+          setShowSettings(false)
+        } else {
+          // 모달이 없으면 앱 종료 (기본 동작)
+          CapApp.exitApp()
+        }
+      })
+      return () => { backListener.then(l => l.remove()) }
+    }
+  }, [])
 
   const processSyncQueue = async () => {
     if (!user) return
