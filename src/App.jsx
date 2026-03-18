@@ -769,14 +769,19 @@ function App() {
 
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date') {
+      let retryCount = 0
       const alignScroll = () => {
         const container = weekScrollRef.current
         if (!container) return
         
-        const w = container.clientWidth
-        // 렌더링 직후 width가 0이거나 너무 작을 때 재시도
-        if (w < 50) {
-          requestAnimationFrame(alignScroll)
+        const cw = container.clientWidth
+        const sw = container.scrollWidth
+        // 기기가 화면을 계산하는 중이라 아직 가로 영역이 충분하지 않을 경우 (5개의 페이지가 그려지려면 최소 4배수 이상 필요)
+        if (cw < 50 || sw < cw * 4) {
+          if (retryCount < 20) {
+            retryCount++
+            requestAnimationFrame(alignScroll)
+          }
           return
         }
         
@@ -784,12 +789,12 @@ function App() {
         setIsSnapEnabled(false) // 스냅 효과를 리액트 차원에서 꺼둔 상태로 강제 주입
         
         // 부드러운 스크롤 충돌 없이 즉시 이동
-        container.scrollTo({ left: w * 2, behavior: 'auto' })
+        container.scrollLeft = cw * 2
         
         // 이동 성공 후 약간의 딜레이 뒤 스냅 재활성화 및 이벤트 처리 복구
         setTimeout(() => {
           if (weekScrollRef.current) {
-            weekScrollRef.current.scrollTo({ left: w * 2, behavior: 'auto' })
+            weekScrollRef.current.scrollLeft = cw * 2
             setIsSnapEnabled(true)
             hasScrolledInit.current = true
           }
