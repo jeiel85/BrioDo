@@ -769,38 +769,43 @@ function App() {
 
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date') {
-      let retryCount = 0
+      let timer;
       const alignScroll = () => {
         const container = weekScrollRef.current
         if (!container) return
         
         const cw = container.clientWidth
         const sw = container.scrollWidth
-        // 기기가 화면을 계산하는 중이라 아직 가로 영역이 충분하지 않을 경우 (5개의 페이지가 그려지려면 최소 4배수 이상 필요)
+        // 화면이 충분히 그려지기 전이면 재시도
         if (cw < 50 || sw < cw * 4) {
-          if (retryCount < 20) {
-            retryCount++
-            requestAnimationFrame(alignScroll)
-          }
+          timer = setTimeout(alignScroll, 50)
           return
         }
         
         hasScrolledInit.current = false
-        setIsSnapEnabled(false) // 스냅 효과를 리액트 차원에서 꺼둔 상태로 강제 주입
+        setIsSnapEnabled(false) // 스냅 꺼둠
         
-        // 부드러운 스크롤 충돌 없이 즉시 이동
-        container.scrollLeft = cw * 2
+        // 0.5초 동안 거의 매 프레임마다 강제로 밀어넣기 (튕김 방지)
+        let startTime = Date.now()
+        const forcePush = () => {
+          if (container && Date.now() - startTime < 500) {
+            container.scrollLeft = container.clientWidth * 2
+            requestAnimationFrame(forcePush)
+          }
+        }
+        forcePush()
         
-        // 이동 성공 후 약간의 딜레이 뒤 스냅 재활성화 및 이벤트 처리 복구
+        // 충분히 시간이 흐른 뒤(이동이 완료된 뒤)에 스냅 다시 켜기
         setTimeout(() => {
           if (weekScrollRef.current) {
-            weekScrollRef.current.scrollLeft = cw * 2
+            weekScrollRef.current.scrollLeft = weekScrollRef.current.clientWidth * 2
             setIsSnapEnabled(true)
             hasScrolledInit.current = true
           }
-        }, 150)
+        }, 600)
       }
-      requestAnimationFrame(alignScroll)
+      alignScroll()
+      return () => clearTimeout(timer)
     }
   }, [baseDate, viewMode])
 
