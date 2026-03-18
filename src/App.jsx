@@ -765,7 +765,6 @@ function App() {
   // 주간 스크롤 ref 및 초기 위치 설정
   const weekScrollRef = useRef(null)
   const hasScrolledInit = useRef(false)
-  const [isSnapEnabled, setIsSnapEnabled] = useState(false)
 
   useEffect(() => {
     if (weekScrollRef.current && viewMode === 'date') {
@@ -778,33 +777,39 @@ function App() {
         
         const cw = container.clientWidth
         const sw = container.scrollWidth
-        // 화면이 충분히 그려지기 전이면 재시도 (5개 주간 확보 확인)
+        
+        // 화면 레이아웃이 아직 안 잡히면 재시도
         if (cw < 50 || sw < cw * 4) {
-          retryTimer = setTimeout(alignScroll, 40)
+          retryTimer = setTimeout(alignScroll, 30)
           return
         }
         
         hasScrolledInit.current = false
-        setIsSnapEnabled(false) // 자석 효과 OFF
+        // 리액트 상태가 아닌 DOM 스타일 직접 조작 (재랜더링 방지)
+        container.style.scrollSnapType = 'none'
         
-        // 0.6초 동안 끈질기게 중앙 위치(cw * 2)로 강제 고정
+        const targetX = cw * 2
+        
+        // 0.7초 동안 20ms 간격으로 좌표 주입 (튕김 방지)
         const startTime = Date.now()
         forceTimer = setInterval(() => {
           if (weekScrollRef.current) {
-            weekScrollRef.current.scrollLeft = weekScrollRef.current.clientWidth * 2
+            weekScrollRef.current.scrollLeft = targetX
           }
-          if (Date.now() - startTime > 600) {
+          if (Date.now() - startTime > 700) {
             clearInterval(forceTimer)
-            setIsSnapEnabled(true) // 이동 완료 후 자석 효과 ON
+            if (weekScrollRef.current) {
+              weekScrollRef.current.style.scrollSnapType = 'x mandatory'
+            }
             hasScrolledInit.current = true
           }
-        }, 30) // 30ms 마다 주입
+        }, 20)
       }
       
       alignScroll()
       return () => {
         clearTimeout(retryTimer)
-        clearInterval(forceTimer)
+        if (forceTimer) clearInterval(forceTimer)
       }
     }
   }, [baseDate, viewMode])
@@ -885,7 +890,7 @@ function App() {
           
           {viewMode === 'date' && (
             <div className="date-nav-container">
-              <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll} style={{scrollSnapType: isSnapEnabled ? 'x mandatory' : 'none'}}>
+              <div className="date-scroll-wrapper" ref={weekScrollRef} onScroll={handleWeekScroll}>
                 {[0, 1, 2, 3, 4].map(weekIdx => (
                   <div key={weekIdx} className="date-week-page" id={weekIdx === 2 ? 'current-week-page' : ''}>
                     {dateRange.filter(d => d.weekIndex === weekIdx).map((date) => (
