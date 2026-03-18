@@ -582,10 +582,21 @@ function App() {
 
         if (isOnline) {
           await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
+          
+          // 동기화 요청 (오차 방지를 위해 약간의 지연 후 실행하되 확실히 실행)
           setTimeout(async () => {
-             const gId = await syncEventToGoogle(localPayload)
-             if (gId) await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
-          }, 100)
+             try {
+               const gId = await syncEventToGoogle({ ...localPayload })
+               console.log("Sync Result (New):", gId)
+               if (gId) {
+                 await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
+                 // 로컬 상태에도 gId 반영 (추후 수정 시 필요)
+                 setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId: gId } : t))
+               }
+             } catch (syncErr) {
+               console.error("Google Sync Logic Error:", syncErr)
+             }
+          }, 300)
         } else {
           await addSyncQueue('set', newId, initialData)
         }
@@ -634,13 +645,20 @@ function App() {
 
         if (isOnline) {
           await setDoc(doc(db, "todos", editId), { ...updateData, updatedAt: serverTimestamp() }, { merge: true })
+          
           setTimeout(async () => {
-             const targetToSync = { ...oldTodo, ...updateData }
-             const gId = await syncEventToGoogle(targetToSync)
-             if (gId && !targetToSync.googleEventId) {
-               await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
+             try {
+               const targetToSync = { ...oldTodo, ...updateData }
+               const gId = await syncEventToGoogle(targetToSync)
+               console.log("Sync Result (Update):", gId)
+               if (gId && !targetToSync.googleEventId) {
+                 await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
+                 setTodos(prev => prev.map(t => t.id === editId ? { ...t, googleEventId: gId } : t))
+               }
+             } catch (syncErr) {
+               console.error("Google Sync Update Error:", syncErr)
              }
-          }, 100)
+          }, 300)
         } else {
           await addSyncQueue('set', editId, updateData)
         }
