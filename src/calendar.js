@@ -54,8 +54,11 @@ export const ensureBlendDoCalendar = async () => {
 }
 
 const buildEventPayload = (todo) => {
+  // 제목에 B] 접두사 추가 (이미 있으면 중복 추가 방지)
+  const titleWithPrefix = todo.text?.startsWith('B]') ? todo.text : `B] ${todo.text || '할 일'}`
+  
   const payload = {
-    summary: todo.text || '할 일',
+    summary: titleWithPrefix,
     description: todo.description || '',
   }
 

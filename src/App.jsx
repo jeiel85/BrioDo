@@ -381,7 +381,7 @@ function App() {
                     const dt = ev.start?.date || ev.start?.dateTime?.split('T')[0]
                     const time = ev.start?.dateTime ? ev.start.dateTime.substring(11, 16) : ''
                     const updatedTodo = {
-                      text: ev.summary || '제목 없음',
+                      text: (ev.summary || '').replace(/^B\]\s*/, '') || '제목 없음',
                       description: ev.description || '',
                       date: dt || match.date,
                       time: time,
@@ -1009,15 +1009,31 @@ function App() {
       {showInputModal && (
         <div className="input-overlay" onClick={resetForm}>
           <div className="input-modal" onClick={e => e.stopPropagation()}>
-            <div style={{display:'flex', gap:'8px'}}>
-              <input className="main-input" style={{flex:1}} type="text" placeholder={t.placeholder} autoFocus value={newTodo.text} onChange={e => setNewTodo({...newTodo, text: e.target.value})} />
-              <button className="desc-toggle-btn" onClick={() => setShowDescInput(!showDescInput)}>
-                {showDescInput ? '📝설명숨기기' : '📝설명작성'}
+            <div style={{display:'flex', gap:'8px', alignItems: 'center', marginBottom: '8px'}}>
+              <input className="main-input" style={{flex:1, marginBottom: 0}} type="text" placeholder={t.placeholder} autoFocus value={newTodo.text} onChange={e => setNewTodo({...newTodo, text: e.target.value})} />
+              <button 
+                className={`desc-toggle-btn ${showDescInput ? 'active' : ''}`} 
+                onClick={() => setShowDescInput(!showDescInput)}
+                title={lang === 'ko' ? '상세 내용 입력' : 'Add Details'}
+              >
+                {showDescInput ? '➖' : '➕'}
               </button>
             </div>
             {showDescInput && (
               <textarea 
                 className="desc-input"
+                style={{
+                  width: '100%', 
+                  minHeight: '80px', 
+                  borderRadius: '12px', 
+                  padding: '12px', 
+                  background: 'rgba(255,255,255,0.05)', 
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'white',
+                  fontSize: '14px',
+                  marginBottom: '10px',
+                  outline: 'none'
+                }}
                 placeholder={lang === 'ko' ? '일정의 상세 내용이나 메모를 적어보세요' : 'Add details or notes...'}
                 value={newTodo.description}
                 onChange={e => setNewTodo({...newTodo, description: e.target.value})}
