@@ -8,6 +8,12 @@ import { db, genAI } from '../firebase'
 import { getLocalTodos, saveLocalTodosBatch, saveLocalTodo, deleteLocalTodo, addSyncQueue, getSyncQueue, clearSyncQueue } from '../db'
 import { syncEventToGoogle, deleteEventFromGoogle, fetchEventsFromGoogle } from '../calendar'
 
+const sortTodos = (list) => list.sort((a, b) => {
+  const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
+  const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
+  return dtA - dtB
+})
+
 export function useTodosData(user) {
   const [todos, setTodos] = useState([])
   const [isOnline, setIsOnline] = useState(true)
@@ -46,7 +52,30 @@ export function useTodosData(user) {
     return () => { listener.then(l => l.remove()) }
   }, [user])
 
-  // Firestore 실시간 동기화 + 로컬 DB
+  // 로그인 시 게스트 todos를 Firestore로 마이그레이션 (미완료 항목만)
+  useEffect(() => {
+    if (!user) return
+    const migrateGuestTodos = async () => {
+      try {
+        const all = await getLocalTodos()
+        const guests = all.filter(t => !t.uid && !t.completed)
+        if (guests.length === 0) return
+        console.log(`Migrating ${guests.length} guest todo(s) to Firestore...`)
+        for (const todo of guests) {
+          const newDocRef = doc(collection(db, 'todos'))
+          const { id: oldId, createdAt: _, ...rest } = todo
+          const payload = { ...rest, uid: user.uid }
+          await setDoc(newDocRef, { ...payload, createdAt: serverTimestamp() })
+          await deleteLocalTodo(oldId)
+          await saveLocalTodo({ ...payload, id: newDocRef.id })
+        }
+        console.log('Guest todos migrated ✓')
+      } catch (e) { console.error('Guest migration error:', e) }
+    }
+    migrateGuestTodos()
+  }, [user?.uid])
+
+  // Firestore 실시간 동기화 + 로컬 DB / 게스트 모드 로컬 전용
   useEffect(() => {
     let unsubscribe = null
 
@@ -55,12 +84,7 @@ export function useTodosData(user) {
         // 로컬 DB 우선 즉시 렌더링
         const localData = await getLocalTodos()
         if (localData && localData.length > 0) {
-          const sortedList = localData.sort((a, b) => {
-            const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
-            const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
-            return dtA - dtB
-          })
-          setTodos(sortedList)
+          setTodos(sortTodos(localData))
         }
 
         // Firestore 실시간 구독
@@ -96,19 +120,16 @@ export function useTodosData(user) {
             }
           } catch (calErr) { console.error('Calendar sync error:', calErr) }
 
-          const sortedList = list.sort((a, b) => {
-            const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
-            const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
-            return dtA - dtB
-          })
-
-          setTodos(sortedList)
+          setTodos(sortTodos(list))
           try { await saveLocalTodosBatch(list) } catch (e) { console.error("Local DB Sync error:", e) }
         }, (error) => {
           console.error("Firestore sync error:", error)
         })
       } else {
-        setTodos([])
+        // 게스트 모드: uid 없는 로컬 todos만 표시
+        const localData = await getLocalTodos()
+        const guestTodos = localData.filter(t => !t.uid)
+        setTodos(sortTodos(guestTodos))
       }
     }
 
@@ -164,8 +185,10 @@ export function useTodosData(user) {
       setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t))
       const target = todos.find(t => t.id === id)
       if (target) await saveLocalTodo({ ...target, completed: !completed })
-      if (isOnline) await setDoc(doc(db, "todos", id), { completed: !completed }, { merge: true })
-      else await addSyncQueue('set', id, { completed: !completed })
+      if (user) {
+        if (isOnline) await setDoc(doc(db, "todos", id), { completed: !completed }, { merge: true })
+        else await addSyncQueue('set', id, { completed: !completed })
+      }
     } catch (e) { console.error(e) }
   }
 
@@ -175,13 +198,15 @@ export function useTodosData(user) {
       const target = todos.find(t => t.id === id)
       setTodos(prev => prev.filter(t => t.id !== id))
       await deleteLocalTodo(id)
-      if (isOnline) {
-        await deleteDoc(doc(db, "todos", id))
-        if (target?.googleEventId) {
-          setTimeout(() => deleteEventFromGoogle(target.googleEventId), 100)
+      if (user) {
+        if (isOnline) {
+          await deleteDoc(doc(db, "todos", id))
+          if (target?.googleEventId) {
+            setTimeout(() => deleteEventFromGoogle(target.googleEventId), 100)
+          }
+        } else {
+          await addSyncQueue('delete', id)
         }
-      } else {
-        await addSyncQueue('delete', id)
       }
     } catch (e) { console.error(e) }
   }

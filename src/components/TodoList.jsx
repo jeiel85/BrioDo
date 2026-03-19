@@ -4,22 +4,31 @@ import { formatTime } from '../utils/helpers'
 export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, openEditModal, toggleComplete, deleteTodo, handleLogin }) {
   const [showCompleted, setShowCompleted] = useState(false)
 
-  if (!user) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-time)' }}>
-        <p style={{ marginBottom: '20px' }}>로그인하여 대기중인 일정을 클라우드에 백업하세요.</p>
-        <button
-          style={{ background: 'var(--primary)', color: 'white', padding: '10px 20px', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 600 }}
-          onClick={handleLogin}
-        >
-          Google 계정으로 시작하기
-        </button>
-      </div>
-    )
-  }
-
   return (
     <>
+      {!user && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 16px', margin: '0 0 12px',
+          background: 'var(--bg-secondary, rgba(108,99,255,0.08))',
+          borderRadius: '12px', gap: '12px'
+        }}>
+          <span style={{ fontSize: '13px', color: 'var(--text-secondary, #aaa)' }}>
+            {t?.guestModeBanner || '로그인하면 클라우드 백업 및 캘린더 연동이 활성화됩니다.'}
+          </span>
+          <button
+            onClick={handleLogin}
+            style={{
+              flexShrink: 0, background: 'var(--primary)', color: 'white',
+              padding: '6px 14px', border: 'none', borderRadius: '8px',
+              cursor: 'pointer', fontWeight: 600, fontSize: '12px', whiteSpace: 'nowrap'
+            }}
+          >
+            {t?.loginBtn || '로그인'}
+          </button>
+        </div>
+      )}
+
       <div className="active-list">
         {activeTodos.map(todo => (
           <div key={todo.id} className="todo-item" onClick={() => openEditModal(todo)}>

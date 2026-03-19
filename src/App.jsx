@@ -144,7 +144,7 @@ function App() {
   }
 
   const handleSaveTodo = async () => {
-    if (!user || newTodo.text.trim() === '') return
+    if (newTodo.text.trim() === '') return
 
     const inputTags = newTodo.tagInput.split(/[,#\s]+/).map(tag => tag.trim().replace('#', '')).filter(Boolean)
     const savedText = newTodo.text
@@ -158,6 +158,15 @@ function App() {
 
     try {
       if (!isEdit) {
+        // 게스트 모드: 로컬에만 저장
+        if (!user) {
+          const localId = `guest_${Date.now()}`
+          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, completed: false, createdAt: Date.now() }
+          setTodos(prev => [...prev, localPayload])
+          await saveLocalTodo(localPayload)
+          return
+        }
+
         // 신규 생성
         const newDocRef = doc(collection(db, "todos"))
         const newId = newDocRef.id
@@ -319,11 +328,9 @@ function App() {
         />
       </div>
 
-      {user && (
-        <button className="add-fab" onClick={handleOpenAddModal}>
-          <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" /></svg>
-        </button>
-      )}
+      <button className="add-fab" onClick={handleOpenAddModal}>
+        <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" /></svg>
+      </button>
 
       {showInputModal && (
         <InputModal

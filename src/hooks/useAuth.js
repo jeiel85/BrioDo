@@ -140,6 +140,7 @@ export function useAuth() {
       }
       await signOut(auth)
       localStorage.removeItem('googleAccessToken')
+      localStorage.removeItem('blenddo-calendar-id')
     } catch (e) {
       console.error("Logout error:", e)
     }
