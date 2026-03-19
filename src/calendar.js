@@ -7,7 +7,11 @@ export const fetchCalendars = async (token) => {
   const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
     headers: { Authorization: `Bearer ${token}` }
   })
-  if (!res.ok) throw new Error('Failed to fetch calendars')
+  if (!res.ok) {
+    const body = await res.text()
+    console.error(`fetchCalendars failed: HTTP ${res.status}`, body)
+    throw new Error(`Failed to fetch calendars (${res.status})`)
+  }
   return res.json()
 }
 
@@ -24,9 +28,12 @@ export const createBlendDoCalendar = async (token) => {
   return res.json()
 }
 
+// 중복 캘린더 감지 시 반환되는 특수 객체
+export const CALENDAR_CONFLICT = '__CALENDAR_CONFLICT__'
+
 export const ensureBlendDoCalendar = async () => {
   const token = getCalendarAccessToken()
-  if (!token) return null // No token, cannot sync
+  if (!token) return null
 
   // Local 저장 확인
   const savedId = localStorage.getItem('blenddo-calendar-id')
@@ -34,10 +41,16 @@ export const ensureBlendDoCalendar = async () => {
 
   try {
     const data = await fetchCalendars(token)
-    const blenddoCal = data.items?.find(cal => cal.summary === 'BlendDo')
-    if (blenddoCal) {
-      localStorage.setItem('blenddo-calendar-id', blenddoCal.id)
-      return blenddoCal.id
+    const matchingCals = data.items?.filter(cal => cal.summary === 'BlendDo') || []
+
+    if (matchingCals.length > 1) {
+      // 동일한 이름의 캘린더가 여러 개 → 사용자 선택 필요
+      return { type: CALENDAR_CONFLICT, calendars: matchingCals }
+    }
+
+    if (matchingCals.length === 1) {
+      localStorage.setItem('blenddo-calendar-id', matchingCals[0].id)
+      return matchingCals[0].id
     }
 
     const newCal = await createBlendDoCalendar(token)
@@ -46,11 +59,39 @@ export const ensureBlendDoCalendar = async () => {
   } catch (error) {
     console.error('ensureBlendDoCalendar error:', error)
     if (error.message.includes('401')) {
-      // Token expired or invalid
       localStorage.removeItem('googleAccessToken')
     }
     return null
   }
+}
+
+export const resolveCalendarConflict = async (calendarId, newName) => {
+  const token = getCalendarAccessToken()
+  if (!token) return null
+
+  if (calendarId) {
+    // 기존 캘린더에 연결
+    localStorage.setItem('blenddo-calendar-id', calendarId)
+    return calendarId
+  }
+
+  if (newName) {
+    // 새 이름으로 캘린더 생성
+    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ summary: newName, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+    })
+    if (!res.ok) throw new Error('Failed to create calendar')
+    const newCal = await res.json()
+    localStorage.setItem('blenddo-calendar-id', newCal.id)
+    return newCal.id
+  }
+
+  return null
 }
 
 const buildEventPayload = (todo) => {
@@ -95,9 +136,9 @@ const buildEventPayload = (todo) => {
 export const syncEventToGoogle = async (todo) => {
   const token = getCalendarAccessToken()
   if (!token) return null
-  
+
   const calendarId = await ensureBlendDoCalendar()
-  if (!calendarId) return null
+  if (!calendarId || typeof calendarId === 'object') return null
 
   const payload = buildEventPayload(todo)
 
@@ -152,7 +193,7 @@ export const deleteEventFromGoogle = async (googleEventId) => {
   if (!token || !googleEventId) return
   
   const calendarId = await ensureBlendDoCalendar()
-  if (!calendarId) return
+  if (!calendarId || typeof calendarId === 'object') return
 
   try {
     const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
@@ -172,7 +213,7 @@ export const fetchEventsFromGoogle = async () => {
   if (!token) return []
   
   const calendarId = await ensureBlendDoCalendar()
-  if (!calendarId) return []
+  if (!calendarId || typeof calendarId === 'object') return []
 
   try {
     // From 30 days ago to future
