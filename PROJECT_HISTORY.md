@@ -29,7 +29,12 @@
 
 ### 3. 데이터 및 동기화
 - **Offline-First**: IndexedDB를 활용하여 네트워크 연결 없이 즉시 데이터 읽기/쓰기 가능. 네트워크 복구 시 Firestore와 자동 동기화.
-- **구글 캘린더 연동**: 'BlendDo' 전용 캘린더 생성 및 일정 양방향 동기화 (앱 일정 -> 구글 캘린더 / 구글 캘린더 수정 사항 -> 앱 반영).
+- **구글 캘린더 연동**: 'BlendDo' 전용 캘린더 생성 및 일정 양방향 동기화 (앱 일정 → 구글 캘린더 / 구글 캘린더 수정 사항 → 앱 반영).
+- **중복 캘린더 처리**: 동일 이름 캘린더 감지 시 `CalendarConflictModal`로 기존 캘린더 선택 또는 새 이름으로 생성 가능.
+
+### 4. 인증 및 게스트 모드
+- **네이티브 Google 로그인**: `@codetrix-studio/capacitor-google-auth` 플러그인으로 Calendar 스코프 포함 OAuth2 accessToken 획득.
+- **게스트 모드**: 로그인 없이도 할 일 추가/관리 가능 (IndexedDB 로컬 저장). 로그인 전환 시 미완료 항목 자동 Firestore 마이그레이션.
 
 ---
 
@@ -37,7 +42,7 @@
 
 ### 1. 안드로이드 네이티브 인증 이슈
 - **문제**: `@capacitor-firebase/authentication` 플러그인 사용 시 구글 캘린더 API 접근을 위한 `accessToken`과 `scope`를 안정적으로 가져오는 데 어려움이 있었음.
-- **현상**: 로그인은 성공하나 캘린더 동기화 단계에서 권한 부족(403) 또는 토큰 누락 발생.
+- **해결**: `@codetrix-studio/capacitor-google-auth`로 교체 (Capacitor 6 peer dep → `--legacy-peer-deps`로 설치, Android build.gradle 수동 패치 필요).
 
 ### 2. Firestore 초기 로딩 지연
 - **문제**: 앱 실행 시 Firestore로부터 데이터를 가져올 때까지 빈 화면이 노출되는 문제.
@@ -47,6 +52,11 @@
 - **문제**: 앱과 캘린더에서 동시에 수정할 경우 데이터 충돌 위험 및 무한 루프 발생 가능성.
 - **해결**: `updatedAt` 타임스탬프 비교 로직과 `B]` 접두사를 활용한 식별 절차 도입.
 
+### 4. 캘린더 동기화 재로그인 후 중단 버그 (2026-03-19 수정)
+- **문제**: 로그아웃 후 재로그인해도 Google Calendar 동기화가 작동하지 않는 현상.
+- **원인**: `handleLogout`에서 `blenddo-calendar-id`(캘린더 ID 캐시)를 localStorage에서 삭제하지 않아, 재로그인 시 만료되거나 삭제된 캘린더 ID가 계속 사용됨.
+- **해결**: 로그아웃 시 `googleAccessToken`과 함께 `blenddo-calendar-id`도 함께 삭제.
+
 ---
 
 ## 🔄 선회 기록 (Pivots & Direction Changes)
@@ -54,28 +64,63 @@
 ### 1. 프로젝트 리브랜딩 (Todoest → BlendDo)
 - 단순 할 일 목록 앱에서 '일상의 조화'를 강조하는 브랜드 가치를 반영하여 명칭 변경.
 
-### 2. 인증 전략 전환 (Pure Native → Hybrid)
-- 초기에는 안드로이드 네이티브 로그인만 고집했으나, 캘린더 권한(Scope)의 안정적인 획득을 위해 Web Redirect 방식과 Native 방식을 혼용하는 하이브리드 인증 로직으로 선회.
+### 2. 인증 전략 전환 (Pure Native → Hybrid → Native with Calendar Scope)
+- 초기 Web Redirect 방식 시도 → Android WebView 미동작으로 실패.
+- 최종: `@codetrix-studio/capacitor-google-auth`로 네이티브 로그인 + Calendar 스코프 획득.
 
 ### 3. AI 모델 최적화
 - 복합적인 분석을 위해 `gemini-2.5-flash` 모델을 사용하여 속도와 분석 정확도의 균형을 맞춤.
 
+### 4. 게스트 모드 도입 (2026-03-19)
+- 초기 설계는 로그인 필수였으나, UX 개선을 위해 비로그인 사용자도 로컬에서 앱 사용 가능하도록 변경.
+- 로그인 시 미완료 게스트 todos 자동 업로드로 데이터 연속성 확보.
+
 ---
 
 ## 🚀 향후 방향성 및 주의 사항
-- **방향성 고수**: "오프라인 우선"과 "AI 자연어 처리"가 이 앱의 핵심 가치임. 
+- **방향성 고수**: "오프라인 우선"과 "AI 자연어 처리"가 이 앱의 핵심 가치임.
 - **인증 유지**: 인증 방식 변경 시 구글 캘린더 권한(`https://www.googleapis.com/auth/calendar`)이 유지되는지 반드시 확인해야 함.
 - **UI 일관성**: 랜덤 테마 생성 시 가독성(대비율)을 유지하도록 계산 로직이 설계되어 있으므로 이를 훼손하지 말 것.
+- **node_modules 패치 주의**: `@codetrix-studio/capacitor-google-auth/android/build.gradle`의 jcenter→mavenCentral, proguard 파일명 패치는 `npm install` 시 초기화됨. `patch-package` 도입 고려 필요.
 
 ---
+
+## 🗂️ 미구현 / 향후 개발 요건
+
+### 높은 우선순위
+- [ ] **알림/리마인더**: 일정 시간에 푸시 알림 발송 (Capacitor LocalNotifications 활용)
+- [ ] **반복 일정**: 매일/매주/매월 반복 옵션
+- [ ] **Google OAuth 토큰 자동 갱신**: accessToken 만료(1시간) 시 재로그인 없이 자동 갱신
+
+### 중간 우선순위
+- [ ] **우선순위 레벨**: 높음/보통/낮음 설정 및 정렬
+- [ ] **하위 태스크(체크리스트)**: 큰 할 일 하위 항목 분해
+- [ ] **검색 기능**: 제목/태그/날짜 범위 검색
+- [ ] **위젯**: 안드로이드 홈 화면 위젯
+
+### 낮은 우선순위
+- [ ] **iOS 지원**: Capacitor iOS 빌드 및 Apple 로그인 연동
+- [ ] **공유 기능**: 특정 할 일을 다른 사람과 공유
+- [ ] **통계 뷰**: 완료율, 태그별 분포 시각화
+- [ ] **patch-package 도입**: node_modules 패치 영구 적용
+
+---
+
 ## 📝 최근 활동 로그 (Recent Activity)
-- **2026-03-19**: 
+
+- **2026-03-19** (세션 2):
+  - **캘린더 동기화 버그 수정**: 로그아웃 시 `blenddo-calendar-id` 미삭제로 재로그인 후 캘린더 동기화 실패하는 버그 수정.
+  - **게스트 모드 구현**: 비로그인 사용자도 할 일 추가/관리 가능. 로그인 전환 시 미완료 항목 자동 Firestore 마이그레이션.
+  - `TodoList.jsx`: 비로그인 시 전체 차단 → 상단 로그인 유도 배너로 변경, FAB 항상 표시.
+  - 개발 워크플로우 정립: 소스 변경 즉시 커밋+푸시, PROJECT_HISTORY.md 이력 관리.
+
+- **2026-03-19** (세션 1):
   - 안드로이드 디버깅을 위한 환경 점검 및 빌드 수행.
-  - `npm run build`를 통한 웹 에셋 최신화.
-  - `npx cap sync android`를 통한 안드로이드 프로젝트 동기화 완료.
-  - `PROJECT_HISTORY.md` 생성 및 프로젝트 방향성 문서화.
-  - **인증 방식 재수정**: 안드로이드 네이티브 플러그인에서 다시 **Web Redirect 인증**으로 선회 (구글 캘린더 권한/토큰 획득 안정성 목적).
-  - **로그인 오류 수정**: 로그인 시 반응이 없는 문제를 해결하기 위해 `@capacitor/browser` 플러그인 설치 및 상세 디버깅 alert 추가.
+  - **인증 방식 최종 확정**: `@codetrix-studio/capacitor-google-auth`로 네이티브 Calendar 스코프 포함 로그인 성공.
+  - Google Calendar API 활성화 (Cloud Console에서 수동 활성화 필요했음).
+  - 중복 BlendDo 캘린더 감지 및 `CalendarConflictModal` 구현.
+  - `.gitignore`에 `.claude/` 추가.
+  - `PROJECT_HISTORY.md` 최초 생성.
 
 ---
 *최종 업데이트: 2026-03-19*
