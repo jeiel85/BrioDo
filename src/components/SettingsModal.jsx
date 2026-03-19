@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { getLocalDateString } from '../utils/helpers'
+import { getCalendarAccessToken, ensureBlendDoCalendar, syncEventToGoogle } from '../calendar'
 
 export function SettingsModal({
   lang, t,
@@ -8,6 +10,39 @@ export function SettingsModal({
   user, handleLogin, handleLogout,
   setShowSettings
 }) {
+  const [testLog, setTestLog] = useState([])
+  const [isTesting, setIsTesting] = useState(false)
+
+  const runCalendarTest = async () => {
+    setIsTesting(true)
+    const logs = []
+    const log = (msg) => { logs.push(msg); setTestLog([...logs]) }
+
+    try {
+      log('🔍 accessToken 확인...')
+      const token = getCalendarAccessToken()
+      log(token ? `✅ token: ...${token.slice(-8)}` : '❌ token 없음 → 로그인 필요')
+      if (!token) return
+
+      log('📅 BlendDo 캘린더 조회/생성...')
+      localStorage.removeItem('blenddo-calendar-id')
+      const calId = await ensureBlendDoCalendar()
+      log(calId ? `✅ calendarId: ${calId.slice(0, 20)}...` : '❌ 캘린더 생성 실패')
+      if (!calId) return
+
+      log('📝 테스트 이벤트 동기화...')
+      const today = new Date()
+      const dateStr = today.toISOString().split('T')[0]
+      const gId = await syncEventToGoogle({ id: 'test-001', text: '캘린더 동기화 테스트', date: dateStr, time: '', tags: [], description: '' })
+      log(gId ? `✅ 이벤트 생성: ${gId}` : '❌ 이벤트 생성 실패')
+      log(gId ? '🎉 동기화 정상 작동!' : '⚠️ 이벤트 생성 실패 (캘린더는 생성됨)')
+    } catch (e) {
+      log(`❌ 오류: ${e.message}`)
+    } finally {
+      setIsTesting(false)
+    }
+  }
+
   return (
     <div className="input-overlay" onClick={() => setShowSettings(false)}>
       <div className="settings-modal" onClick={e => e.stopPropagation()}>
@@ -91,11 +126,24 @@ export function SettingsModal({
             </p>
             <button
               className="login-btn"
-              style={{ width: '100%', textAlign: 'center', background: 'transparent', border: '2px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold' }}
+              style={{ width: '100%', textAlign: 'center', background: 'transparent', border: '2px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold', marginBottom: '8px' }}
               onClick={() => { setShowSettings(false); handleLogin() }}
             >
               {lang === 'ko' ? '캘린더 권한 업데이트 🔄' : 'Grant Calendar Permissions 🔄'}
             </button>
+            <button
+              className="login-btn"
+              style={{ width: '100%', textAlign: 'center', background: 'transparent', border: '1.5px dashed var(--border-color)', color: 'var(--text-time)', fontWeight: 'normal', fontSize: '13px' }}
+              onClick={runCalendarTest}
+              disabled={isTesting}
+            >
+              {isTesting ? '테스트 중...' : '🧪 동기화 자동 테스트'}
+            </button>
+            {testLog.length > 0 && (
+              <div style={{ marginTop: '10px', background: 'var(--tag-bg)', borderRadius: '8px', padding: '10px', fontSize: '11px', lineHeight: '1.8', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
+                {testLog.join('\n')}
+              </div>
+            )}
           </div>
         )}
 

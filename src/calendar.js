@@ -170,14 +170,28 @@ export const syncEventToGoogle = async (todo) => {
 
     if (!res.ok) {
       if (res.status === 401) localStorage.removeItem('googleAccessToken')
-      // If it's a 404 on PUT, the event was deleted from Google Calendar. We might need to recreate it.
+      // 캘린더 자체가 삭제된 경우 (POST → 404): 캐시 초기화 후 새 캘린더 생성
+      if (res.status === 404 && method === 'POST') {
+        console.warn('syncEventToGoogle: calendar not found, resetting cache and retrying...')
+        localStorage.removeItem('blenddo-calendar-id')
+        const newCalendarId = await ensureBlendDoCalendar()
+        if (newCalendarId) {
+          const retryRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(newCalendarId)}/events`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+          if (retryRes.ok) {
+            const data = await retryRes.json()
+            return data.id
+          }
+        }
+      }
+      // 이벤트가 삭제된 경우 (PUT → 404): 새로 생성
       if (res.status === 404 && method === 'PUT') {
         const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
           method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         })
         if (createRes.ok) {
