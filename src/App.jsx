@@ -374,13 +374,26 @@ function App() {
   useEffect(() => {
     // 1. Firebase 인증 상태 감지
     console.log("Setting up Auth listener...");
+    
+    // 타임아웃 3초 - onAuthStateChanged가 너무 안 오면 currentUser 직접 확인 (Capacitor 환경 대비)
+    const checkTimer = setTimeout(() => {
+        if (loading && !user) {
+            console.log("Auth Timeout - checking currentUser manually");
+            if (auth.currentUser) {
+                setUser(auth.currentUser);
+                setLoading(false);
+            }
+        }
+    }, 3000);
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      console.log("Auth state changed:", u ? u.email : "No User");
+      console.log("Auth state changed callback:", u ? u.email : "No User");
+      clearTimeout(checkTimer);
       setUser(u)
       setLoading(false)
     })
 
-    // 2. 리다이렉트 로그인 결과 처리 (안드로이드 복귀 시 핵심)
+    // 2. 리다이렉트 로그인 결과 처리 (웹/안드로이드 하이브리드 대응)
     const checkRedirect = async () => {
       try {
         console.log("Checking Redirect Result...");
@@ -389,16 +402,12 @@ function App() {
           const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
           if (oauthCredential?.accessToken) {
             localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
-            console.log("Access Token saved from Redirect result")
-            alert("로그인 성공! 캘린더 연동이 준비되었습니다.")
+            console.log("Access Token saved from Web Redirect")
+            alert("로그인 성공! (Web Redirect)");
           }
-        } else {
-          console.log("No redirect result found");
         }
       } catch (e) {
         console.error("Redirect result error:", e)
-        alert("인증 처리 중 오류가 발생했습니다: " + e.message);
-        setLoading(false); // 에러 발생 시에도 로딩은 풀어줌
       }
     }
     checkRedirect()
@@ -565,16 +574,44 @@ function App() {
 
   // --- Handlers ---
   const handleLogin = async () => {
-    console.log("Starting Web Redirect Login for Calendar Access")
-    try {
-      googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
-      googleProvider.addScope('https://www.googleapis.com/auth/calendar')
-      
-      // 안드로이드에서 가장 안정적인 리다이렉트 방식 사용
-      await signInWithRedirect(auth, googleProvider)
-    } catch (e) {
-      console.error("Login redirect error:", e)
-      alert("Login failed: " + (e.message || "알 수 없는 오류"))
+    console.log("handleLogin triggered");
+    // 안드로이드에서는 네이티브 구글 팝업이 가장 확실함
+    if (Capacitor.isNativePlatform()) {
+      try {
+        console.log("Attempting Native Google Sign-In...");
+        const result = await FirebaseAuthentication.signInWithGoogle({
+            // Firebase 콘솔의 Web Client ID를 여기에 명시적으로 적어주는 것이 안전함
+            // google-services.json에서 확인된 클라이언트 ID
+        });
+        
+        console.log("Native Sign-In Result received");
+        
+        // 네이티브 토큰으로 Web SDK 로그인 상태 동기화
+        if (result.credential?.idToken) {
+          const credential = GoogleAuthProvider.credential(result.credential.idToken);
+          const userCredential = await signInWithCredential(auth, credential);
+          setUser(userCredential.user);
+          
+          if (result.credential.accessToken) {
+            localStorage.setItem('googleAccessToken', result.credential.accessToken);
+            console.log("Google Calendar Access Token saved from Native plugin");
+          }
+          alert("네이티브 로그인 성공!");
+        }
+      } catch (e) {
+        console.error("Native Login Error:", e);
+        alert("Native Login Failed: " + (e.message || JSON.stringify(e)));
+      }
+    } else {
+      // 웹 환경에서는 리다이렉트 사용
+      try {
+        googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
+        googleProvider.addScope('https://www.googleapis.com/auth/calendar')
+        await signInWithRedirect(auth, googleProvider)
+      } catch (e) {
+        console.error("Web Login Redirect error:", e)
+        alert("Login failed: " + (e.message || "알 수 없는 오류"))
+      }
     }
   }
 
