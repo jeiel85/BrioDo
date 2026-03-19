@@ -177,8 +177,19 @@ function App() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [todos, setTodos] = useState([])
-  const [viewMode, setViewMode] = useState('date') // 다시 date로 기본값 설정
+  const [viewMode, setViewMode] = useState('date')
   const [selectedTag, setSelectedTag] = useState(null)
+
+  // 디버깅: 로딩 상태가 너무 길어지면 강제 해제 (5초)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        console.warn("Loading timeout - forcing loading to false");
+        setLoading(false);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [loading]);
   
   // Local Timezone 기준 YYYY-MM-DD 구하기
   const getLocalDateString = (d) => {
@@ -362,7 +373,9 @@ function App() {
   // Auth Listener & Deep Link Handling & Redirect Results
   useEffect(() => {
     // 1. Firebase 인증 상태 감지
+    console.log("Setting up Auth listener...");
     const unsubscribe = onAuthStateChanged(auth, (u) => {
+      console.log("Auth state changed:", u ? u.email : "No User");
       setUser(u)
       setLoading(false)
     })
@@ -370,6 +383,7 @@ function App() {
     // 2. 리다이렉트 로그인 결과 처리 (안드로이드 복귀 시 핵심)
     const checkRedirect = async () => {
       try {
+        console.log("Checking Redirect Result...");
         const result = await getRedirectResult(auth)
         if (result) {
           const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
@@ -378,9 +392,13 @@ function App() {
             console.log("Access Token saved from Redirect result")
             alert("로그인 성공! 캘린더 연동이 준비되었습니다.")
           }
+        } else {
+          console.log("No redirect result found");
         }
       } catch (e) {
         console.error("Redirect result error:", e)
+        alert("인증 처리 중 오류가 발생했습니다: " + e.message);
+        setLoading(false); // 에러 발생 시에도 로딩은 풀어줌
       }
     }
     checkRedirect()
