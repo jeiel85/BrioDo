@@ -4,7 +4,7 @@ import { App as CapApp } from '@capacitor/app'
 import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { db } from './firebase'
 import { addSyncQueue, saveLocalTodo } from './db'
-import { syncEventToGoogle, ensureBlendDoCalendar, resolveCalendarConflict, CALENDAR_CONFLICT } from './calendar'
+import { syncEventToGoogle } from './calendar'
 import { formatTime } from './utils/helpers'
 
 import { useLanguage } from './hooks/useLanguage'
@@ -17,7 +17,6 @@ import { Header } from './components/Header'
 import { TodoList } from './components/TodoList'
 import { InputModal } from './components/InputModal'
 import { SettingsModal } from './components/SettingsModal'
-import { CalendarConflictModal } from './components/CalendarConflictModal'
 
 import './index.css'
 
@@ -32,21 +31,6 @@ function App() {
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-
-  // 중복 캘린더 conflict 상태
-  const [calendarConflict, setCalendarConflict] = useState(null) // { calendars: [...] }
-
-  // 로그인 후 중복 캘린더 자동 감지
-  useEffect(() => {
-    if (!user) return
-    const checkConflict = async () => {
-      const result = await ensureBlendDoCalendar()
-      if (result && typeof result === 'object' && result.type === CALENDAR_CONFLICT) {
-        setCalendarConflict(result)
-      }
-    }
-    checkConflict()
-  }, [user])
 
   // 할 일 입력 모달 상태
   const [showInputModal, setShowInputModal] = useState(false)
@@ -178,37 +162,35 @@ function App() {
 
         if (isOnline) {
           await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
-          // Calendar sync → AI 분석 → Calendar 업데이트를 직렬로 처리 (중복 생성 방지)
+          // AI 분석 먼저 → 완료된 데이터로 sync 딱 한 번 (중복 이벤트 원천 차단)
           setTimeout(async () => {
             try {
-              // 1단계: 원본 텍스트로 캘린더 이벤트 생성
-              let googleEventId = await syncEventToGoogle({ ...localPayload })
-              if (googleEventId) {
-                await setDoc(newDocRef, { googleEventId, updatedAt: serverTimestamp() }, { merge: true })
-                setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId } : t))
-              }
+              let finalData = { text: savedText, date: savedDate, time: savedTime, tags: inputTags }
 
-              // 2단계: AI 분석
               const ai = await getAiFullAnalysis(savedText)
               if (ai) {
-                const merged = {
+                finalData = {
                   text: ai.refinedText || savedText,
                   date: ai.date || savedDate,
                   time: ai.time || savedTime,
                   tags: [...new Set([...inputTags, ...(ai.categories || [])])]
                 }
-                setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...merged } : t))
-                await saveLocalTodo({ ...localPayload, ...merged, googleEventId })
-                await setDoc(newDocRef, { ...merged, updatedAt: serverTimestamp() }, { merge: true })
+                setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
+                await saveLocalTodo({ ...localPayload, ...finalData })
+                await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
+              }
 
-                // 3단계: googleEventId 포함 → PUT으로 기존 이벤트 업데이트 (중복 생성 없음)
-                await syncEventToGoogle({ ...localPayload, ...merged, googleEventId })
+              // 단 한 번의 캘린더 sync
+              const gId = await syncEventToGoogle({ ...localPayload, ...finalData })
+              if (gId) {
+                await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
+                setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId: gId } : t))
+                await saveLocalTodo({ ...localPayload, ...finalData, googleEventId: gId })
               }
             } catch (e) { console.error("Sync Error:", e) }
           }, 300)
         } else {
           await addSyncQueue('set', newId, initialData)
-          // 오프라인 시 AI 분석만 수행
           try {
             const ai = await getAiFullAnalysis(savedText)
             if (ai) {
@@ -237,31 +219,25 @@ function App() {
           setTimeout(async () => {
             try {
               const base = { ...oldTodo, ...updateData }
+              let finalData = { text: savedText, date: savedDate, time: savedTime, tags: inputTags }
 
-              // 1단계: 현재 데이터로 캘린더 동기화 (PUT 또는 POST)
-              let googleEventId = base.googleEventId
-              const gId = await syncEventToGoogle(base)
-              if (gId && !googleEventId) {
-                googleEventId = gId
-                await setDoc(doc(db, "todos", editId), { googleEventId }, { merge: true })
-                setTodos(prev => prev.map(t => t.id === editId ? { ...t, googleEventId } : t))
-              }
-
-              // 2단계: AI 분석
               const ai = await getAiFullAnalysis(savedText)
               if (ai) {
-                const merged = {
+                finalData = {
                   text: ai.refinedText || savedText,
                   date: ai.date || savedDate,
                   time: ai.time || savedTime,
                   tags: [...new Set([...inputTags, ...(ai.categories || [])])]
                 }
-                setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...merged } : t))
-                await saveLocalTodo({ ...base, ...merged, googleEventId })
-                await setDoc(doc(db, "todos", editId), { ...merged, updatedAt: serverTimestamp() }, { merge: true })
+                setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...finalData } : t))
+                await saveLocalTodo({ ...base, ...finalData })
+                await setDoc(doc(db, "todos", editId), { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
+              }
 
-                // 3단계: PUT으로 기존 이벤트 업데이트
-                await syncEventToGoogle({ ...base, ...merged, googleEventId })
+              const gId = await syncEventToGoogle({ ...base, ...finalData })
+              if (gId && !base.googleEventId) {
+                await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
+                setTodos(prev => prev.map(t => t.id === editId ? { ...t, googleEventId: gId } : t))
               }
             } catch (e) { console.error("Sync Update Error:", e) }
           }, 300)
@@ -375,16 +351,6 @@ function App() {
         />
       )}
 
-      {calendarConflict && (
-        <CalendarConflictModal
-          calendars={calendarConflict.calendars}
-          t={t}
-          onResolve={async ({ calendarId, newName }) => {
-            await resolveCalendarConflict(calendarId, newName)
-            setCalendarConflict(null)
-          }}
-        />
-      )}
     </div>
   )
 }
