@@ -2,9 +2,17 @@ import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 
+const fontScaleMap = { 1: 0.70, 2: 0.82, 3: 0.91, 4: 1.00, 5: 1.10, 6: 1.20, 7: 1.35 }
+
 export function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem('blenddo-theme') || 'dark')
-  const [fontScale, setFontScale] = useState(() => localStorage.getItem('blenddo-font-scale') || 'medium')
+  const [fontScale, setFontScale] = useState(() => {
+    const saved = localStorage.getItem('blenddo-font-scale')
+    if (saved === 'small') return 2
+    if (saved === 'large') return 6
+    const num = parseInt(saved)
+    return (num >= 1 && num <= 7) ? num : 4
+  })
   const [randomColors, setRandomColors] = useState(() => {
     const saved = localStorage.getItem('blenddo-random-colors')
     return saved ? JSON.parse(saved) : null
@@ -83,7 +91,7 @@ export function useTheme() {
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('font-small', 'font-medium', 'font-large')
-    root.classList.add(`font-${fontScale}`)
+    root.style.setProperty('--font-scale', fontScaleMap[fontScale] ?? 1)
     localStorage.setItem('blenddo-font-scale', fontScale)
   }, [fontScale])
 

@@ -18,19 +18,27 @@ export function SettingsModal({
 
         <div className="settings-section">
           <h3>{lang === 'ko' ? '글자 크기' : 'Font Size'}</h3>
-          <div className="font-size-selector">
-            <button className={fontScale === 'small' ? 'active' : ''} onClick={() => setFontScale('small')}>
-              <span style={{ fontSize: '13px' }}>A</span>
-              <span>{lang === 'ko' ? '작게' : 'Small'}</span>
-            </button>
-            <button className={fontScale === 'medium' ? 'active' : ''} onClick={() => setFontScale('medium')}>
-              <span style={{ fontSize: '16px' }}>A</span>
-              <span>{lang === 'ko' ? '중간' : 'Medium'}</span>
-            </button>
-            <button className={fontScale === 'large' ? 'active' : ''} onClick={() => setFontScale('large')}>
-              <span style={{ fontSize: '20px' }}>A</span>
-              <span>{lang === 'ko' ? '크게' : 'Large'}</span>
-            </button>
+          <div className="font-size-selector" style={{ marginBottom: '14px' }}>
+            {[{ val: 2, label: lang === 'ko' ? '작게' : 'Small', size: '13px' },
+              { val: 4, label: lang === 'ko' ? '중간' : 'Medium', size: '16px' },
+              { val: 6, label: lang === 'ko' ? '크게' : 'Large', size: '20px' }
+            ].map(({ val, label, size }) => (
+              <button key={val} className={fontScale === val ? 'active' : ''} onClick={() => setFontScale(val)}>
+                <span style={{ fontSize: size }}>A</span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-time)', minWidth: '8px' }}>1</span>
+            <input
+              type="range" min="1" max="7" step="1"
+              value={fontScale}
+              onChange={e => setFontScale(Number(e.target.value))}
+              style={{ flex: 1, accentColor: 'var(--primary)', height: '4px', cursor: 'pointer' }}
+            />
+            <span style={{ fontSize: '11px', color: 'var(--text-time)', minWidth: '8px' }}>7</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', minWidth: '16px', textAlign: 'right' }}>{fontScale}</span>
           </div>
         </div>
 
