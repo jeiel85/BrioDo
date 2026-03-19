@@ -50,11 +50,8 @@ export const ensureBlendDoCalendar = async () => {
       const data = await fetchCalendars(token)
       const matchingCals = data.items?.filter(cal => cal.summary === 'BlendDo') || []
 
-      if (matchingCals.length > 1) {
-        return { type: CALENDAR_CONFLICT, calendars: matchingCals }
-      }
-
-      if (matchingCals.length === 1) {
+      if (matchingCals.length >= 1) {
+        // 복수 BlendDo 캘린더가 있어도 첫 번째를 자동 선택 (중복 모달 제거)
         localStorage.setItem('blenddo-calendar-id', matchingCals[0].id)
         return matchingCals[0].id
       }
