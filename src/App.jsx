@@ -574,18 +574,30 @@ function App() {
 
   // --- Handlers ---
   const handleLogin = async () => {
-    console.log("handleLogin triggered (Web Redirect Strategy)");
+    console.log("handleLogin: Start authentication process");
+    alert("구글 로그인 시작 (Redirect)...");
+    
     try {
-      // 구글 캘린더 연동을 위한 Scope 명시적 요청
+      // 캘린더 연동을 위해 필요한 스코프가 확실히 포함되었는지 확인
       googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
       googleProvider.addScope('https://www.googleapis.com/auth/calendar')
       
-      // Capacitor 환경에서도 네이티브 팝업 대신 리다이렉트 방식을 사용하여
-      // 캘린더 API 접근을 위한 세션 및 토큰 획득 안정성을 높임
+      console.log("Calling signInWithRedirect...");
+      // @capacitor/browser 설치 후 Firebase SDK가 이를 감지하여 시스템 브라우저를 열게 됨
       await signInWithRedirect(auth, googleProvider)
     } catch (e) {
-      console.error("Login Redirect error:", e)
-      alert("로그인 시도 중 오류가 발생했습니다: " + (e.message || "알 수 없는 오류"))
+      console.error("Critical Login Error:", e)
+      alert("로그인 실패 에러 객체: " + JSON.stringify(e))
+      
+      // 혹시라도 Redirect가 모바일에서 지원되지 않는 환경이라면 Popup 시도 (Webview 설정 등에 따라 다를 수 있음)
+      try {
+        console.log("Attempting fallback: signInWithPopup");
+        alert("리다이렉트 실패로 팝업 방식 시도...");
+        await signInWithPopup(auth, googleProvider)
+      } catch (popupErr) {
+        console.error("Popup Fallback Failed:", popupErr)
+        alert("팝업 시도 실패: " + (popupErr.message || "알 수 없는 오류"))
+      }
     }
   }
 
