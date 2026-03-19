@@ -306,7 +306,7 @@ function App() {
       <Header
         lang={lang} t={t}
         formattedHeaderDate={formattedHeaderDate} handleGoToToday={handleGoToToday}
-        user={user} handleLogin={handleLogin}
+        user={user}
         viewMode={viewMode} setViewMode={setViewMode}
         todayStr={todayStr} setSelectedDate={setSelectedDate} setBaseDate={setBaseDate}
         allUsedTags={allUsedTags} selectedTag={selectedTag} setSelectedTag={setSelectedTag}
@@ -324,7 +324,6 @@ function App() {
           openEditModal={openEditModal}
           toggleComplete={toggleComplete}
           deleteTodo={deleteTodo}
-          handleLogin={handleLogin}
         />
       </div>
 
