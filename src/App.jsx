@@ -574,44 +574,18 @@ function App() {
 
   // --- Handlers ---
   const handleLogin = async () => {
-    console.log("handleLogin triggered");
-    // 안드로이드에서는 네이티브 구글 팝업이 가장 확실함
-    if (Capacitor.isNativePlatform()) {
-      try {
-        console.log("Attempting Native Google Sign-In...");
-        const result = await FirebaseAuthentication.signInWithGoogle({
-            // Firebase 콘솔의 Web Client ID를 여기에 명시적으로 적어주는 것이 안전함
-            // google-services.json에서 확인된 클라이언트 ID
-        });
-        
-        console.log("Native Sign-In Result received");
-        
-        // 네이티브 토큰으로 Web SDK 로그인 상태 동기화
-        if (result.credential?.idToken) {
-          const credential = GoogleAuthProvider.credential(result.credential.idToken);
-          const userCredential = await signInWithCredential(auth, credential);
-          setUser(userCredential.user);
-          
-          if (result.credential.accessToken) {
-            localStorage.setItem('googleAccessToken', result.credential.accessToken);
-            console.log("Google Calendar Access Token saved from Native plugin");
-          }
-          alert("네이티브 로그인 성공!");
-        }
-      } catch (e) {
-        console.error("Native Login Error:", e);
-        alert("Native Login Failed: " + (e.message || JSON.stringify(e)));
-      }
-    } else {
-      // 웹 환경에서는 리다이렉트 사용
-      try {
-        googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
-        googleProvider.addScope('https://www.googleapis.com/auth/calendar')
-        await signInWithRedirect(auth, googleProvider)
-      } catch (e) {
-        console.error("Web Login Redirect error:", e)
-        alert("Login failed: " + (e.message || "알 수 없는 오류"))
-      }
+    console.log("handleLogin triggered (Web Redirect Strategy)");
+    try {
+      // 구글 캘린더 연동을 위한 Scope 명시적 요청
+      googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
+      googleProvider.addScope('https://www.googleapis.com/auth/calendar')
+      
+      // Capacitor 환경에서도 네이티브 팝업 대신 리다이렉트 방식을 사용하여
+      // 캘린더 API 접근을 위한 세션 및 토큰 획득 안정성을 높임
+      await signInWithRedirect(auth, googleProvider)
+    } catch (e) {
+      console.error("Login Redirect error:", e)
+      alert("로그인 시도 중 오류가 발생했습니다: " + (e.message || "알 수 없는 오류"))
     }
   }
 
