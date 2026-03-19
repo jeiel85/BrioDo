@@ -1,7 +1,7 @@
 export function Header({
   lang, t,
   formattedHeaderDate, handleGoToToday,
-  user, handleLogin,
+  user,
   viewMode, setViewMode, todayStr, setSelectedDate, setBaseDate,
   allUsedTags, selectedTag, setSelectedTag, tagExpanded, setTagExpanded,
   weekScrollRef, handleWeekScroll, dateRange, selectedDate,
@@ -14,13 +14,7 @@ export function Header({
           <div className="month-year-header clickable" onClick={handleGoToToday}>
             {formattedHeaderDate}
           </div>
-          <div className="auth-group">
-            {!user && (
-              <button className="login-btn" onClick={handleLogin}>
-                {lang === 'ko' ? '로그인' : 'Login'}
-              </button>
-            )}
-          </div>
+          <div className="auth-group"></div>
         </div>
 
         <div className="title-row">
