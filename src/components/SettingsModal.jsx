@@ -1,48 +1,13 @@
-import { useState } from 'react'
 import { getLocalDateString } from '../utils/helpers'
-import { getCalendarAccessToken, ensureBlendDoCalendar, syncEventToGoogle } from '../calendar'
 
 export function SettingsModal({
-  lang, t,
+  lang,
   fontScale, setFontScale,
   theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate, setBaseDate,
   user, handleLogin, handleLogout,
   setShowSettings
 }) {
-  const [testLog, setTestLog] = useState([])
-  const [isTesting, setIsTesting] = useState(false)
-
-  const runCalendarTest = async () => {
-    setIsTesting(true)
-    const logs = []
-    const log = (msg) => { logs.push(msg); setTestLog([...logs]) }
-
-    try {
-      log('🔍 accessToken 확인...')
-      const token = getCalendarAccessToken()
-      log(token ? `✅ token: ...${token.slice(-8)}` : '❌ token 없음 → 로그인 필요')
-      if (!token) return
-
-      log('📅 BlendDo 캘린더 조회/생성...')
-      localStorage.removeItem('blenddo-calendar-id')
-      const calId = await ensureBlendDoCalendar()
-      log(calId ? `✅ calendarId: ${calId.slice(0, 20)}...` : '❌ 캘린더 생성 실패')
-      if (!calId) return
-
-      log('📝 테스트 이벤트 동기화...')
-      const today = new Date()
-      const dateStr = today.toISOString().split('T')[0]
-      const gId = await syncEventToGoogle({ id: 'test-001', text: '캘린더 동기화 테스트', date: dateStr, time: '', tags: [], description: '' })
-      log(gId ? `✅ 이벤트 생성: ${gId}` : '❌ 이벤트 생성 실패')
-      log(gId ? '🎉 동기화 정상 작동!' : '⚠️ 이벤트 생성 실패 (캘린더는 생성됨)')
-    } catch (e) {
-      log(`❌ 오류: ${e.message}`)
-    } finally {
-      setIsTesting(false)
-    }
-  }
-
   return (
     <div className="input-overlay" onClick={() => setShowSettings(false)}>
       <div className="settings-modal" onClick={e => e.stopPropagation()}>
