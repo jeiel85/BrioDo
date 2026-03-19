@@ -87,38 +87,53 @@ export function useTodosData(user) {
           setTodos(sortTodos(localData))
         }
 
+        // 로그인 시 1회만 Google Calendar 역동기화 (onSnapshot 밖으로 분리)
+        const syncCalendarOnce = async (firestoreList) => {
+          try {
+            const events = await fetchEventsFromGoogle()
+            if (!events || events.length === 0) return firestoreList
+            let updated = false
+            const list = [...firestoreList]
+            for (const ev of events) {
+              const matchIndex = list.findIndex(t => t.googleEventId === ev.id)
+              if (matchIndex >= 0) {
+                const match = list[matchIndex]
+                const evUpdated = new Date(ev.updated).getTime()
+                const localUpdated = match.updatedAt?.toMillis ? match.updatedAt.toMillis() : (match.createdAt?.toMillis ? match.createdAt.toMillis() : 0)
+                if (evUpdated > localUpdated + 60000) {
+                  const dt = ev.start?.date || ev.start?.dateTime?.split('T')[0]
+                  const time = ev.start?.dateTime ? ev.start.dateTime.substring(11, 16) : ''
+                  const updatedTodo = {
+                    text: (ev.summary || '').replace(/^B\]\s*/, '') || '제목 없음',
+                    description: ev.description || '',
+                    date: dt || match.date,
+                    time,
+                    updatedAt: serverTimestamp()
+                  }
+                  await updateDoc(doc(db, "todos", match.id), updatedTodo)
+                  list[matchIndex] = { ...match, ...updatedTodo }
+                  updated = true
+                }
+              }
+            }
+            return updated ? list : firestoreList
+          } catch (calErr) {
+            console.error('Calendar sync error:', calErr)
+            return firestoreList
+          }
+        }
+
         // Firestore 실시간 구독
+        let calendarSyncDone = false
         const q = query(collection(db, "todos"), where("uid", "==", user.uid))
         unsubscribe = onSnapshot(q, async (snapshot) => {
           let list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
 
-          // Google Calendar 역동기화
-          try {
-            const events = await fetchEventsFromGoogle()
-            if (events && events.length > 0) {
-              for (const ev of events) {
-                const matchIndex = list.findIndex(t => t.googleEventId === ev.id)
-                if (matchIndex >= 0) {
-                  const match = list[matchIndex]
-                  const evUpdated = new Date(ev.updated).getTime()
-                  const localUpdated = match.updatedAt?.toMillis ? match.updatedAt.toMillis() : (match.createdAt?.toMillis ? match.createdAt.toMillis() : 0)
-                  if (evUpdated > localUpdated + 60000) {
-                    const dt = ev.start?.date || ev.start?.dateTime?.split('T')[0]
-                    const time = ev.start?.dateTime ? ev.start.dateTime.substring(11, 16) : ''
-                    const updatedTodo = {
-                      text: (ev.summary || '').replace(/^B\]\s*/, '') || '제목 없음',
-                      description: ev.description || '',
-                      date: dt || match.date,
-                      time,
-                      updatedAt: serverTimestamp()
-                    }
-                    await updateDoc(doc(db, "todos", match.id), updatedTodo)
-                    list[matchIndex] = { ...match, ...updatedTodo }
-                  }
-                }
-              }
-            }
-          } catch (calErr) { console.error('Calendar sync error:', calErr) }
+          // 최초 1회만 Google Calendar 역동기화
+          if (!calendarSyncDone) {
+            calendarSyncDone = true
+            list = await syncCalendarOnce(list)
+          }
 
           setTodos(sortTodos(list))
           try { await saveLocalTodosBatch(list) } catch (e) { console.error("Local DB Sync error:", e) }
