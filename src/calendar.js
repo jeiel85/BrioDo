@@ -31,38 +31,49 @@ export const createBlendDoCalendar = async (token) => {
 // 중복 캘린더 감지 시 반환되는 특수 객체
 export const CALENDAR_CONFLICT = '__CALENDAR_CONFLICT__'
 
+// 동시 다발 호출 시 하나의 요청만 실행되도록 싱글톤 프로미스
+let _ensureCalendarPromise = null
+
 export const ensureBlendDoCalendar = async () => {
   const token = getCalendarAccessToken()
   if (!token) return null
 
-  // Local 저장 확인
+  // 캐시된 ID가 있으면 즉시 반환
   const savedId = localStorage.getItem('blenddo-calendar-id')
   if (savedId) return savedId
 
-  try {
-    const data = await fetchCalendars(token)
-    const matchingCals = data.items?.filter(cal => cal.summary === 'BlendDo') || []
+  // 이미 진행 중인 요청이 있으면 그 결과를 공유
+  if (_ensureCalendarPromise) return _ensureCalendarPromise
 
-    if (matchingCals.length > 1) {
-      // 동일한 이름의 캘린더가 여러 개 → 사용자 선택 필요
-      return { type: CALENDAR_CONFLICT, calendars: matchingCals }
-    }
+  _ensureCalendarPromise = (async () => {
+    try {
+      const data = await fetchCalendars(token)
+      const matchingCals = data.items?.filter(cal => cal.summary === 'BlendDo') || []
 
-    if (matchingCals.length === 1) {
-      localStorage.setItem('blenddo-calendar-id', matchingCals[0].id)
-      return matchingCals[0].id
-    }
+      if (matchingCals.length > 1) {
+        return { type: CALENDAR_CONFLICT, calendars: matchingCals }
+      }
 
-    const newCal = await createBlendDoCalendar(token)
-    localStorage.setItem('blenddo-calendar-id', newCal.id)
-    return newCal.id
-  } catch (error) {
-    console.error('ensureBlendDoCalendar error:', error)
-    if (error.message.includes('401')) {
-      localStorage.removeItem('googleAccessToken')
+      if (matchingCals.length === 1) {
+        localStorage.setItem('blenddo-calendar-id', matchingCals[0].id)
+        return matchingCals[0].id
+      }
+
+      const newCal = await createBlendDoCalendar(token)
+      localStorage.setItem('blenddo-calendar-id', newCal.id)
+      return newCal.id
+    } catch (error) {
+      console.error('ensureBlendDoCalendar error:', error)
+      if (error.message.includes('401')) {
+        localStorage.removeItem('googleAccessToken')
+      }
+      return null
+    } finally {
+      _ensureCalendarPromise = null
     }
-    return null
-  }
+  })()
+
+  return _ensureCalendarPromise
 }
 
 export const resolveCalendarConflict = async (calendarId, newName) => {

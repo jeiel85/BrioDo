@@ -178,42 +178,52 @@ function App() {
 
         if (isOnline) {
           await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
+          // Calendar sync → AI 분석 → Calendar 업데이트를 직렬로 처리 (중복 생성 방지)
           setTimeout(async () => {
             try {
-              const gId = await syncEventToGoogle({ ...localPayload })
-              if (gId) {
-                await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
-                setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId: gId } : t))
+              // 1단계: 원본 텍스트로 캘린더 이벤트 생성
+              let googleEventId = await syncEventToGoogle({ ...localPayload })
+              if (googleEventId) {
+                await setDoc(newDocRef, { googleEventId, updatedAt: serverTimestamp() }, { merge: true })
+                setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId } : t))
               }
-            } catch (e) { console.error("Google Sync Error:", e) }
+
+              // 2단계: AI 분석
+              const ai = await getAiFullAnalysis(savedText)
+              if (ai) {
+                const merged = {
+                  text: ai.refinedText || savedText,
+                  date: ai.date || savedDate,
+                  time: ai.time || savedTime,
+                  tags: [...new Set([...inputTags, ...(ai.categories || [])])]
+                }
+                setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...merged } : t))
+                await saveLocalTodo({ ...localPayload, ...merged, googleEventId })
+                await setDoc(newDocRef, { ...merged, updatedAt: serverTimestamp() }, { merge: true })
+
+                // 3단계: googleEventId 포함 → PUT으로 기존 이벤트 업데이트 (중복 생성 없음)
+                await syncEventToGoogle({ ...localPayload, ...merged, googleEventId })
+              }
+            } catch (e) { console.error("Sync Error:", e) }
           }, 300)
         } else {
           await addSyncQueue('set', newId, initialData)
-        }
-
-        // AI 비동기 개선
-        try {
-          const ai = await getAiFullAnalysis(savedText)
-          if (ai) {
-            const merged = {
-              text: ai.refinedText || savedText,
-              date: ai.date || savedDate,
-              time: ai.time || savedTime,
-              tags: [...new Set([...inputTags, ...(ai.categories || [])])]
-            }
-            setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...merged } : t))
-            await saveLocalTodo({ ...localPayload, ...merged })
-            if (isOnline) {
-              await setDoc(newDocRef, merged, { merge: true })
-              setTimeout(async () => {
-                const gId = await syncEventToGoogle({ ...localPayload, ...merged })
-                if (gId) await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
-              }, 100)
-            } else {
+          // 오프라인 시 AI 분석만 수행
+          try {
+            const ai = await getAiFullAnalysis(savedText)
+            if (ai) {
+              const merged = {
+                text: ai.refinedText || savedText,
+                date: ai.date || savedDate,
+                time: ai.time || savedTime,
+                tags: [...new Set([...inputTags, ...(ai.categories || [])])]
+              }
+              setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...merged } : t))
+              await saveLocalTodo({ ...localPayload, ...merged })
               await addSyncQueue('set', newId, merged)
             }
-          }
-        } catch (aiErr) { console.error("AI refinement failed:", aiErr) }
+          } catch (aiErr) { console.error("AI refinement failed:", aiErr) }
+        }
       } else {
         // 수정
         const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags }
@@ -226,42 +236,52 @@ function App() {
           await setDoc(doc(db, "todos", editId), { ...updateData, updatedAt: serverTimestamp() }, { merge: true })
           setTimeout(async () => {
             try {
-              const targetToSync = { ...oldTodo, ...updateData }
-              const gId = await syncEventToGoogle(targetToSync)
-              if (gId && !targetToSync.googleEventId) {
-                await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
-                setTodos(prev => prev.map(t => t.id === editId ? { ...t, googleEventId: gId } : t))
+              const base = { ...oldTodo, ...updateData }
+
+              // 1단계: 현재 데이터로 캘린더 동기화 (PUT 또는 POST)
+              let googleEventId = base.googleEventId
+              const gId = await syncEventToGoogle(base)
+              if (gId && !googleEventId) {
+                googleEventId = gId
+                await setDoc(doc(db, "todos", editId), { googleEventId }, { merge: true })
+                setTodos(prev => prev.map(t => t.id === editId ? { ...t, googleEventId } : t))
               }
-            } catch (e) { console.error("Google Sync Update Error:", e) }
+
+              // 2단계: AI 분석
+              const ai = await getAiFullAnalysis(savedText)
+              if (ai) {
+                const merged = {
+                  text: ai.refinedText || savedText,
+                  date: ai.date || savedDate,
+                  time: ai.time || savedTime,
+                  tags: [...new Set([...inputTags, ...(ai.categories || [])])]
+                }
+                setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...merged } : t))
+                await saveLocalTodo({ ...base, ...merged, googleEventId })
+                await setDoc(doc(db, "todos", editId), { ...merged, updatedAt: serverTimestamp() }, { merge: true })
+
+                // 3단계: PUT으로 기존 이벤트 업데이트
+                await syncEventToGoogle({ ...base, ...merged, googleEventId })
+              }
+            } catch (e) { console.error("Sync Update Error:", e) }
           }, 300)
         } else {
           await addSyncQueue('set', editId, updateData)
-        }
-
-        try {
-          const ai = await getAiFullAnalysis(savedText)
-          if (ai) {
-            const merged = {
-              text: ai.refinedText || savedText,
-              date: ai.date || savedDate,
-              time: ai.time || savedTime,
-              tags: [...new Set([...inputTags, ...(ai.categories || [])])]
-            }
-            setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...merged } : t))
-            await saveLocalTodo({ ...oldTodo, ...updateData, ...merged })
-            if (isOnline) {
-              await setDoc(doc(db, "todos", editId), { ...merged, updatedAt: serverTimestamp() }, { merge: true })
-              setTimeout(async () => {
-                const gId = await syncEventToGoogle({ ...oldTodo, ...updateData, ...merged })
-                if (gId && !oldTodo.googleEventId) {
-                  await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
-                }
-              }, 100)
-            } else {
+          try {
+            const ai = await getAiFullAnalysis(savedText)
+            if (ai) {
+              const merged = {
+                text: ai.refinedText || savedText,
+                date: ai.date || savedDate,
+                time: ai.time || savedTime,
+                tags: [...new Set([...inputTags, ...(ai.categories || [])])]
+              }
+              setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...merged } : t))
+              await saveLocalTodo({ ...oldTodo, ...updateData, ...merged })
               await addSyncQueue('set', editId, merged)
             }
-          }
-        } catch (aiErr) { console.error("AI refinement failed:", aiErr) }
+          } catch (aiErr) { console.error("AI refinement failed:", aiErr) }
+        }
       }
     } catch (e) { console.error("Save Todo Error:", e) }
   }
