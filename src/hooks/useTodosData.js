@@ -14,7 +14,7 @@ const sortTodos = (list) => list.sort((a, b) => {
   return dtA - dtB
 })
 
-export function useTodosData(user) {
+export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
   const [todos, setTodos] = useState([])
   const [isOnline, setIsOnline] = useState(true)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
@@ -218,19 +218,45 @@ export function useTodosData(user) {
 
   const toggleComplete = async (e, id, completed) => {
     e.stopPropagation()
+    const nowCompleting = !completed
     try {
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !completed } : t))
       const target = todos.find(t => t.id === id)
-      if (target) await saveLocalTodo({ ...target, completed: !completed })
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: nowCompleting } : t))
+      if (target) await saveLocalTodo({ ...target, completed: nowCompleting })
       if (user) {
         if (isOnline) {
-          await setDoc(doc(db, "todos", id), { completed: !completed }, { merge: true })
-          // Google 캘린더 이벤트 완료 상태 갱신
-          if (target?.googleEventId) {
-            setTimeout(() => syncEventToGoogle({ ...target, completed: !completed }), 100)
+          await setDoc(doc(db, "todos", id), { completed: nowCompleting }, { merge: true })
+
+          if (completionCalendarMode === 'delete') {
+            if (nowCompleting) {
+              // 완료 → 캘린더에서 삭제 후 googleEventId 초기화
+              if (target?.googleEventId) {
+                setTimeout(async () => {
+                  await deleteEventFromGoogle(target.googleEventId)
+                  await setDoc(doc(db, "todos", id), { googleEventId: null }, { merge: true })
+                  await saveLocalTodo({ ...target, completed: true, googleEventId: null })
+                  setTodos(prev => prev.map(t => t.id === id ? { ...t, googleEventId: null } : t))
+                }, 100)
+              }
+            } else {
+              // 완료 취소 → 신규 이벤트 생성 (googleEventId 없으므로 POST)
+              setTimeout(async () => {
+                const newEventId = await syncEventToGoogle({ ...target, completed: false, googleEventId: null })
+                if (newEventId) {
+                  await setDoc(doc(db, "todos", id), { googleEventId: newEventId }, { merge: true })
+                  await saveLocalTodo({ ...target, completed: false, googleEventId: newEventId })
+                  setTodos(prev => prev.map(t => t.id === id ? { ...t, googleEventId: newEventId } : t))
+                }
+              }, 100)
+            }
+          } else {
+            // 상태 변경 모드 (기본): 캘린더 이벤트 완료 상태 갱신
+            if (target?.googleEventId) {
+              setTimeout(() => syncEventToGoogle({ ...target, completed: nowCompleting }), 100)
+            }
           }
         } else {
-          await addSyncQueue('set', id, { completed: !completed })
+          await addSyncQueue('set', id, { completed: nowCompleting })
         }
       }
     } catch (e) { console.error(e) }

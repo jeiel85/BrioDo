@@ -6,6 +6,7 @@ export function SettingsModal({
   theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate,
   inputMode, setInputMode,
+  completionCalendarMode, setCompletionCalendarMode,
   user, handleLogin, handleLogout,
   setShowSettings
 }) {
@@ -116,6 +117,29 @@ export function SettingsModal({
             >
               {lang === 'ko' ? '캘린더 권한 업데이트 🔄' : 'Grant Calendar Permissions 🔄'}
             </button>
+
+            <h3 style={{ marginTop: '18px' }}>{lang === 'ko' ? '완료 시 캘린더 처리' : 'On Completion'}</h3>
+            <div className="font-size-selector">
+              <button
+                className={completionCalendarMode === 'status' ? 'active' : ''}
+                onClick={() => setCompletionCalendarMode('status')}
+              >
+                <span>✅</span>
+                <span>{lang === 'ko' ? '상태 변경' : 'Keep & Mark'}</span>
+              </button>
+              <button
+                className={completionCalendarMode === 'delete' ? 'active' : ''}
+                onClick={() => setCompletionCalendarMode('delete')}
+              >
+                <span>🗑️</span>
+                <span>{lang === 'ko' ? '캘린더 삭제' : 'Remove'}</span>
+              </button>
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginTop: '8px', lineHeight: '1.4' }}>
+              {completionCalendarMode === 'delete'
+                ? (lang === 'ko' ? '완료 시 구글 캘린더에서 삭제합니다. 완료 취소 시 자동으로 다시 추가됩니다.' : 'Removes from Google Calendar on completion. Restored on undo.')
+                : (lang === 'ko' ? '완료 시 구글 캘린더에 완료 표시로 남깁니다.' : 'Keeps the event in Google Calendar with a completed mark.')}
+            </p>
           </div>
         )}
 
