@@ -7,7 +7,6 @@
   --color-surface-container-lowest: #ffffff;
   --color-surface-container-high: #e8e7f1;
   --color-primary: #0053dc;
-  --color-primary-end: #3e76fe;
   --color-on-surface: #30323b;
   --color-on-surface-variant: #5d5f68;
   --color-outline-variant: rgba(176, 177, 188, 0.15);
@@ -31,7 +30,6 @@
   --color-surface-container-lowest: #0e1116;
   --color-surface-container-high: #353742;
   --color-primary: #aec6ff;
-  --color-primary-end: #6e9fff;
   --color-on-surface: #e3e2e9;
   --color-on-surface-variant: #c6c5d0;
   --color-outline-variant: rgba(198, 197, 208, 0.12);
@@ -55,7 +53,6 @@
     --color-surface-container-lowest: #0e1116;
     --color-surface-container-high: #353742;
     --color-primary: #aec6ff;
-    --color-primary-end: #6e9fff;
     --color-on-surface: #e3e2e9;
     --color-on-surface-variant: #c6c5d0;
     --color-outline-variant: rgba(198, 197, 208, 0.12);
@@ -152,7 +149,7 @@ body {
 }
 
 .login-btn {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-end));
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 12px;
@@ -256,7 +253,7 @@ body {
 }
 
 .date-item.active {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-end));
+  background: var(--color-primary);
   color: white;
   box-shadow: 0 8px 16px rgba(0, 83, 220, 0.28);
 }
@@ -304,7 +301,7 @@ body {
 }
 
 .tag-filter-bar button.active {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-end));
+  background: var(--color-primary);
   color: white;
 }
 
@@ -545,7 +542,7 @@ body {
   height: 65px;
   min-width: 65px;
   min-height: 65px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-end));
+  background: var(--color-primary);
   border-radius: 50%;
   border: none;
   display: flex;
@@ -702,7 +699,7 @@ body.modal-open {
 }
 
 .btn-save {
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-end));
+  background: var(--color-primary);
   color: white;
 }
 
