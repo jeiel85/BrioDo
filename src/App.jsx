@@ -16,6 +16,7 @@ import { useCalendarNav } from './hooks/useCalendarNav'
 import { Header } from './components/Header'
 import { TodoList } from './components/TodoList'
 import { InputModal } from './components/InputModal'
+import { SmartInputModal } from './components/SmartInputModal'
 import { SettingsModal } from './components/SettingsModal'
 
 import './index.css'
@@ -25,12 +26,20 @@ function App() {
   const { user, loading, handleLogin, handleLogout } = useAuth()
   const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme } = useTheme()
   const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user)
-  const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, handleGoToToday } = useCalendarNav(lang)
+  const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState('date')
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+
+  // 입력 모드: 'smart' | 'manual' (기본값: smart)
+  const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'smart')
+  const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
+
+  // 스마트 입력 모달 상태
+  const [showSmartModal, setShowSmartModal] = useState(false)
+  const [smartText, setSmartText] = useState('')
 
   // 할 일 입력 모달 상태
   const [showInputModal, setShowInputModal] = useState(false)
@@ -41,7 +50,7 @@ function App() {
   // AI 태그 자동 제안 (디바운스)
   const debounceTimer = useRef(null)
   useEffect(() => {
-    if (showInputModal && newTodo.text.length > 3) {
+    if (showInputModal && !editingTodoId && newTodo.text.length > 3) {
       if (debounceTimer.current) clearTimeout(debounceTimer.current)
       debounceTimer.current = setTimeout(async () => {
         const analysis = await getAiTagsOnly(newTodo.text)
@@ -164,49 +173,19 @@ function App() {
 
         if (isOnline) {
           await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
-          // AI 분석 먼저 → 완료된 데이터로 sync 딱 한 번 (중복 이벤트 원천 차단)
+          // 수동 저장: AI 없이 바로 캘린더 sync
           setTimeout(async () => {
             try {
-              let finalData = { text: savedText, date: savedDate, time: savedTime, tags: inputTags }
-
-              const ai = await getAiFullAnalysis(savedText)
-              if (ai) {
-                finalData = {
-                  text: ai.refinedText || savedText,
-                  date: ai.date || savedDate,
-                  time: ai.time || savedTime,
-                  tags: [...new Set([...inputTags, ...(ai.categories || [])])]
-                }
-                setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
-                await saveLocalTodo({ ...localPayload, ...finalData })
-                await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
-              }
-
-              // 단 한 번의 캘린더 sync
-              const gId = await syncEventToGoogle({ ...localPayload, ...finalData })
+              const gId = await syncEventToGoogle(localPayload)
               if (gId) {
                 await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
                 setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId: gId } : t))
-                await saveLocalTodo({ ...localPayload, ...finalData, googleEventId: gId })
+                await saveLocalTodo({ ...localPayload, googleEventId: gId })
               }
             } catch (e) { console.error("Sync Error:", e) }
           }, 300)
         } else {
           await addSyncQueue('set', newId, initialData)
-          try {
-            const ai = await getAiFullAnalysis(savedText)
-            if (ai) {
-              const merged = {
-                text: ai.refinedText || savedText,
-                date: ai.date || savedDate,
-                time: ai.time || savedTime,
-                tags: [...new Set([...inputTags, ...(ai.categories || [])])]
-              }
-              setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...merged } : t))
-              await saveLocalTodo({ ...localPayload, ...merged })
-              await addSyncQueue('set', newId, merged)
-            }
-          } catch (aiErr) { console.error("AI refinement failed:", aiErr) }
         }
       } else {
         // 수정
@@ -218,25 +197,11 @@ function App() {
 
         if (isOnline) {
           await setDoc(doc(db, "todos", editId), { ...updateData, updatedAt: serverTimestamp() }, { merge: true })
+          // 편집 시 AI 분석 없이 사용자 입력 그대로 캘린더 동기화
           setTimeout(async () => {
             try {
               const base = { ...oldTodo, ...updateData }
-              let finalData = { text: savedText, date: savedDate, time: savedTime, tags: inputTags }
-
-              const ai = await getAiFullAnalysis(savedText)
-              if (ai) {
-                finalData = {
-                  text: ai.refinedText || savedText,
-                  date: ai.date || savedDate,
-                  time: ai.time || savedTime,
-                  tags: [...new Set([...inputTags, ...(ai.categories || [])])]
-                }
-                setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...finalData } : t))
-                await saveLocalTodo({ ...base, ...finalData })
-                await setDoc(doc(db, "todos", editId), { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
-              }
-
-              const gId = await syncEventToGoogle({ ...base, ...finalData })
+              const gId = await syncEventToGoogle(base)
               if (gId && !base.googleEventId) {
                 await setDoc(doc(db, "todos", editId), { googleEventId: gId }, { merge: true })
                 setTodos(prev => prev.map(t => t.id === editId ? { ...t, googleEventId: gId } : t))
@@ -245,23 +210,63 @@ function App() {
           }, 300)
         } else {
           await addSyncQueue('set', editId, updateData)
-          try {
-            const ai = await getAiFullAnalysis(savedText)
-            if (ai) {
-              const merged = {
-                text: ai.refinedText || savedText,
-                date: ai.date || savedDate,
-                time: ai.time || savedTime,
-                tags: [...new Set([...inputTags, ...(ai.categories || [])])]
-              }
-              setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...merged } : t))
-              await saveLocalTodo({ ...oldTodo, ...updateData, ...merged })
-              await addSyncQueue('set', editId, merged)
-            }
-          } catch (aiErr) { console.error("AI refinement failed:", aiErr) }
         }
       }
     } catch (e) { console.error("Save Todo Error:", e) }
+  }
+
+  // 스마트 입력 저장 (AI 자연어 처리)
+  const handleSmartSave = async (text) => {
+    if (!text.trim()) return
+    const savedText = text.trim()
+    const today = todayStr
+    setShowSmartModal(false)
+    setSmartText('')
+
+    if (!user) {
+      const localId = `guest_${Date.now()}`
+      const localPayload = { id: localId, text: savedText, description: '', date: today, time: '', tags: [], priority: 'medium', completed: false, createdAt: Date.now() }
+      setTodos(prev => [...prev, localPayload])
+      await saveLocalTodo(localPayload)
+      return
+    }
+
+    const newDocRef = doc(collection(db, "todos"))
+    const newId = newDocRef.id
+    const initialData = { uid: user.uid, text: savedText, description: '', date: today, time: '', tags: [], priority: 'medium', completed: false }
+    const localPayload = { ...initialData, id: newId, createdAt: Date.now() }
+
+    setTodos(prev => [...prev, localPayload])
+    await saveLocalTodo(localPayload)
+
+    if (isOnline) {
+      await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
+      setTimeout(async () => {
+        try {
+          let finalData = { text: savedText, date: today, time: '', tags: [] }
+          const ai = await getAiFullAnalysis(savedText)
+          if (ai) {
+            finalData = {
+              text: ai.refinedText || savedText,
+              date: ai.date || today,
+              time: ai.time || '',
+              tags: ai.categories || []
+            }
+            setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
+            await saveLocalTodo({ ...localPayload, ...finalData })
+            await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
+          }
+          const gId = await syncEventToGoogle({ ...localPayload, ...finalData })
+          if (gId) {
+            await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
+            setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId: gId } : t))
+            await saveLocalTodo({ ...localPayload, ...finalData, googleEventId: gId })
+          }
+        } catch (e) { console.error("Smart Save Error:", e) }
+      }, 300)
+    } else {
+      await addSyncQueue('set', newId, initialData)
+    }
   }
 
   // 필터링
@@ -311,11 +316,12 @@ function App() {
         tagExpanded={tagExpanded} setTagExpanded={setTagExpanded}
         selectedDate={selectedDate}
         calendarExpanded={calendarExpanded} setCalendarExpanded={setCalendarExpanded}
+        viewMonth={viewMonth}
         viewMonthLabel={viewMonthLabel}
         currentWeekDates={currentWeekDates}
         monthGridDates={monthGridDates}
         weekdayNames={weekdayNames}
-        prevMonth={prevMonth} nextMonth={nextMonth}
+        prevMonth={prevMonth} nextMonth={nextMonth} goToMonth={goToMonth}
         setShowSettings={setShowSettings}
       />
 
@@ -330,9 +336,26 @@ function App() {
         />
       </div>
 
-      <button className="add-fab" onClick={handleOpenAddModal}>
-        <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" /></svg>
-      </button>
+      {inputMode === 'smart' ? (
+        <button className="add-fab smart-fab" onClick={() => setShowSmartModal(true)}>
+          <span className="smart-fab-icon">✨</span>
+          <span className="smart-fab-text">{lang === 'ko' ? 'AI 입력' : 'AI'}</span>
+        </button>
+      ) : (
+        <button className="add-fab" onClick={handleOpenAddModal}>
+          <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" /></svg>
+        </button>
+      )}
+
+      {showSmartModal && (
+        <SmartInputModal
+          lang={lang}
+          smartText={smartText} setSmartText={setSmartText}
+          isAiAnalyzing={isAiAnalyzing}
+          onClose={() => { setShowSmartModal(false); setSmartText('') }}
+          onSave={handleSmartSave}
+        />
+      )}
 
       {showInputModal && (
         <InputModal
@@ -353,6 +376,7 @@ function App() {
           theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme}
           viewMode={viewMode} setViewMode={setViewMode}
           setSelectedDate={setSelectedDate}
+          inputMode={inputMode} setInputMode={setInputModePersisted}
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
           setShowSettings={setShowSettings}
         />

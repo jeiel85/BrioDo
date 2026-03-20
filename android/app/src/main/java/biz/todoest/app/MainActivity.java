@@ -3,6 +3,9 @@ package biz.todoest.app;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -19,5 +22,14 @@ public class MainActivity extends BridgeActivity {
                     | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                     | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
         }
+
+        // WebView 마이크 권한 허용 (Web Speech API)
+        WebView webView = getBridge().getWebView();
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(PermissionRequest request) {
+                request.grant(request.getResources());
+            }
+        });
     }
 }

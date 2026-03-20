@@ -5,6 +5,7 @@ export function SettingsModal({
   fontScale, setFontScale,
   theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate,
+  inputMode, setInputMode,
   user, handleLogin, handleLogout,
   setShowSettings
 }) {
@@ -62,6 +63,25 @@ export function SettingsModal({
               <span>{lang === 'ko' ? '랜덤' : 'Random'}</span>
             </button>
           </div>
+        </div>
+
+        <div className="settings-section">
+          <h3>{lang === 'ko' ? '할 일 입력 방식' : 'Input Mode'}</h3>
+          <div className="font-size-selector">
+            <button className={inputMode === 'smart' ? 'active' : ''} onClick={() => setInputMode('smart')}>
+              <span>✨</span>
+              <span>{lang === 'ko' ? '스마트 입력' : 'Smart'}</span>
+            </button>
+            <button className={inputMode === 'manual' ? 'active' : ''} onClick={() => setInputMode('manual')}>
+              <span>✏️</span>
+              <span>{lang === 'ko' ? '수동 입력' : 'Manual'}</span>
+            </button>
+          </div>
+          <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginTop: '8px', lineHeight: '1.4' }}>
+            {inputMode === 'smart'
+              ? (lang === 'ko' ? '자유롭게 입력하면 날짜·태그를 AI가 자동 분석합니다' : 'AI detects date & tags from natural text')
+              : (lang === 'ko' ? '날짜·태그를 직접 지정해 저장합니다' : 'Manually set date, tags and priority')}
+          </p>
         </div>
 
         <div className="settings-section">

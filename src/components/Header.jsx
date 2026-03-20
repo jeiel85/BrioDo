@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 export function Header({
   lang, t,
   formattedHeaderDate, handleGoToToday,
@@ -6,17 +8,32 @@ export function Header({
   allUsedTags, selectedTag, setSelectedTag, tagExpanded, setTagExpanded,
   selectedDate,
   calendarExpanded, setCalendarExpanded,
-  viewMonthLabel,
+  viewMonth, viewMonthLabel,
   currentWeekDates,
   monthGridDates,
   weekdayNames,
-  prevMonth, nextMonth,
+  prevMonth, nextMonth, goToMonth,
   setShowSettings
 }) {
+  const [showMonthPicker, setShowMonthPicker] = useState(false)
+  const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
+
+  const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+
   const getDayClass = (dayOfWeek) => {
     if (dayOfWeek === 0) return 'day-sunday'
     if (dayOfWeek === 6) return 'day-saturday'
     return ''
+  }
+
+  const openMonthPicker = () => {
+    setPickerYear(viewMonth.getFullYear())
+    setShowMonthPicker(true)
+  }
+
+  const handlePickerSelect = (year, month) => {
+    goToMonth(year, month)
+    setShowMonthPicker(false)
   }
 
   return (
@@ -77,9 +94,13 @@ export function Header({
               /* 월간 뷰 */
               <div className="month-calendar">
                 <div className="month-nav-header">
-                  <button className="month-nav-btn" onClick={prevMonth}>‹</button>
-                  <span className="month-nav-label">{viewMonthLabel}</span>
-                  <button className="month-nav-btn" onClick={nextMonth}>›</button>
+                  <div className="month-nav-inner">
+                    <button className="month-nav-btn" onClick={prevMonth}>‹</button>
+                    <span className="month-nav-label" onClick={openMonthPicker}>
+                      {viewMonthLabel}
+                    </span>
+                    <button className="month-nav-btn" onClick={nextMonth}>›</button>
+                  </div>
                   <button
                     className="calendar-expand-btn"
                     onClick={() => setCalendarExpanded(false)}
@@ -111,6 +132,30 @@ export function Header({
                     )
                   ))}
                 </div>
+
+                {/* 년/월 직접 선택 피커 */}
+                {showMonthPicker && (
+                  <div className="month-picker-overlay" onClick={() => setShowMonthPicker(false)}>
+                    <div className="month-picker" onClick={e => e.stopPropagation()}>
+                      <div className="month-picker-year-nav">
+                        <button onClick={() => setPickerYear(y => y - 1)}>‹</button>
+                        <span>{pickerYear}</span>
+                        <button onClick={() => setPickerYear(y => y + 1)}>›</button>
+                      </div>
+                      <div className="month-picker-grid">
+                        {Array.from({ length: 12 }, (_, i) => (
+                          <button
+                            key={i}
+                            className={viewMonth.getFullYear() === pickerYear && viewMonth.getMonth() === i ? 'active' : ''}
+                            onClick={() => handlePickerSelect(pickerYear, i)}
+                          >
+                            {new Date(pickerYear, i, 1).toLocaleDateString(locale, { month: 'short' })}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
