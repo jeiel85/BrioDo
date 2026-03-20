@@ -7,6 +7,8 @@ export function SettingsModal({
   viewMode, setViewMode, setSelectedDate,
   inputMode, setInputMode,
   completionCalendarMode, setCompletionCalendarMode,
+  defaultReminderOffset, setDefaultReminderOffset,
+  allDayReminderTime, setAllDayReminderTime,
   user, handleLogin, handleLogout,
   setShowSettings
 }) {
@@ -83,6 +85,49 @@ export function SettingsModal({
               ? (lang === 'ko' ? '자유롭게 입력하면 날짜·태그를 AI가 자동 분석합니다' : 'AI detects date & tags from natural text')
               : (lang === 'ko' ? '날짜·태그를 직접 지정해 저장합니다' : 'Manually set date, tags and priority')}
           </p>
+        </div>
+
+        <div className="settings-section">
+          <h3>{lang === 'ko' ? '알림 기본값' : 'Default Reminder'}</h3>
+          <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', lineHeight: '1.4' }}>
+            {lang === 'ko' ? '새 일정 추가 시 기본으로 적용할 알림 시점' : 'Default reminder timing for new tasks'}
+          </p>
+          <div className="reminder-offset-btns" style={{ marginBottom: '16px' }}>
+            {[
+              { val: null, label: lang === 'ko' ? '없음' : 'Off' },
+              { val: 0,  label: lang === 'ko' ? '정각' : 'On time' },
+              { val: 10, label: lang === 'ko' ? '10분 전' : '-10m' },
+              { val: 30, label: lang === 'ko' ? '30분 전' : '-30m' },
+              { val: 60, label: lang === 'ko' ? '1시간 전' : '-1h' },
+            ].map(({ val, label }) => (
+              <button
+                key={String(val)}
+                className={`reminder-offset-btn${defaultReminderOffset === val ? ' active' : ''}`}
+                onClick={() => setDefaultReminderOffset(val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <h3>{lang === 'ko' ? '종일 일정 알림 시간' : 'All-day Reminder Time'}</h3>
+          <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', lineHeight: '1.4' }}>
+            {lang === 'ko' ? '시간 없는 종일 일정의 기본 알림 시간 (기본: 오전 9시)' : 'Notification time for all-day tasks (default: 9:00 AM)'}
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input
+              type="time"
+              value={allDayReminderTime}
+              onChange={e => setAllDayReminderTime(e.target.value)}
+              style={{ flex: 1, padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--color-outline)', background: 'var(--color-surface-variant)', color: 'var(--color-on-surface)', fontSize: '14px' }}
+            />
+            <button
+              onClick={() => setAllDayReminderTime('09:00')}
+              style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
+            >
+              {lang === 'ko' ? '기본값' : 'Reset'}
+            </button>
+          </div>
         </div>
 
         <div className="settings-section">

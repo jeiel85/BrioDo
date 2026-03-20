@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 
-export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave }) {
+export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, reminderOffset, setReminderOffset, defaultReminderOffset }) {
   const textareaRef = useRef(null)
   const webRecognitionRef = useRef(null)
   const [isListening, setIsListening] = useState(false)
@@ -150,6 +150,29 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
             {lang === 'ko' ? 'AI가 분석 중...' : 'Analyzing...'}
           </div>
         )}
+
+        <div style={{ marginBottom: '12px' }}>
+          <div style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', marginBottom: '6px' }}>
+            🔔 {lang === 'ko' ? '알림' : 'Reminder'}
+          </div>
+          <div className="reminder-offset-btns">
+            {[
+              { val: null, label: lang === 'ko' ? '없음' : 'Off' },
+              { val: 0,  label: lang === 'ko' ? '정각' : 'On time' },
+              { val: 10, label: lang === 'ko' ? '10분 전' : '-10m' },
+              { val: 30, label: lang === 'ko' ? '30분 전' : '-30m' },
+              { val: 60, label: lang === 'ko' ? '1시간 전' : '-1h' },
+            ].map(({ val, label }) => (
+              <button
+                key={String(val)}
+                className={`reminder-offset-btn${(reminderOffset ?? defaultReminderOffset) === val ? ' active' : ''}`}
+                onClick={() => setReminderOffset(val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <button
           className="smart-save-btn"
