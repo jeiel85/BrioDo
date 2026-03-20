@@ -135,8 +135,12 @@
   - **수동 입력 AI 제거**: 기존 + 버튼 흐름에서 AI 분석 완전 분리. 편집 시 AI 호출도 제거 (날짜 덮어쓰기 버그 수정).
   - **캘린더 다중기기 공유**: `blenddo-calendar-id`를 Firestore `userSettings/{userId}`에 저장하여 디바이스 간 공유. localStorage는 캐시 역할만.
   - **캘린더 API 페이지네이션**: `calendarList` 250개 한계 극복 — `nextPageToken` 기반 `fetchAllCalendars` 함수 추가.
-  - **마이크(Web Speech API) 지원**: AndroidManifest에 `RECORD_AUDIO` 권한 추가 + MainActivity `WebChromeClient.onPermissionRequest` 오버라이드로 WebView 마이크 자동 승인.
-  - **AI fallback 강화**: `generateWithFallback`에서 에러 종류(quota/모델명 오류/네트워크 등) 무관하게 항상 다음 모델로 시도하도록 단순화.
+  - **AI fallback 강화**: `generateWithFallback`에서 에러 종류 무관하게 항상 다음 모델로 시도하도록 단순화.
+  - **음성 입력 구현 (3단계 시행착오)**:
+    - 1차: Web Speech API → Capacitor WebView에서 `service-not-allowed` 구조적 오류 (WebView는 브라우저 아님)
+    - 2차: `@capacitor-community/speech-recognition` 네이티브 플러그인 도입 + `requestPermissions()` 반환값 체크 → 이미 허용 상태에서도 차단되는 문제
+    - 3차(완료): `requestPermissions()` 반환값 체크 제거, `start()` 직접 호출 → 정상 동작
+    - 필수 조건: AndroidManifest `RECORD_AUDIO` 권한 + node_modules proguard 패치(`proguard-android.txt` → `proguard-android-optimize.txt`)
   - **디자인 가이드 추가**: `assets/design/stitch_add_edit_task.zip` — 할 일 추가/편집 화면 UI 가이드 (Stitch by Google 기반).
 
 - **2026-03-20** (세션 4):
@@ -176,4 +180,4 @@
   - `PROJECT_HISTORY.md` 최초 생성.
 
 ---
-*최종 업데이트: 2026-03-20 (세션 5)*
+*최종 업데이트: 2026-03-20 (세션 6)*
