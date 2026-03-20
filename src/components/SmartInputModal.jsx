@@ -1,67 +1,85 @@
 import { useRef, useEffect, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 
 export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave }) {
   const textareaRef = useRef(null)
-  const recognitionRef = useRef(null)
+  const webRecognitionRef = useRef(null)
   const [isListening, setIsListening] = useState(false)
   const [micError, setMicError] = useState('')
+
+  const isNative = Capacitor.isNativePlatform()
+  const langCode = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
 
   useEffect(() => {
     textareaRef.current?.focus()
   }, [])
 
   useEffect(() => {
-    return () => { recognitionRef.current?.abort() }
+    return () => {
+      if (isNative) SpeechRecognition.stop().catch(() => {})
+      else webRecognitionRef.current?.abort()
+    }
   }, [])
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
-  const canRecord = !!SpeechRecognition
+  const canRecord = isNative || !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
   const toggleMic = async () => {
     if (isListening) {
-      recognitionRef.current?.stop()
+      if (isNative) await SpeechRecognition.stop().catch(() => {})
+      else webRecognitionRef.current?.stop()
       setIsListening(false)
       return
     }
 
     setMicError('')
 
-    // Android WebView 런타임 마이크 권한 요청
-    if (navigator.mediaDevices?.getUserMedia) {
+    if (isNative) {
+      // 네이티브 Android 음성 인식
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-        stream.getTracks().forEach(t => t.stop())
-      } catch {
-        setMicError(lang === 'ko' ? '마이크 권한을 허용해주세요' : 'Microphone permission required')
-        return
+        const { speechRecognition } = await SpeechRecognition.requestPermissions()
+        if (speechRecognition !== 'granted') {
+          setMicError(lang === 'ko' ? '마이크 권한을 허용해주세요' : 'Microphone permission required')
+          return
+        }
+        setIsListening(true)
+        const result = await SpeechRecognition.start({
+          language: langCode,
+          maxResults: 1,
+          partialResults: false,
+          popup: false,
+        })
+        if (result?.matches?.[0]) {
+          const transcript = result.matches[0]
+          setSmartText(prev => prev ? prev + ' ' + transcript : transcript)
+        }
+      } catch (e) {
+        console.warn('[SpeechRecognition]', e)
+        setMicError(lang === 'ko' ? '음성 인식에 실패했습니다' : 'Speech recognition failed')
+      } finally {
+        setIsListening(false)
       }
-    }
-
-    const recognition = new SpeechRecognition()
-    recognition.lang = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
-    recognition.continuous = false
-    recognition.interimResults = false
-
-    recognition.onresult = (e) => {
-      const transcript = e.results[0][0].transcript
-      setSmartText(prev => prev ? prev + ' ' + transcript : transcript)
-    }
-    recognition.onend = () => setIsListening(false)
-    recognition.onerror = (e) => {
-      console.warn('[SpeechRecognition] error:', e.error)
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-        setMicError(lang === 'ko' ? '마이크 권한을 허용해주세요' : 'Microphone permission required')
-      } else if (e.error === 'network') {
-        setMicError(lang === 'ko' ? '음성 인식 네트워크 오류' : 'Network error')
-      } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
-        setMicError(lang === 'ko' ? `음성 인식 오류: ${e.error}` : `Error: ${e.error}`)
+    } else {
+      // 웹 브라우저 (개발 환경) fallback
+      const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition
+      if (!WebSpeech) return
+      const recognition = new WebSpeech()
+      recognition.lang = langCode
+      recognition.continuous = false
+      recognition.interimResults = false
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript
+        setSmartText(prev => prev ? prev + ' ' + transcript : transcript)
       }
-      setIsListening(false)
+      recognition.onend = () => setIsListening(false)
+      recognition.onerror = (e) => {
+        console.warn('[SpeechRecognition web]', e.error)
+        setIsListening(false)
+      }
+      webRecognitionRef.current = recognition
+      recognition.start()
+      setIsListening(true)
     }
-
-    recognitionRef.current = recognition
-    recognition.start()
-    setIsListening(true)
   }
 
   const handleKeyDown = (e) => {
