@@ -37,11 +37,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
     if (isNative) {
       // 네이티브 Android 음성 인식
       try {
-        const { speechRecognition } = await SpeechRecognition.requestPermissions()
-        if (speechRecognition !== 'granted') {
-          setMicError(lang === 'ko' ? '마이크 권한을 허용해주세요' : 'Microphone permission required')
-          return
-        }
+        await SpeechRecognition.requestPermissions().catch(() => {})
         setIsListening(true)
         const result = await SpeechRecognition.start({
           language: langCode,
@@ -54,8 +50,13 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           setSmartText(prev => prev ? prev + ' ' + transcript : transcript)
         }
       } catch (e) {
-        console.warn('[SpeechRecognition]', e)
-        setMicError(lang === 'ko' ? '음성 인식에 실패했습니다' : 'Speech recognition failed')
+        console.warn('[SpeechRecognition]', e?.message || e)
+        const msg = String(e?.message || '').toLowerCase()
+        if (msg.includes('permission') || msg.includes('denied')) {
+          setMicError(lang === 'ko' ? '마이크 권한을 허용해주세요' : 'Microphone permission required')
+        } else {
+          setMicError(lang === 'ko' ? '음성 인식에 실패했습니다' : 'Speech recognition failed')
+        }
       } finally {
         setIsListening(false)
       }
