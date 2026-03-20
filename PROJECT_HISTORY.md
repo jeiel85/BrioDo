@@ -130,6 +130,15 @@
 
 ## 📝 최근 활동 로그 (Recent Activity)
 
+- **2026-03-20** (세션 5):
+  - **스마트 입력 모드 도입**: 단일 textarea → 저장 후 Gemini AI 비동기 분석. FAB에서 스마트/수동 모드 전환. 설정에서 모드 토글(기본: 스마트).
+  - **수동 입력 AI 제거**: 기존 + 버튼 흐름에서 AI 분석 완전 분리. 편집 시 AI 호출도 제거 (날짜 덮어쓰기 버그 수정).
+  - **캘린더 다중기기 공유**: `blenddo-calendar-id`를 Firestore `userSettings/{userId}`에 저장하여 디바이스 간 공유. localStorage는 캐시 역할만.
+  - **캘린더 API 페이지네이션**: `calendarList` 250개 한계 극복 — `nextPageToken` 기반 `fetchAllCalendars` 함수 추가.
+  - **마이크(Web Speech API) 지원**: AndroidManifest에 `RECORD_AUDIO` 권한 추가 + MainActivity `WebChromeClient.onPermissionRequest` 오버라이드로 WebView 마이크 자동 승인.
+  - **AI fallback 강화**: `generateWithFallback`에서 에러 종류(quota/모델명 오류/네트워크 등) 무관하게 항상 다음 모델로 시도하도록 단순화.
+  - **디자인 가이드 추가**: `assets/design/stitch_add_edit_task.zip` — 할 일 추가/편집 화면 UI 가이드 (Stitch by Google 기반).
+
 - **2026-03-20** (세션 4):
   - **UI/UX 전면 리뉴얼 — "The Mindful Curator"** (Aeon Focus + DESIGN.md 기반):
     - `index.css` 전면 교체: Manrope + Inter 듀얼 폰트, Material Design 기반 tonal surface 계층 (`--color-surface`, `--color-surface-container-*`), 구 토큰(`--primary`, `--bg-color` 등) 완전 제거.
@@ -167,4 +176,4 @@
   - `PROJECT_HISTORY.md` 최초 생성.
 
 ---
-*최종 업데이트: 2026-03-20 (세션 4)*
+*최종 업데이트: 2026-03-20 (세션 5)*
