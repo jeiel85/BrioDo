@@ -25,7 +25,17 @@ function App() {
   const { lang, setLang, t } = useLanguage()
   const { user, loading, handleLogin, handleLogout } = useAuth()
   const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme } = useTheme()
-  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user)
+
+  // 완료 시 캘린더 처리 방식: 'status' | 'delete' (기본값: status)
+  const [completionCalendarMode, setCompletionCalendarMode] = useState(
+    () => localStorage.getItem('completionCalendarMode') || 'status'
+  )
+  const setCompletionCalendarModePersisted = (mode) => {
+    setCompletionCalendarMode(mode)
+    localStorage.setItem('completionCalendarMode', mode)
+  }
+
+  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode })
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState('date')
@@ -377,6 +387,7 @@ function App() {
           viewMode={viewMode} setViewMode={setViewMode}
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
+          completionCalendarMode={completionCalendarMode} setCompletionCalendarMode={setCompletionCalendarModePersisted}
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
           setShowSettings={setShowSettings}
         />
