@@ -69,6 +69,28 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
             <span>⏰</span>
             <input type="time" value={newTodo.time} onChange={e => setNewTodo({ ...newTodo, time: e.target.value })} />
           </div>
+          <div className="input-option-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-on-surface-variant)' }}>
+              🔔 {lang === 'ko' ? '알림' : 'Reminder'}
+            </span>
+            <div className="reminder-offset-btns">
+              {[
+                { val: null, label: lang === 'ko' ? '없음' : 'Off' },
+                { val: 0,  label: lang === 'ko' ? '정각' : 'On time' },
+                { val: 10, label: lang === 'ko' ? '10분 전' : '-10m' },
+                { val: 30, label: lang === 'ko' ? '30분 전' : '-30m' },
+                { val: 60, label: lang === 'ko' ? '1시간 전' : '-1h' },
+              ].map(({ val, label }) => (
+                <button
+                  key={String(val)}
+                  className={`reminder-offset-btn${(newTodo.reminderOffset ?? null) === val ? ' active' : ''}`}
+                  onClick={() => setNewTodo({ ...newTodo, reminderOffset: val })}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="input-option-item" style={{ flex: 1 }}>
             <span>🏷️</span>
             <input type="text" placeholder={t.tags} value={newTodo.tagInput} onChange={e => setNewTodo({ ...newTodo, tagInput: e.target.value })} />

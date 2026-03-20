@@ -7,6 +7,7 @@ import {
 import { db, genAI } from '../firebase'
 import { getLocalTodos, saveLocalTodosBatch, saveLocalTodo, deleteLocalTodo, addSyncQueue, getSyncQueue, clearSyncQueue } from '../db'
 import { syncEventToGoogle, deleteEventFromGoogle, fetchEventsFromGoogle } from '../calendar'
+import { cancelNotification, scheduleNotification } from './useNotifications'
 
 const sortTodos = (list) => list.sort((a, b) => {
   const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
@@ -223,6 +224,16 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
       const target = todos.find(t => t.id === id)
       setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: nowCompleting } : t))
       if (target) await saveLocalTodo({ ...target, completed: nowCompleting })
+      if (target) {
+        if (nowCompleting) {
+          // 완료 시 알림 취소
+          cancelNotification(id)
+        } else if (target.reminderOffset !== null && target.reminderOffset !== undefined) {
+          // 완료 취소 시 알림 재스케줄
+          scheduleNotification({ ...target, completed: false })
+        }
+      }
+
       if (user) {
         if (isOnline) {
           await setDoc(doc(db, "todos", id), { completed: nowCompleting }, { merge: true })
@@ -268,6 +279,7 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
       const target = todos.find(t => t.id === id)
       setTodos(prev => prev.filter(t => t.id !== id))
       await deleteLocalTodo(id)
+      cancelNotification(id)
       if (user) {
         if (isOnline) {
           await deleteDoc(doc(db, "todos", id))
