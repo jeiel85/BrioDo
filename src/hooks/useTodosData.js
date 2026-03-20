@@ -152,14 +152,35 @@ export function useTodosData(user) {
     return () => { if (unsubscribe) unsubscribe() }
   }, [user])
 
+  // 쿼터 소진 시 다음 모델로 순차 시도
+  const AI_MODELS = [
+    'gemini-2.5-flash-lite',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-flash',
+  ]
+
+  const generateWithFallback = async (prompt) => {
+    for (const model of AI_MODELS) {
+      try {
+        const response = await genAI.models.generateContent({ model, contents: prompt })
+        if (response?.text) return response.text
+      } catch (e) {
+        console.warn(`[AI] ${model} failed:`, e?.message || String(e))
+      }
+    }
+    console.error('[AI] All models failed')
+    return null
+  }
+
   const getAiTagsOnly = async (text) => {
     if (!genAI) return null
     try {
       setIsAiAnalyzing(true)
       const prompt = `Analyze: "${text}". Extract ONLY 1-2 category tags in Korean (e.g., 업무, 개인, 건강, 학습). Return ONLY JSON: {"categories": ["tag1", "tag2"]}`
-      const response = await genAI.models.generateContent({ model: 'gemini-2.0-flash', contents: prompt })
-      const rawText = response.text.replace(/```json|```/g, '').trim()
-      return JSON.parse(rawText.match(/\{.*\}/s)?.[0] || rawText)
+      const rawText = await generateWithFallback(prompt)
+      if (!rawText) return null
+      return JSON.parse(rawText.replace(/```json|```/g, '').trim().match(/\{.*\}/s)?.[0] || rawText.trim())
     } catch (error) {
       console.error('AI Tags Error:', error)
       return null
@@ -180,9 +201,10 @@ export function useTodosData(user) {
 
       const prompt = `오늘: ${todayInfo}\n입력: "${text}"\n\n반드시 아래 JSON만 응답하세요:\n{"categories":["태그1"],"date":"YYYY-MM-DD","time":"HH:MM 또는 null","refinedText":"핵심 내용"}\n\n규칙:\n- categories: 할일 성격 태그 1~2개 (업무,개인,건강,학습 등)\n- date: 날짜(YYYY-MM-DD). 상대적 표현은 오늘 기준 계산\n- time: 시간 있으면 HH:MM, 없으면 null\n- refinedText: 날짜/시간 제외한 핵심 내용`
 
-      const response = await genAI.models.generateContent({ model: 'gemini-2.0-flash', contents: prompt })
-      const rawText = response.text.replace(/```json|```/g, '').trim()
-      const analysis = JSON.parse(rawText.match(/\{.*\}/s)?.[0] || rawText)
+      const rawText = await generateWithFallback(prompt)
+      if (!rawText) return null
+      const cleaned = rawText.replace(/```json|```/g, '').trim()
+      const analysis = JSON.parse(cleaned.match(/\{.*\}/s)?.[0] || cleaned)
 
       if (analysis && (!analysis.date || !/^\d{4}-\d{2}-\d{2}$/.test(analysis.date))) {
         analysis.date = null

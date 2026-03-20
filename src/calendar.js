@@ -1,5 +1,7 @@
 // src/calendar.js
 import { Capacitor } from '@capacitor/core'
+import { db, auth } from './firebase.js'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 export const getCalendarAccessToken = () => {
   return localStorage.getItem('googleAccessToken')
@@ -36,6 +38,41 @@ export const fetchCalendars = async (token) => {
     throw new Error(`Failed to fetch calendars (${res.status})`)
   }
   return res.json()
+}
+
+// 페이지네이션을 포함한 전체 캘린더 목록 조회
+const fetchAllCalendars = async (token) => {
+  const items = []
+  let pageToken = null
+  do {
+    const url = 'https://www.googleapis.com/calendar/v3/users/me/calendarList' +
+      (pageToken ? `?pageToken=${pageToken}` : '')
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+    if (!res.ok) throw new Error(`Failed to fetch calendars (${res.status})`)
+    const data = await res.json()
+    items.push(...(data.items || []))
+    pageToken = data.nextPageToken || null
+  } while (pageToken)
+  return items
+}
+
+// Firestore에서 캘린더 ID 저장/조회 (다중 기기 공유)
+const FIRESTORE_CAL_COLLECTION = 'userSettings'
+const saveCalendarIdToFirestore = async (userId, calId) => {
+  try {
+    await setDoc(doc(db, FIRESTORE_CAL_COLLECTION, userId), { blendoCalendarId: calId }, { merge: true })
+  } catch (e) {
+    console.warn('saveCalendarIdToFirestore failed:', e)
+  }
+}
+const loadCalendarIdFromFirestore = async (userId) => {
+  try {
+    const snap = await getDoc(doc(db, FIRESTORE_CAL_COLLECTION, userId))
+    return snap.exists() ? (snap.data().blendoCalendarId || null) : null
+  } catch (e) {
+    console.warn('loadCalendarIdFromFirestore failed:', e)
+    return null
+  }
 }
 
 export const createBlendDoCalendar = async (token) => {
@@ -75,32 +112,43 @@ export const ensureBlendDoCalendar = async () => {
 
   _ensureCalendarPromise = (async () => {
     try {
-      // 항상 목록을 조회하여 캐시 유효성 검증 (증식 방지)
-      const savedId = localStorage.getItem('blenddo-calendar-id')
-      const data = await fetchCalendars(token)
-      const matchingCals = data.items?.filter(cal => cal.summary === 'BlendDo') || []
+      const userId = auth.currentUser?.uid
 
-      // 저장된 ID가 현재 목록에 있으면 재사용
+      // 1. localStorage → Firestore 순으로 저장된 ID 확인 (다중 기기 지원)
+      let savedId = localStorage.getItem('blenddo-calendar-id')
+      if (!savedId && userId) {
+        savedId = await loadCalendarIdFromFirestore(userId)
+        if (savedId) localStorage.setItem('blenddo-calendar-id', savedId)
+      }
+
+      // 2. 전체 캘린더 목록 조회 (페이지네이션 포함, 증식 방지)
+      const allCals = await fetchAllCalendars(token)
+      const matchingCals = allCals.filter(cal => cal.summary === 'BlendDo')
+
+      // 3. 저장된 ID가 목록에 있으면 재사용
       if (savedId && matchingCals.some(cal => cal.id === savedId)) {
         _sessionCalendarId = savedId
         return savedId
       }
 
-      // 기존 BlendDo 캘린더 중 첫 번째 선택
+      // 4. 기존 BlendDo 캘린더가 있으면 첫 번째 선택 (가장 오래된 것)
       if (matchingCals.length >= 1) {
-        localStorage.setItem('blenddo-calendar-id', matchingCals[0].id)
-        _sessionCalendarId = matchingCals[0].id
-        return matchingCals[0].id
+        const calId = matchingCals[0].id
+        localStorage.setItem('blenddo-calendar-id', calId)
+        if (userId) await saveCalendarIdToFirestore(userId, calId)
+        _sessionCalendarId = calId
+        return calId
       }
 
-      // 없으면 새로 생성
+      // 5. 없으면 새로 생성 후 Firestore에도 저장
       const newCal = await createBlendDoCalendar(token)
       localStorage.setItem('blenddo-calendar-id', newCal.id)
+      if (userId) await saveCalendarIdToFirestore(userId, newCal.id)
       _sessionCalendarId = newCal.id
       return newCal.id
     } catch (error) {
       console.error('ensureBlendDoCalendar error:', error)
-      if (error.message.includes('401')) {
+      if (error.message?.includes('401')) {
         localStorage.removeItem('googleAccessToken')
         _sessionCalendarId = null
       }

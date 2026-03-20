@@ -97,6 +97,10 @@ export function useCalendarNav(lang) {
     })
   }
 
+  const goToMonth = (year, month) => {
+    setViewMonth(new Date(year, month, 1))
+  }
+
   return {
     todayStr,
     selectedDate,
@@ -110,6 +114,7 @@ export function useCalendarNav(lang) {
     weekdayNames,
     prevMonth,
     nextMonth,
+    goToMonth,
     handleGoToToday
   }
 }
