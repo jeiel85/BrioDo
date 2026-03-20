@@ -10,6 +10,7 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
       <div className="active-list">
         {activeTodos.map(todo => (
           <div key={todo.id} className="todo-item" onClick={() => openEditModal(todo)}>
+            <div className={`priority-indicator ${todo.priority ?? 'medium'}`} />
             <div className="checkbox" onClick={(e) => toggleComplete(e, todo.id, todo.completed)}></div>
             <div className="todo-body">
               <div className="todo-main-row">
@@ -31,7 +32,7 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
           </div>
         ))}
         {activeTodos.length === 0 && (
-          <p style={{ textAlign: 'center', padding: '40px', color: 'var(--text-time)' }}>{t.doneAll}</p>
+          <p style={{ textAlign: 'center', padding: '40px', color: 'var(--color-on-surface-variant)' }}>{t.doneAll}</p>
         )}
       </div>
 
@@ -39,7 +40,7 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
         <div style={{ marginTop: '20px' }}>
           <div
             onClick={() => setShowCompleted(!showCompleted)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--text-time)', fontSize: '14px', fontWeight: '600', padding: '10px 0' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: 'var(--color-on-surface-variant)', fontSize: '14px', fontWeight: '600', padding: '10px 0' }}
           >
             <span style={{ fontSize: '10px', transition: 'transform 0.2s', transform: showCompleted ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
             <span>{t.completed} {completedTodos.length}</span>
@@ -48,6 +49,7 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
             <div>
               {completedTodos.map(todo => (
                 <div key={todo.id} className="todo-item" onClick={() => openEditModal(todo)} style={{ opacity: 0.6 }}>
+                  <div className={`priority-indicator ${todo.priority ?? 'medium'}`} />
                   <div className="checkbox checked" onClick={(e) => toggleComplete(e, todo.id, todo.completed)}></div>
                   <div className="todo-body">
                     <div className="todo-main-row">

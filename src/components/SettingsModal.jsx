@@ -12,7 +12,7 @@ export function SettingsModal({
     <div className="input-overlay" onClick={() => setShowSettings(false)}>
       <div className="settings-modal" onClick={e => e.stopPropagation()}>
         <div className="settings-header">
-          <h2>{lang === 'ko' ? '설정' : 'Settings'}</h2>
+          <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800 }}>{lang === 'ko' ? '설정' : 'Settings'}</h2>
           <button className="settings-close" onClick={() => setShowSettings(false)}>✕</button>
         </div>
 
@@ -30,15 +30,15 @@ export function SettingsModal({
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-time)', minWidth: '8px' }}>1</span>
+            <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', minWidth: '8px' }}>1</span>
             <input
               type="range" min="1" max="7" step="1"
               value={fontScale}
               onChange={e => setFontScale(Number(e.target.value))}
-              style={{ flex: 1, accentColor: 'var(--primary)', height: '4px', cursor: 'pointer' }}
+              style={{ flex: 1, accentColor: 'var(--color-primary)', height: '4px', cursor: 'pointer' }}
             />
-            <span style={{ fontSize: '11px', color: 'var(--text-time)', minWidth: '8px' }}>7</span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--primary)', minWidth: '16px', textAlign: 'right' }}>{fontScale}</span>
+            <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', minWidth: '8px' }}>7</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary)', minWidth: '16px', textAlign: 'right' }}>{fontScale}</span>
           </div>
         </div>
 
@@ -84,35 +84,22 @@ export function SettingsModal({
         {user && (
           <div className="settings-section">
             <h3>{lang === 'ko' ? '구글 캘린더 동기화' : 'Google Calendar Sync'}</h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-time)', marginBottom: '10px', lineHeight: '1.4' }}>
+            <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', lineHeight: '1.4' }}>
               {lang === 'ko'
                 ? '일정을 구글 캘린더와 양방향 동기화하려면 추가 권한 승인이 필요합니다. 기존 계정 그대로 버튼을 누르시면 됩니다.'
                 : 'Required to sync events bidirectionally with Google Calendar.'}
             </p>
             <button
               className="login-btn"
-              style={{ width: '100%', textAlign: 'center', background: 'transparent', border: '2px solid var(--primary)', color: 'var(--primary)', fontWeight: 'bold', marginBottom: '8px' }}
+              style={{ width: '100%', textAlign: 'center', background: 'transparent', border: '2px solid var(--color-primary)', color: 'var(--color-primary)', fontWeight: 'bold' }}
               onClick={() => { setShowSettings(false); handleLogin() }}
             >
               {lang === 'ko' ? '캘린더 권한 업데이트 🔄' : 'Grant Calendar Permissions 🔄'}
             </button>
-            <button
-              className="login-btn"
-              style={{ width: '100%', textAlign: 'center', background: 'transparent', border: '1.5px dashed var(--border-color)', color: 'var(--text-time)', fontWeight: 'normal', fontSize: '13px' }}
-              onClick={runCalendarTest}
-              disabled={isTesting}
-            >
-              {isTesting ? '테스트 중...' : '🧪 동기화 자동 테스트'}
-            </button>
-            {testLog.length > 0 && (
-              <div style={{ marginTop: '10px', background: 'var(--tag-bg)', borderRadius: '8px', padding: '10px', fontSize: '11px', lineHeight: '1.8', color: 'var(--text-main)', whiteSpace: 'pre-wrap' }}>
-                {testLog.join('\n')}
-              </div>
-            )}
           </div>
         )}
 
-        <div className="settings-section" style={{ borderBottom: 'none' }}>
+        <div className="settings-section">
           {user ? (
             <button
               className="logout-footer-btn"
@@ -122,23 +109,13 @@ export function SettingsModal({
               {lang === 'ko' ? '로그아웃 / 계정 전환' : 'Logout / Change Account'}
             </button>
           ) : (
-            <div style={{
-              background: 'linear-gradient(135deg, rgba(108,99,255,0.12), rgba(108,99,255,0.06))',
-              border: '1.5px solid var(--primary)',
-              borderRadius: '16px',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '14px',
-              marginTop: '10px'
-            }}>
+            <div className="login-card">
               <div style={{ fontSize: '32px' }}>☁️</div>
               <div style={{ textAlign: 'center' }}>
-                <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)', marginBottom: '6px' }}>
+                <p style={{ fontWeight: 700, fontSize: '15px', color: 'var(--color-on-surface)', marginBottom: '6px' }}>
                   {lang === 'ko' ? '클라우드 기능 활성화' : 'Enable Cloud Features'}
                 </p>
-                <p style={{ fontSize: '13px', color: 'var(--text-time)', lineHeight: '1.5' }}>
+                <p style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)', lineHeight: '1.5' }}>
                   {lang === 'ko'
                     ? '로그인하면 클라우드 백업 및\n구글 캘린더 연동이 활성화됩니다.'
                     : 'Login to enable cloud backup\nand Google Calendar sync.'}

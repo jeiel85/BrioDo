@@ -18,7 +18,7 @@ export function Header({
         </div>
 
         <div className="title-row">
-          <h1>BlendDo</h1>
+          <h1 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800 }}>BlendDo</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div className="view-selector">
               <button

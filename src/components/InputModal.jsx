@@ -1,7 +1,19 @@
+const PRIORITY_LABELS = {
+  ko: { low: '낮음', medium: '보통', high: '높음', urgent: '긴급' },
+  ja: { low: '低', medium: '中', high: '高', urgent: '緊急' },
+  zh: { low: '低', medium: '中', high: '高', urgent: '紧急' },
+  en: { low: 'Low', medium: 'Med', high: 'High', urgent: 'Urgent' },
+}
+
 export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setShowDescInput, isAiAnalyzing, editingTodoId, resetForm, handleSaveTodo }) {
+  const pLabels = PRIORITY_LABELS[lang] || PRIORITY_LABELS.en
+  const priority = newTodo.priority ?? 'medium'
+
   return (
     <div className="input-overlay" onClick={resetForm}>
       <div className="input-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-handle" />
+
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
           <input
             className="main-input"
@@ -24,11 +36,6 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
         {showDescInput && (
           <textarea
             className="desc-input"
-            style={{
-              width: '100%', minHeight: '80px', borderRadius: '12px', padding: '12px',
-              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-              color: 'white', fontSize: '14px', marginBottom: '10px', outline: 'none'
-            }}
             placeholder={lang === 'ko' ? '일정의 상세 내용이나 메모를 적어보세요' : 'Add details or notes...'}
             value={newTodo.description}
             onChange={e => setNewTodo({ ...newTodo, description: e.target.value })}
@@ -36,10 +43,22 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
         )}
 
         {isAiAnalyzing && (
-          <div style={{ fontSize: '11px', color: 'var(--primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ fontSize: '11px', color: 'var(--color-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
             <span className="pulse-dot"></span> {t.aiThinking}
           </div>
         )}
+
+        <div className="priority-picker">
+          {['low', 'medium', 'high', 'urgent'].map(level => (
+            <button
+              key={level}
+              className={`priority-picker-btn ${priority === level ? `active-${level}` : ''}`}
+              onClick={() => setNewTodo({ ...newTodo, priority: level })}
+            >
+              {pLabels[level]}
+            </button>
+          ))}
+        </div>
 
         <div className="input-options">
           <div className="input-option-item">

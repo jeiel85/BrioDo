@@ -35,7 +35,7 @@ function App() {
   // 할 일 입력 모달 상태
   const [showInputModal, setShowInputModal] = useState(false)
   const [editingTodoId, setEditingTodoId] = useState(null)
-  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '' })
+  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium' })
   const [showDescInput, setShowDescInput] = useState(false)
 
   // AI 태그 자동 제안 (디바운스)
@@ -88,7 +88,7 @@ function App() {
   }, [loading])
 
   const resetForm = () => {
-    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '' })
+    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium' })
     setShowDescInput(false)
     setEditingTodoId(null)
     setShowInputModal(false)
@@ -102,7 +102,8 @@ function App() {
       description: todo.description || '',
       date: todo.date,
       time: formatTime(todo.time, t.noTime),
-      tagInput: (todo.tags || []).map(tg => '#' + tg).join(' ')
+      tagInput: (todo.tags || []).map(tg => '#' + tg).join(' '),
+      priority: todo.priority ?? 'medium'
     })
     setShowDescInput(!!todo.description)
     setShowInputModal(true)
@@ -121,7 +122,7 @@ function App() {
       defaultTime = `${hh}:${mm}`
     }
     setEditingTodoId(null)
-    setNewTodo({ text: '', description: '', date: defaultDate, time: defaultTime, tagInput: '' })
+    setNewTodo({ text: '', description: '', date: defaultDate, time: defaultTime, tagInput: '', priority: 'medium' })
     setShowDescInput(false)
     setShowInputModal(true)
     document.body.classList.add('modal-open')
@@ -135,6 +136,7 @@ function App() {
     const savedDesc = newTodo.description
     const savedDate = newTodo.date
     const savedTime = newTodo.time || ''
+    const savedPriority = newTodo.priority ?? 'medium'
     const isEdit = !!editingTodoId
     const editId = editingTodoId
 
@@ -145,7 +147,7 @@ function App() {
         // 게스트 모드: 로컬에만 저장
         if (!user) {
           const localId = `guest_${Date.now()}`
-          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, completed: false, createdAt: Date.now() }
+          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, completed: false, createdAt: Date.now() }
           setTodos(prev => [...prev, localPayload])
           await saveLocalTodo(localPayload)
           return
@@ -154,7 +156,7 @@ function App() {
         // 신규 생성
         const newDocRef = doc(collection(db, "todos"))
         const newId = newDocRef.id
-        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, completed: false }
+        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, completed: false }
         const localPayload = { ...initialData, id: newId, createdAt: Date.now() }
 
         setTodos(prev => [...prev, localPayload])
@@ -208,7 +210,7 @@ function App() {
         }
       } else {
         // 수정
-        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags }
+        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority }
         const oldTodo = todos.find(t => t.id === editId) || {}
 
         setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...updateData } : t))
@@ -291,7 +293,7 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontWeight: 600 }}>
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)', fontWeight: 600 }}>
         {t.loading}
       </div>
     )

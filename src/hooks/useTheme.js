@@ -4,6 +4,29 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 
 const fontScaleMap = { 1: 0.70, 2: 0.82, 3: 0.91, 4: 1.00, 5: 1.10, 6: 1.20, 7: 1.35 }
 
+// All CSS custom properties managed by random theme — must match index.css token names
+const RANDOM_THEME_PROPS = [
+  '--color-surface',
+  '--color-surface-container-low',
+  '--color-surface-container-lowest',
+  '--color-surface-container-high',
+  '--color-primary',
+  '--color-primary-end',
+  '--color-on-surface',
+  '--color-on-surface-variant',
+  '--color-outline-variant',
+  '--color-secondary',
+  '--color-secondary-container',
+  '--color-tertiary',
+  '--color-error',
+  '--priority-low',
+  '--priority-medium',
+  '--priority-high',
+  '--priority-urgent',
+  '--checkbox-border',
+  '--header-glass-bg',
+]
+
 export function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem('blenddo-theme') || 'dark')
   const [fontScale, setFontScale] = useState(() => {
@@ -20,27 +43,50 @@ export function useTheme() {
 
   const generateRandomTheme = () => {
     const hue = Math.floor(Math.random() * 360)
+    const sec = (hue + 150) % 360
+    const ter = (hue + 60) % 360
     const isDark = Math.random() > 0.5
+
     const colors = isDark ? {
-      primary: `hsl(${hue}, 70%, 65%)`,
-      bgColor: `hsl(${hue}, 15%, 10%)`,
-      cardBg: `hsl(${hue}, 15%, 14%)`,
-      textMain: `hsl(${hue}, 10%, 90%)`,
-      textTime: `hsl(${hue}, 10%, 60%)`,
-      borderColor: `hsl(${hue}, 15%, 22%)`,
-      checkboxBorder: `hsl(${hue}, 10%, 40%)`,
-      tagBg: `hsl(${hue}, 15%, 18%)`,
-      modalBg: `hsl(${hue}, 15%, 14%)`,
+      '--color-surface':                  `hsl(${hue}, 15%, 8%)`,
+      '--color-surface-container-low':    `hsl(${hue}, 15%, 12%)`,
+      '--color-surface-container-lowest': `hsl(${hue}, 15%, 6%)`,
+      '--color-surface-container-high':   `hsl(${hue}, 15%, 22%)`,
+      '--color-primary':                  `hsl(${hue}, 70%, 75%)`,
+      '--color-primary-end':              `hsl(${hue}, 60%, 60%)`,
+      '--color-on-surface':               `hsl(${hue}, 10%, 88%)`,
+      '--color-on-surface-variant':       `hsl(${hue}, 10%, 68%)`,
+      '--color-outline-variant':          `hsla(${hue}, 15%, 55%, 0.15)`,
+      '--color-secondary':                `hsl(${sec}, 55%, 65%)`,
+      '--color-secondary-container':      `hsl(${sec}, 40%, 22%)`,
+      '--color-tertiary':                 `hsl(${ter}, 65%, 75%)`,
+      '--color-error':                    `hsl(0, 70%, 72%)`,
+      '--priority-low':                   `hsl(${hue}, 10%, 60%)`,
+      '--priority-medium':                `hsl(${hue}, 70%, 75%)`,
+      '--priority-high':                  `hsl(${ter}, 65%, 75%)`,
+      '--priority-urgent':                `hsl(0, 70%, 72%)`,
+      '--checkbox-border':                `hsla(${hue}, 10%, 80%, 0.25)`,
+      '--header-glass-bg':                `hsla(${hue}, 15%, 8%, 0.85)`,
     } : {
-      primary: `hsl(${hue}, 70%, 50%)`,
-      bgColor: `hsl(${hue}, 30%, 97%)`,
-      cardBg: `hsl(${hue}, 30%, 97%)`,
-      textMain: `hsl(${hue}, 20%, 15%)`,
-      textTime: `hsl(${hue}, 10%, 45%)`,
-      borderColor: `hsl(${hue}, 20%, 90%)`,
-      checkboxBorder: `hsl(${hue}, 10%, 70%)`,
-      tagBg: `hsl(${hue}, 25%, 93%)`,
-      modalBg: `hsl(${hue}, 30%, 97%)`,
+      '--color-surface':                  `hsl(${hue}, 30%, 98%)`,
+      '--color-surface-container-low':    `hsl(${hue}, 25%, 94%)`,
+      '--color-surface-container-lowest': `hsl(${hue}, 30%, 100%)`,
+      '--color-surface-container-high':   `hsl(${hue}, 20%, 88%)`,
+      '--color-primary':                  `hsl(${hue}, 85%, 35%)`,
+      '--color-primary-end':              `hsl(${hue}, 75%, 52%)`,
+      '--color-on-surface':               `hsl(${hue}, 15%, 18%)`,
+      '--color-on-surface-variant':       `hsl(${hue}, 10%, 42%)`,
+      '--color-outline-variant':          `hsla(${hue}, 15%, 45%, 0.15)`,
+      '--color-secondary':                `hsl(${sec}, 60%, 28%)`,
+      '--color-secondary-container':      `hsl(${sec}, 55%, 85%)`,
+      '--color-tertiary':                 `hsl(${ter}, 65%, 38%)`,
+      '--color-error':                    `hsl(0, 75%, 38%)`,
+      '--priority-low':                   `hsl(${hue}, 10%, 42%)`,
+      '--priority-medium':                `hsl(${hue}, 85%, 35%)`,
+      '--priority-high':                  `hsl(${ter}, 65%, 38%)`,
+      '--priority-urgent':                `hsl(0, 75%, 38%)`,
+      '--checkbox-border':                `hsla(${hue}, 10%, 20%, 0.2)`,
+      '--header-glass-bg':                `hsla(${hue}, 30%, 98%, 0.85)`,
     }
     setRandomColors(colors)
     localStorage.setItem('blenddo-random-colors', JSON.stringify(colors))
@@ -50,19 +96,12 @@ export function useTheme() {
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('theme-light', 'theme-dark', 'theme-system')
-    const props = ['--primary', '--bg-color', '--card-bg', '--text-main', '--text-time', '--border-color', '--checkbox-border', '--tag-bg', '--modal-bg']
-    props.forEach(p => root.style.removeProperty(p))
+    RANDOM_THEME_PROPS.forEach(p => root.style.removeProperty(p))
 
     if (theme === 'random' && randomColors) {
-      root.style.setProperty('--primary', randomColors.primary)
-      root.style.setProperty('--bg-color', randomColors.bgColor)
-      root.style.setProperty('--card-bg', randomColors.cardBg)
-      root.style.setProperty('--text-main', randomColors.textMain)
-      root.style.setProperty('--text-time', randomColors.textTime)
-      root.style.setProperty('--border-color', randomColors.borderColor)
-      root.style.setProperty('--checkbox-border', randomColors.checkboxBorder)
-      root.style.setProperty('--tag-bg', randomColors.tagBg)
-      root.style.setProperty('--modal-bg', randomColors.modalBg)
+      Object.entries(randomColors).forEach(([prop, value]) => {
+        root.style.setProperty(prop, value)
+      })
     } else {
       root.classList.add(`theme-${theme}`)
     }

@@ -111,20 +111,39 @@
 - [ ] **Google OAuth 토큰 자동 갱신**: accessToken 만료(1시간) 시 재로그인 없이 자동 갱신
 
 ### 중간 우선순위
-- [ ] **우선순위 레벨**: 높음/보통/낮음 설정 및 정렬
 - [ ] **하위 태스크(체크리스트)**: 큰 할 일 하위 항목 분해
 - [ ] **검색 기능**: 제목/태그/날짜 범위 검색
 - [ ] **위젯**: 안드로이드 홈 화면 위젯
+- [ ] **바텀 내비게이션**: Today / Lists / Progress / Settings 탭 구조 (Aeon Focus 디자인 참고)
+- [ ] **Daily Momentum 게이지**: 오늘 완료율 원형 진행률 표시 (홈 상단)
+- [ ] **통계 화면**: 주간 완료 수, Deep Work 세션, 성취 배지
 
 ### 낮은 우선순위
+- [ ] **카테고리 관리 화면**: Collection Cards (Work/Personal/Shopping + 이미지 Hero)
+- [ ] **Focus "Orb"**: tertiary-container 색상의 플로팅 집중 지표 위젯
+- [ ] **헤더 고도화**: 사용자 아바타 + 검색 아이콘 (TopAppBar)
 - [ ] **iOS 지원**: Capacitor iOS 빌드 및 Apple 로그인 연동
 - [ ] **공유 기능**: 특정 할 일을 다른 사람과 공유
-- [ ] **통계 뷰**: 완료율, 태그별 분포 시각화
 - [ ] **patch-package 도입**: node_modules 패치 영구 적용
 
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-20** (세션 4):
+  - **UI/UX 전면 리뉴얼 — "The Mindful Curator"** (Aeon Focus + DESIGN.md 기반):
+    - `index.css` 전면 교체: Manrope + Inter 듀얼 폰트, Material Design 기반 tonal surface 계층 (`--color-surface`, `--color-surface-container-*`), 구 토큰(`--primary`, `--bg-color` 등) 완전 제거.
+    - 글래스모피즘 헤더 (`backdrop-filter: blur(12px)`, `@supports` 조건부, `--header-glass-bg` 변수).
+    - 1px 구분선 전면 제거 → tonal 카드 방식 (`border-radius: 1rem`, tonal background).
+    - Gradient FAB + 저장 버튼 + 날짜 active 항목 (`linear-gradient(135deg, --color-primary, --color-primary-end)`).
+    - 체크박스 완료 색상 → `--color-secondary` (녹색 계열).
+    - **Priority 필드 신규 추가**: `low / medium / high / urgent` 4단계. 투두 왼쪽 3px 컬러 바(priority indicator)로 시각화.
+    - `InputModal.jsx`: drag handle pill + priority segmented picker (4버튼) 추가, 인라인 하드코딩 스타일 CSS 변수로 전환.
+    - `TodoList.jsx`: priority indicator 렌더링 추가 (`[컬러바] [체크박스] [내용]` flex row).
+    - `Header.jsx`: BlendDo 타이틀 Manrope 800 적용.
+    - `SettingsModal.jsx`: 설정 타이틀 Manrope 800, 구 토큰명 전면 교체, 깨진 테스트 버튼 코드 제거, 로그인 카드 `.login-card` CSS 클래스로 전환.
+    - `useTheme.js`: `props` 배열 신규 토큰명으로 교체, `generateRandomTheme` HSL 기반 신규 토큰 구조로 재작성 (`--header-glass-bg` 포함).
+    - `App.jsx`: priority 필드 `newTodo` 초기값/수정/저장/리셋에 추가, 로딩 스피너 토큰 교체.
 
 - **2026-03-19** (세션 3):
   - **로그인 버튼 단일화**: Header 우측 상단, TodoList 중간 배너의 로그인 버튼 제거. 설정 화면에 클라우드 기능 설명 카드 + Google 로그인 버튼으로 통합.
@@ -148,4 +167,4 @@
   - `PROJECT_HISTORY.md` 최초 생성.
 
 ---
-*최종 업데이트: 2026-03-20*
+*최종 업데이트: 2026-03-20 (세션 4)*
