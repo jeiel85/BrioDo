@@ -1,6 +1,29 @@
 // src/calendar.js
+import { Capacitor } from '@capacitor/core'
+
 export const getCalendarAccessToken = () => {
   return localStorage.getItem('googleAccessToken')
+}
+
+// 토큰 자동 갱신 (50분 경과 시 GoogleAuth.refresh() 호출)
+export const refreshAccessTokenIfNeeded = async () => {
+  if (!Capacitor.isNativePlatform()) return
+  const savedAt = parseInt(localStorage.getItem('googleAccessTokenSavedAt') || '0')
+  if (!savedAt) return
+  const age = Date.now() - savedAt
+  if (age < 50 * 60 * 1000) return  // 50분 미만이면 skip
+
+  try {
+    const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
+    const refreshed = await GoogleAuth.refresh()
+    if (refreshed?.accessToken) {
+      localStorage.setItem('googleAccessToken', refreshed.accessToken)
+      localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
+      console.log('Calendar token refreshed ✓')
+    }
+  } catch (e) {
+    console.warn('Token refresh failed:', e)
+  }
 }
 
 export const fetchCalendars = async (token) => {
@@ -18,7 +41,7 @@ export const fetchCalendars = async (token) => {
 export const createBlendDoCalendar = async (token) => {
   const res = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
     method: 'POST',
-    headers: { 
+    headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
@@ -28,8 +51,14 @@ export const createBlendDoCalendar = async (token) => {
   return res.json()
 }
 
-// 중복 캘린더 감지 시 반환되는 특수 객체
-export const CALENDAR_CONFLICT = '__CALENDAR_CONFLICT__'
+// 세션 내 캐시 (메모리): 재로그인 시 초기화 필요
+let _sessionCalendarId = null
+
+// 세션 캐시 초기화 (로그아웃 시 calendar.js 외부에서 호출)
+export const resetCalendarSession = () => {
+  _sessionCalendarId = null
+  _ensureCalendarPromise = null
+}
 
 // 동시 다발 호출 시 하나의 요청만 실행되도록 싱글톤 프로미스
 let _ensureCalendarPromise = null
@@ -38,31 +67,42 @@ export const ensureBlendDoCalendar = async () => {
   const token = getCalendarAccessToken()
   if (!token) return null
 
-  // 캐시된 ID가 있으면 즉시 반환
-  const savedId = localStorage.getItem('blenddo-calendar-id')
-  if (savedId) return savedId
+  // 세션 내 이미 검증된 ID가 있으면 즉시 반환
+  if (_sessionCalendarId) return _sessionCalendarId
 
   // 이미 진행 중인 요청이 있으면 그 결과를 공유
   if (_ensureCalendarPromise) return _ensureCalendarPromise
 
   _ensureCalendarPromise = (async () => {
     try {
+      // 항상 목록을 조회하여 캐시 유효성 검증 (증식 방지)
+      const savedId = localStorage.getItem('blenddo-calendar-id')
       const data = await fetchCalendars(token)
       const matchingCals = data.items?.filter(cal => cal.summary === 'BlendDo') || []
 
+      // 저장된 ID가 현재 목록에 있으면 재사용
+      if (savedId && matchingCals.some(cal => cal.id === savedId)) {
+        _sessionCalendarId = savedId
+        return savedId
+      }
+
+      // 기존 BlendDo 캘린더 중 첫 번째 선택
       if (matchingCals.length >= 1) {
-        // 복수 BlendDo 캘린더가 있어도 첫 번째를 자동 선택 (중복 모달 제거)
         localStorage.setItem('blenddo-calendar-id', matchingCals[0].id)
+        _sessionCalendarId = matchingCals[0].id
         return matchingCals[0].id
       }
 
+      // 없으면 새로 생성
       const newCal = await createBlendDoCalendar(token)
       localStorage.setItem('blenddo-calendar-id', newCal.id)
+      _sessionCalendarId = newCal.id
       return newCal.id
     } catch (error) {
       console.error('ensureBlendDoCalendar error:', error)
       if (error.message.includes('401')) {
         localStorage.removeItem('googleAccessToken')
+        _sessionCalendarId = null
       }
       return null
     } finally {
@@ -73,65 +113,46 @@ export const ensureBlendDoCalendar = async () => {
   return _ensureCalendarPromise
 }
 
-export const resolveCalendarConflict = async (calendarId, newName) => {
-  const token = getCalendarAccessToken()
-  if (!token) return null
-
-  if (calendarId) {
-    // 기존 캘린더에 연결
-    localStorage.setItem('blenddo-calendar-id', calendarId)
-    return calendarId
-  }
-
-  if (newName) {
-    // 새 이름으로 캘린더 생성
-    const res = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ summary: newName, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
-    })
-    if (!res.ok) throw new Error('Failed to create calendar')
-    const newCal = await res.json()
-    localStorage.setItem('blenddo-calendar-id', newCal.id)
-    return newCal.id
-  }
-
-  return null
+const PRIORITY_EMOJI = {
+  low: '🔵',
+  medium: '🟡',
+  high: '🔴',
+  urgent: '🚨'
 }
 
 const buildEventPayload = (todo) => {
-  // 제목에 B] 접두사 추가 (이미 있으면 중복 추가 방지)
-  const titleWithPrefix = todo.text?.startsWith('B]') ? todo.text : `B] ${todo.text || '할 일'}`
-  
+  const priorityEmoji = PRIORITY_EMOJI[todo.priority] || '🟡'
+  const completedPrefix = todo.completed ? '✅ ' : ''
+
+  // 기존 B] 접두사가 있을 경우 제거 후 재포맷
+  const cleanText = (todo.text || '할 일')
+    .replace(/^(✅\s+)?(🔵|🟡|🔴|🚨)\s+B\]\s*/u, '')
+    .replace(/^B\]\s*/, '')
+
   const payload = {
-    summary: titleWithPrefix,
+    summary: `${completedPrefix}${priorityEmoji} B] ${cleanText}`,
     description: todo.description || '',
   }
 
+  if (todo.completed) {
+    payload.colorId = '8'  // Google Calendar Graphite (회색)
+  }
+
   if (todo.time) {
-    // 특정 시간이 있는 경우
-    // date: "YYYY-MM-DD", time: "HH:MM"
     const startStr = `${todo.date}T${todo.time}:00`
-    
     const startDt = new Date(startStr)
-    // End time을 1시간 뒤로 설정 (기본값)
     const endDt = new Date(startDt.getTime() + 60 * 60 * 1000)
 
     const parseTz = (dt) => {
       const p = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString()
-      return p.substring(0, 19) + (dt.getTimezoneOffset() <= 0 ? '+' : '-') + 
+      return p.substring(0, 19) + (dt.getTimezoneOffset() <= 0 ? '+' : '-') +
              String(Math.abs(dt.getTimezoneOffset() / 60)).padStart(2, '0') + ':00'
     }
 
     payload.start = { dateTime: parseTz(startDt), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
     payload.end = { dateTime: parseTz(endDt), timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
   } else {
-    // 종일 일정
     payload.start = { date: todo.date }
-    // Google Calendar 종일 일정의 종료일은 다음 날이어야 함
     const nextDay = new Date(todo.date)
     nextDay.setDate(nextDay.getDate() + 1)
     const endStr = new Date(nextDay.getTime() - nextDay.getTimezoneOffset() * 60000).toISOString().split('T')[0]
@@ -143,7 +164,14 @@ const buildEventPayload = (todo) => {
 
 export const syncEventToGoogle = async (todo) => {
   const token = getCalendarAccessToken()
-  if (!token) return null
+  if (!token) {
+    console.warn('syncEventToGoogle: no access token — calendar sync skipped')
+    return null
+  }
+
+  await refreshAccessTokenIfNeeded()
+  const freshToken = getCalendarAccessToken()
+  if (!freshToken) return null
 
   const calendarId = await ensureBlendDoCalendar()
   if (!calendarId || typeof calendarId === 'object') return null
@@ -153,7 +181,7 @@ export const syncEventToGoogle = async (todo) => {
   try {
     let method = 'POST'
     let url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`
-    
+
     if (todo.googleEventId) {
       method = 'PUT'
       url += `/${todo.googleEventId}`
@@ -162,7 +190,7 @@ export const syncEventToGoogle = async (todo) => {
     const res = await fetch(url, {
       method,
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${freshToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
@@ -170,15 +198,15 @@ export const syncEventToGoogle = async (todo) => {
 
     if (!res.ok) {
       if (res.status === 401) localStorage.removeItem('googleAccessToken')
-      // 캘린더 자체가 삭제된 경우 (POST → 404): 캐시 초기화 후 새 캘린더 생성
       if (res.status === 404 && method === 'POST') {
         console.warn('syncEventToGoogle: calendar not found, resetting cache and retrying...')
         localStorage.removeItem('blenddo-calendar-id')
+        _sessionCalendarId = null
         const newCalendarId = await ensureBlendDoCalendar()
         if (newCalendarId) {
           const retryRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(newCalendarId)}/events`, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            headers: { Authorization: `Bearer ${freshToken}`, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           })
           if (retryRes.ok) {
@@ -187,11 +215,10 @@ export const syncEventToGoogle = async (todo) => {
           }
         }
       }
-      // 이벤트가 삭제된 경우 (PUT → 404): 새로 생성
       if (res.status === 404 && method === 'PUT') {
         const createRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${freshToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         })
         if (createRes.ok) {
@@ -213,16 +240,20 @@ export const syncEventToGoogle = async (todo) => {
 export const deleteEventFromGoogle = async (googleEventId) => {
   const token = getCalendarAccessToken()
   if (!token || !googleEventId) return
-  
+
+  await refreshAccessTokenIfNeeded()
+  const freshToken = getCalendarAccessToken()
+  if (!freshToken) return
+
   const calendarId = await ensureBlendDoCalendar()
   if (!calendarId || typeof calendarId === 'object') return
 
   try {
     const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${googleEventId}`, {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${freshToken}` }
     })
-    
+
     if (res.status === 401) localStorage.removeItem('googleAccessToken')
   } catch (error) {
     console.error('deleteEventFromGoogle error:', error)
@@ -233,15 +264,18 @@ export const deleteEventFromGoogle = async (googleEventId) => {
 export const fetchEventsFromGoogle = async () => {
   const token = getCalendarAccessToken()
   if (!token) return []
-  
+
+  await refreshAccessTokenIfNeeded()
+  const freshToken = getCalendarAccessToken()
+  if (!freshToken) return []
+
   const calendarId = await ensureBlendDoCalendar()
   if (!calendarId || typeof calendarId === 'object') return []
 
   try {
-    // From 30 days ago to future
     const timeMin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
     const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?timeMin=${timeMin}&singleEvents=true`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${freshToken}` }
     })
     if (!res.ok) {
       if (res.status === 401) localStorage.removeItem('googleAccessToken')

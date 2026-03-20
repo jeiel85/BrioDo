@@ -1,113 +1,115 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { getLocalDateString } from '../utils/helpers'
 
 export function useCalendarNav(lang) {
   const todayStr = getLocalDateString(new Date())
-  const [selectedDate, setSelectedDate] = useState(todayStr)
-  const [baseDate, setBaseDate] = useState(new Date())
+  const [selectedDate, setSelectedDateState] = useState(todayStr)
+  const [calendarExpanded, setCalendarExpanded] = useState(false)
+  const [viewMonth, setViewMonth] = useState(new Date())
 
-  const weekScrollRef = useRef(null)
-  const hasScrolledInit = useRef(false)
+  const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
 
   const handleGoToToday = () => {
     const today = new Date()
-    setSelectedDate(getLocalDateString(today))
-    setBaseDate(today)
+    setSelectedDateState(getLocalDateString(today))
+    setViewMonth(today)
+    setCalendarExpanded(false)
   }
 
-  const dateRange = useMemo(() => {
-    if (!baseDate) return []
-    const dates = []
-    const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+  // 날짜 선택 시 월간 달력 자동 축소
+  const setSelectedDate = (dateStr) => {
+    setSelectedDateState(dateStr)
+    // viewMonth를 선택한 날짜의 달로 업데이트
+    const d = new Date(dateStr + 'T00:00:00')
+    setViewMonth(d)
+    setCalendarExpanded(false)
+  }
 
-    const startOfWeek = new Date(baseDate)
-    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
+  // 현재 주 7개 날짜 (선택된 날짜 기준 일요일~토요일)
+  const currentWeekDates = useMemo(() => {
+    const base = new Date(selectedDate + 'T00:00:00')
+    const sunday = new Date(base)
+    sunday.setDate(base.getDate() - base.getDay())
 
-    const rangeStart = new Date(startOfWeek)
-    rangeStart.setDate(rangeStart.getDate() - 14)
-
-    for (let i = 0; i < 35; i++) {
-      const d = new Date(rangeStart); d.setDate(rangeStart.getDate() + i)
-      dates.push({
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(sunday)
+      d.setDate(sunday.getDate() + i)
+      return {
         full: getLocalDateString(d),
         dayName: d.toLocaleDateString(locale, { weekday: 'short' }),
         dayNumber: d.getDate(),
-        weekIndex: Math.floor(i / 7)
+        dayOfWeek: d.getDay()
+      }
+    })
+  }, [selectedDate, locale])
+
+  // 월간 달력 그리드 (42칸 = 6주, null은 빈 칸)
+  const monthGridDates = useMemo(() => {
+    const year = viewMonth.getFullYear()
+    const month = viewMonth.getMonth()
+
+    const firstDay = new Date(year, month, 1)
+    const startPadding = firstDay.getDay()
+
+    const cells = Array(startPadding).fill(null)
+
+    const daysInMonth = new Date(year, month + 1, 0).getDate()
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d)
+      cells.push({
+        full: getLocalDateString(date),
+        dayNumber: d,
+        dayOfWeek: date.getDay()
       })
     }
-    return dates
-  }, [baseDate, lang])
 
-  // 주간 스크롤 초기화 (현재 주 중앙 정렬)
-  useEffect(() => {
-    if (weekScrollRef.current && baseDate) {
-      const container = weekScrollRef.current
-      let retryTimer
-      let forceTimer
-      const startTime = Date.now()
+    while (cells.length % 7 !== 0) cells.push(null)
 
-      const align = () => {
-        if (!container) return
-        const cw = container.clientWidth
-        const sw = container.scrollWidth
+    return cells
+  }, [viewMonth])
 
-        if (cw < 50 || sw < cw * 4) {
-          if (Date.now() - startTime < 3000) retryTimer = setTimeout(align, 50)
-          return
-        }
+  // 요일 헤더 (일~토)
+  const weekdayNames = useMemo(() => {
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(2024, 0, 7 + i) // 2024-01-07 = 일요일
+      return d.toLocaleDateString(locale, { weekday: 'narrow' })
+    })
+  }, [locale])
 
-        hasScrolledInit.current = false
-        container.style.scrollSnapType = 'none'
+  // 월간 뷰 표시용 헤더 (예: "2026년 3월" / "March 2026")
+  const viewMonthLabel = useMemo(() => {
+    return viewMonth.toLocaleDateString(locale, { year: 'numeric', month: 'long' })
+  }, [viewMonth, locale])
 
-        forceTimer = setInterval(() => {
-          if (weekScrollRef.current) {
-            weekScrollRef.current.scrollLeft = weekScrollRef.current.clientWidth * 2
-          }
-          if (Date.now() - startTime > 1000) {
-            clearInterval(forceTimer)
-            if (weekScrollRef.current) {
-              weekScrollRef.current.style.scrollSnapType = 'x mandatory'
-            }
-            hasScrolledInit.current = true
-          }
-        }, 30)
-      }
-      align()
-      return () => {
-        clearTimeout(retryTimer)
-        if (forceTimer) clearInterval(forceTimer)
-      }
-    }
-  }, [baseDate])
+  const prevMonth = () => {
+    setViewMonth(prev => {
+      const d = new Date(prev)
+      d.setMonth(d.getMonth() - 1)
+      return d
+    })
+  }
 
-  const handleWeekScroll = () => {
-    const container = weekScrollRef.current
-    if (!container || !hasScrolledInit.current) return
-    const weekWidth = container.clientWidth
-
-    if (container.scrollLeft < weekWidth * 0.3) {
-      hasScrolledInit.current = false
-      const d = new Date(baseDate)
-      d.setDate(d.getDate() - 7)
-      setBaseDate(d)
-    }
-    if (container.scrollLeft > weekWidth * 3.7) {
-      hasScrolledInit.current = false
-      const d = new Date(baseDate)
-      d.setDate(d.getDate() + 7)
-      setBaseDate(d)
-    }
+  const nextMonth = () => {
+    setViewMonth(prev => {
+      const d = new Date(prev)
+      d.setMonth(d.getMonth() + 1)
+      return d
+    })
   }
 
   return {
     todayStr,
     selectedDate,
     setSelectedDate,
-    baseDate,
-    setBaseDate,
-    dateRange,
-    weekScrollRef,
-    handleGoToToday,
-    handleWeekScroll
+    calendarExpanded,
+    setCalendarExpanded,
+    viewMonth,
+    viewMonthLabel,
+    currentWeekDates,
+    monthGridDates,
+    weekdayNames,
+    prevMonth,
+    nextMonth,
+    handleGoToToday
   }
 }

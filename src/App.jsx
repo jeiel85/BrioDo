@@ -25,7 +25,7 @@ function App() {
   const { user, loading, handleLogin, handleLogout } = useAuth()
   const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme } = useTheme()
   const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user)
-  const { todayStr, selectedDate, setSelectedDate, baseDate, setBaseDate, dateRange, weekScrollRef, handleGoToToday, handleWeekScroll } = useCalendarNav(lang)
+  const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState('date')
   const [selectedTag, setSelectedTag] = useState(null)
@@ -306,11 +306,16 @@ function App() {
         formattedHeaderDate={formattedHeaderDate} handleGoToToday={handleGoToToday}
         user={user}
         viewMode={viewMode} setViewMode={setViewMode}
-        todayStr={todayStr} setSelectedDate={setSelectedDate} setBaseDate={setBaseDate}
+        todayStr={todayStr} setSelectedDate={setSelectedDate}
         allUsedTags={allUsedTags} selectedTag={selectedTag} setSelectedTag={setSelectedTag}
         tagExpanded={tagExpanded} setTagExpanded={setTagExpanded}
-        weekScrollRef={weekScrollRef} handleWeekScroll={handleWeekScroll}
-        dateRange={dateRange} selectedDate={selectedDate}
+        selectedDate={selectedDate}
+        calendarExpanded={calendarExpanded} setCalendarExpanded={setCalendarExpanded}
+        viewMonthLabel={viewMonthLabel}
+        currentWeekDates={currentWeekDates}
+        monthGridDates={monthGridDates}
+        weekdayNames={weekdayNames}
+        prevMonth={prevMonth} nextMonth={nextMonth}
         setShowSettings={setShowSettings}
       />
 
@@ -347,7 +352,7 @@ function App() {
           fontScale={fontScale} setFontScale={setFontScale}
           theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme}
           viewMode={viewMode} setViewMode={setViewMode}
-          setSelectedDate={setSelectedDate} setBaseDate={setBaseDate}
+          setSelectedDate={setSelectedDate}
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
           setShowSettings={setShowSettings}
         />

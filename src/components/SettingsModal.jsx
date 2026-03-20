@@ -4,7 +4,7 @@ export function SettingsModal({
   lang,
   fontScale, setFontScale,
   theme, setTheme, generateRandomTheme,
-  viewMode, setViewMode, setSelectedDate, setBaseDate,
+  viewMode, setViewMode, setSelectedDate,
   user, handleLogin, handleLogout,
   setShowSettings
 }) {
@@ -69,7 +69,7 @@ export function SettingsModal({
           <div className="font-size-selector">
             <button
               className={viewMode === 'date' ? 'active' : ''}
-              onClick={() => { setViewMode('date'); setSelectedDate(getLocalDateString(new Date())); setBaseDate(new Date()) }}
+              onClick={() => { setViewMode('date'); setSelectedDate(getLocalDateString(new Date())) }}
             >
               <span>📅</span>
               <span>{lang === 'ko' ? '날짜별' : 'By Date'}</span>
