@@ -6,6 +6,7 @@ import { db } from './firebase'
 import { addSyncQueue, saveLocalTodo } from './db'
 import { syncEventToGoogle } from './calendar'
 import { formatTime } from './utils/helpers'
+import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
 
 import { useLanguage } from './hooks/useLanguage'
 import { useAuth } from './hooks/useAuth'
@@ -30,6 +31,23 @@ function App() {
   const [completionCalendarMode, setCompletionCalendarMode] = useState(
     () => localStorage.getItem('completionCalendarMode') || 'status'
   )
+
+  // 알림 설정: 기본 오프셋(분), 종일 일정 알림 시간
+  const [defaultReminderOffset, setDefaultReminderOffset] = useState(
+    () => { const v = localStorage.getItem('defaultReminderOffset'); return v !== null ? Number(v) : 0 }
+  )
+  const setDefaultReminderOffsetPersisted = (val) => {
+    setDefaultReminderOffset(val)
+    if (val === null) localStorage.removeItem('defaultReminderOffset')
+    else localStorage.setItem('defaultReminderOffset', String(val))
+  }
+  const [allDayReminderTime, setAllDayReminderTime] = useState(
+    () => localStorage.getItem('allDayReminderTime') || '09:00'
+  )
+  const setAllDayReminderTimePersisted = (val) => {
+    setAllDayReminderTime(val)
+    localStorage.setItem('allDayReminderTime', val)
+  }
   const setCompletionCalendarModePersisted = (mode) => {
     setCompletionCalendarMode(mode)
     localStorage.setItem('completionCalendarMode', mode)
@@ -50,11 +68,15 @@ function App() {
   // 스마트 입력 모달 상태
   const [showSmartModal, setShowSmartModal] = useState(false)
   const [smartText, setSmartText] = useState('')
+  const [smartReminderOffset, setSmartReminderOffset] = useState(null)
+
+  // 알림 채널 초기화 (앱 시작 시 1회)
+  useEffect(() => { initNotificationChannels() }, [])
 
   // 할 일 입력 모달 상태
   const [showInputModal, setShowInputModal] = useState(false)
   const [editingTodoId, setEditingTodoId] = useState(null)
-  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium' })
+  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: 0 })
   const [showDescInput, setShowDescInput] = useState(false)
 
   // AI 태그 자동 제안 (디바운스)
@@ -107,7 +129,7 @@ function App() {
   }, [loading])
 
   const resetForm = () => {
-    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium' })
+    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset })
     setShowDescInput(false)
     setEditingTodoId(null)
     setShowInputModal(false)
@@ -122,7 +144,8 @@ function App() {
       date: todo.date,
       time: formatTime(todo.time, t.noTime),
       tagInput: (todo.tags || []).map(tg => '#' + tg).join(' '),
-      priority: todo.priority ?? 'medium'
+      priority: todo.priority ?? 'medium',
+      reminderOffset: todo.reminderOffset ?? null
     })
     setShowDescInput(!!todo.description)
     setShowInputModal(true)
@@ -141,7 +164,7 @@ function App() {
       defaultTime = `${hh}:${mm}`
     }
     setEditingTodoId(null)
-    setNewTodo({ text: '', description: '', date: defaultDate, time: defaultTime, tagInput: '', priority: 'medium' })
+    setNewTodo({ text: '', description: '', date: defaultDate, time: defaultTime, tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset })
     setShowDescInput(false)
     setShowInputModal(true)
     document.body.classList.add('modal-open')
@@ -156,6 +179,7 @@ function App() {
     const savedDate = newTodo.date
     const savedTime = newTodo.time || ''
     const savedPriority = newTodo.priority ?? 'medium'
+    const savedReminderOffset = newTodo.reminderOffset ?? null
     const isEdit = !!editingTodoId
     const editId = editingTodoId
 
@@ -166,20 +190,22 @@ function App() {
         // 게스트 모드: 로컬에만 저장
         if (!user) {
           const localId = `guest_${Date.now()}`
-          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, completed: false, createdAt: Date.now() }
+          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, completed: false, createdAt: Date.now() }
           setTodos(prev => [...prev, localPayload])
           await saveLocalTodo(localPayload)
+          scheduleNotification(localPayload)
           return
         }
 
         // 신규 생성
         const newDocRef = doc(collection(db, "todos"))
         const newId = newDocRef.id
-        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, completed: false }
+        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, completed: false }
         const localPayload = { ...initialData, id: newId, createdAt: Date.now() }
 
         setTodos(prev => [...prev, localPayload])
         await saveLocalTodo(localPayload)
+        scheduleNotification(localPayload)
 
         if (isOnline) {
           await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
@@ -199,11 +225,16 @@ function App() {
         }
       } else {
         // 수정
-        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority }
+        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset }
         const oldTodo = todos.find(t => t.id === editId) || {}
+        const updatedTodo = { ...oldTodo, ...updateData }
 
         setTodos(prev => prev.map(t => t.id === editId ? { ...t, ...updateData } : t))
-        await saveLocalTodo({ ...oldTodo, ...updateData })
+        await saveLocalTodo(updatedTodo)
+
+        // 알림 재스케줄 (시간/날짜 변경 반영)
+        if (savedReminderOffset !== null) scheduleNotification({ ...updatedTodo, id: editId })
+        else cancelNotification(editId)
 
         if (isOnline) {
           await setDoc(doc(db, "todos", editId), { ...updateData, updatedAt: serverTimestamp() }, { merge: true })
@@ -229,21 +260,24 @@ function App() {
   const handleSmartSave = async (text) => {
     if (!text.trim()) return
     const savedText = text.trim()
+    const savedReminderOffset = smartReminderOffset
     const today = todayStr
     setShowSmartModal(false)
     setSmartText('')
+    setSmartReminderOffset(null)
 
     if (!user) {
       const localId = `guest_${Date.now()}`
-      const localPayload = { id: localId, text: savedText, description: '', date: today, time: '', tags: [], priority: 'medium', completed: false, createdAt: Date.now() }
+      const localPayload = { id: localId, text: savedText, description: '', date: today, time: '', tags: [], priority: 'medium', reminderOffset: savedReminderOffset, completed: false, createdAt: Date.now() }
       setTodos(prev => [...prev, localPayload])
       await saveLocalTodo(localPayload)
+      scheduleNotification(localPayload)
       return
     }
 
     const newDocRef = doc(collection(db, "todos"))
     const newId = newDocRef.id
-    const initialData = { uid: user.uid, text: savedText, description: '', date: today, time: '', tags: [], priority: 'medium', completed: false }
+    const initialData = { uid: user.uid, text: savedText, description: '', date: today, time: '', tags: [], priority: 'medium', reminderOffset: savedReminderOffset, completed: false }
     const localPayload = { ...initialData, id: newId, createdAt: Date.now() }
 
     setTodos(prev => [...prev, localPayload])
@@ -253,19 +287,22 @@ function App() {
       await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
       setTimeout(async () => {
         try {
-          let finalData = { text: savedText, date: today, time: '', tags: [] }
+          let finalData = { text: savedText, date: today, time: '', tags: [], reminderOffset: savedReminderOffset }
           const ai = await getAiFullAnalysis(savedText)
           if (ai) {
             finalData = {
               text: ai.refinedText || savedText,
               date: ai.date || today,
               time: ai.time || '',
-              tags: ai.categories || []
+              tags: ai.categories || [],
+              reminderOffset: savedReminderOffset
             }
             setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
             await saveLocalTodo({ ...localPayload, ...finalData })
             await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
           }
+          // AI 분석 완료 후 알림 스케줄 (날짜가 확정된 시점)
+          scheduleNotification({ ...localPayload, ...finalData, id: newId })
           const gId = await syncEventToGoogle({ ...localPayload, ...finalData })
           if (gId) {
             await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
@@ -276,6 +313,7 @@ function App() {
       }, 300)
     } else {
       await addSyncQueue('set', newId, initialData)
+      if (savedReminderTime) scheduleNotification({ ...localPayload })
     }
   }
 
@@ -362,8 +400,10 @@ function App() {
           lang={lang}
           smartText={smartText} setSmartText={setSmartText}
           isAiAnalyzing={isAiAnalyzing}
-          onClose={() => { setShowSmartModal(false); setSmartText('') }}
+          onClose={() => { setShowSmartModal(false); setSmartText(''); setSmartReminderOffset(null) }}
           onSave={handleSmartSave}
+          reminderOffset={smartReminderOffset} setReminderOffset={setSmartReminderOffset}
+          defaultReminderOffset={defaultReminderOffset}
         />
       )}
 
@@ -388,6 +428,8 @@ function App() {
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
           completionCalendarMode={completionCalendarMode} setCompletionCalendarMode={setCompletionCalendarModePersisted}
+          defaultReminderOffset={defaultReminderOffset} setDefaultReminderOffset={setDefaultReminderOffsetPersisted}
+          allDayReminderTime={allDayReminderTime} setAllDayReminderTime={setAllDayReminderTimePersisted}
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
           setShowSettings={setShowSettings}
         />

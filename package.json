@@ -17,6 +17,7 @@
     "@capacitor/browser": "^8.0.2",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.2.0",
+    "@capacitor/local-notifications": "^8.0.2",
     "@capacitor/network": "^8.0.1",
     "@capacitor/status-bar": "^8.0.1",
     "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
