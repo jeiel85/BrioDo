@@ -24,6 +24,8 @@ android {
         debug {
             applicationIdSuffix ".dev"
             versionNameSuffix "-dev"
+            resValue "string", "app_name", "BlendDo_Dev"
+            resValue "string", "title_activity_main", "BlendDo_Dev"
         }
     }
 }
