@@ -104,7 +104,7 @@ export function useTodosData(user) {
                   const dt = ev.start?.date || ev.start?.dateTime?.split('T')[0]
                   const time = ev.start?.dateTime ? ev.start.dateTime.substring(11, 16) : ''
                   const updatedTodo = {
-                    text: (ev.summary || '').replace(/^B\]\s*/, '') || '제목 없음',
+                    text: (ev.summary || '').replace(/^(✅\s+)?(🔵|🟡|🔴|🚨)\s+B\]\s*/u, '').replace(/^B\]\s*/, '') || '제목 없음',
                     description: ev.description || '',
                     date: dt || match.date,
                     time,
@@ -157,7 +157,7 @@ export function useTodosData(user) {
     try {
       setIsAiAnalyzing(true)
       const prompt = `Analyze: "${text}". Extract ONLY 1-2 category tags in Korean (e.g., 업무, 개인, 건강, 학습). Return ONLY JSON: {"categories": ["tag1", "tag2"]}`
-      const response = await genAI.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt })
+      const response = await genAI.models.generateContent({ model: 'gemini-2.0-flash', contents: prompt })
       const rawText = response.text.replace(/```json|```/g, '').trim()
       return JSON.parse(rawText.match(/\{.*\}/s)?.[0] || rawText)
     } catch (error) {
@@ -180,7 +180,7 @@ export function useTodosData(user) {
 
       const prompt = `오늘: ${todayInfo}\n입력: "${text}"\n\n반드시 아래 JSON만 응답하세요:\n{"categories":["태그1"],"date":"YYYY-MM-DD","time":"HH:MM 또는 null","refinedText":"핵심 내용"}\n\n규칙:\n- categories: 할일 성격 태그 1~2개 (업무,개인,건강,학습 등)\n- date: 날짜(YYYY-MM-DD). 상대적 표현은 오늘 기준 계산\n- time: 시간 있으면 HH:MM, 없으면 null\n- refinedText: 날짜/시간 제외한 핵심 내용`
 
-      const response = await genAI.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt })
+      const response = await genAI.models.generateContent({ model: 'gemini-2.0-flash', contents: prompt })
       const rawText = response.text.replace(/```json|```/g, '').trim()
       const analysis = JSON.parse(rawText.match(/\{.*\}/s)?.[0] || rawText)
 
@@ -201,8 +201,15 @@ export function useTodosData(user) {
       const target = todos.find(t => t.id === id)
       if (target) await saveLocalTodo({ ...target, completed: !completed })
       if (user) {
-        if (isOnline) await setDoc(doc(db, "todos", id), { completed: !completed }, { merge: true })
-        else await addSyncQueue('set', id, { completed: !completed })
+        if (isOnline) {
+          await setDoc(doc(db, "todos", id), { completed: !completed }, { merge: true })
+          // Google 캘린더 이벤트 완료 상태 갱신
+          if (target?.googleEventId) {
+            setTimeout(() => syncEventToGoogle({ ...target, completed: !completed }), 100)
+          }
+        } else {
+          await addSyncQueue('set', id, { completed: !completed })
+        }
       }
     } catch (e) { console.error(e) }
   }

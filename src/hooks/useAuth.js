@@ -11,6 +11,7 @@ import {
   signOut
 } from "firebase/auth"
 import { auth, googleProvider } from '../firebase'
+import { resetCalendarSession } from '../calendar'
 
 // Android/iOS: @codetrix-studio/capacitor-google-auth 플러그인으로 OAuth2 accessToken 획득
 // Web: signInWithPopup 사용
@@ -114,6 +115,7 @@ export function useAuth() {
 
         if (accessToken) {
           localStorage.setItem('googleAccessToken', accessToken)
+          localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
           console.log("Native: Calendar accessToken saved ✓")
         } else {
           console.warn("Native: accessToken not returned")
@@ -125,6 +127,7 @@ export function useAuth() {
         const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
         if (oauthCredential?.accessToken) {
           localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
+          localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
           console.log("Web: accessToken saved ✓")
         }
       }
@@ -140,6 +143,9 @@ export function useAuth() {
       }
       await signOut(auth)
       localStorage.removeItem('googleAccessToken')
+      localStorage.removeItem('googleAccessTokenSavedAt')
+      localStorage.removeItem('blenddo-calendar-id')
+      resetCalendarSession()
     } catch (e) {
       console.error("Logout error:", e)
     }
