@@ -4,26 +4,37 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   const textareaRef = useRef(null)
   const recognitionRef = useRef(null)
   const [isListening, setIsListening] = useState(false)
+  const [micError, setMicError] = useState('')
 
   useEffect(() => {
     textareaRef.current?.focus()
   }, [])
 
-  // 컴포넌트 언마운트 시 인식 중지
   useEffect(() => {
-    return () => {
-      recognitionRef.current?.abort()
-    }
+    return () => { recognitionRef.current?.abort() }
   }, [])
 
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
   const canRecord = !!SpeechRecognition
 
-  const toggleMic = () => {
+  const toggleMic = async () => {
     if (isListening) {
       recognitionRef.current?.stop()
       setIsListening(false)
       return
+    }
+
+    setMicError('')
+
+    // Android WebView 런타임 마이크 권한 요청
+    if (navigator.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        stream.getTracks().forEach(t => t.stop())
+      } catch {
+        setMicError(lang === 'ko' ? '마이크 권한을 허용해주세요' : 'Microphone permission required')
+        return
+      }
     }
 
     const recognition = new SpeechRecognition()
@@ -36,7 +47,17 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
       setSmartText(prev => prev ? prev + ' ' + transcript : transcript)
     }
     recognition.onend = () => setIsListening(false)
-    recognition.onerror = () => setIsListening(false)
+    recognition.onerror = (e) => {
+      console.warn('[SpeechRecognition] error:', e.error)
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        setMicError(lang === 'ko' ? '마이크 권한을 허용해주세요' : 'Microphone permission required')
+      } else if (e.error === 'network') {
+        setMicError(lang === 'ko' ? '음성 인식 네트워크 오류' : 'Network error')
+      } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        setMicError(lang === 'ko' ? `음성 인식 오류: ${e.error}` : `Error: ${e.error}`)
+      }
+      setIsListening(false)
+    }
 
     recognitionRef.current = recognition
     recognition.start()
@@ -95,6 +116,12 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           <div className="smart-analyzing">
             <span className="pulse-dot" />
             {lang === 'ko' ? '듣는 중...' : 'Listening...'}
+          </div>
+        )}
+
+        {micError && (
+          <div style={{ fontSize: '13px', color: 'var(--color-error, #d32f2f)', padding: '4px 2px' }}>
+            {micError}
           </div>
         )}
 
