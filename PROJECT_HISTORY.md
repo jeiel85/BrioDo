@@ -106,7 +106,7 @@
 ## 🗂️ 미구현 / 향후 개발 요건
 
 ### 높은 우선순위
-- [ ] **알림/리마인더**: 일정 시간에 푸시 알림 발송 (Capacitor LocalNotifications 활용)
+- [x] **알림/리마인더**: 일정 시간에 푸시 알림 발송 (Capacitor LocalNotifications 활용) — 세션 7 완료
 - [ ] **반복 일정**: 매일/매주/매월 반복 옵션
 - [ ] **Google OAuth 토큰 자동 갱신**: accessToken 만료(1시간) 시 재로그인 없이 자동 갱신
 
@@ -129,6 +129,21 @@
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-20** (세션 7):
+  - **브랜치 전략 수립**: `main` (안정/릴리즈) / `develop` (개발 중) 분리. debug 빌드에 `.dev` suffix + `BlendDo_Dev` 앱 이름 적용 → 폰에 두 앱 동시 설치 가능.
+  - **릴리즈 서명 설정**: `blenddo-release.jks` 키스토어 생성, `build.gradle`에 `signingConfigs.release` 추가. `assembleRelease`로 서명된 APK 배포 가능. 키스토어는 `.gitignore` 처리.
+  - **알림/리마인더 기능 구현** (`@capacitor/local-notifications@8.0.2`):
+    - `useNotifications.js` 신규 생성: `scheduleNotification`, `cancelNotification`, `initNotificationChannels`
+    - 알림 시점: 정각 / 10분 전 / 30분 전 / 1시간 전 버튼 선택 방식 (`reminderOffset` 필드)
+    - 설정에서 기본 알림 오프셋 및 종일 일정 기본 알림 시간(기본 오전 9시) 관리. 각 일정마다 개별 변경 가능.
+    - 우선순위별 알림 채널 4개 분리: `low`(조용), `medium`(진동), `high`(진동+LED), `urgent`(진동+LED 빨간 플래시)
+    - 알림 body에 일정 시간 및 상세내용 포함
+    - 시간 없는 종일 일정: `allDayReminderTime`(localStorage) 기준 알림
+    - 완료 처리 시 알림 자동 취소, 완료 취소 시 재스케줄
+    - 삭제 시 알림 취소
+    - AndroidManifest 권한 추가: `SCHEDULE_EXACT_ALARM`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`
+  - **develop → main 머지** 및 릴리즈 APK 폰 설치 완료.
 
 - **2026-03-20** (세션 5):
   - **스마트 입력 모드 도입**: 단일 textarea → 저장 후 Gemini AI 비동기 분석. FAB에서 스마트/수동 모드 전환. 설정에서 모드 토글(기본: 스마트).
@@ -180,4 +195,4 @@
   - `PROJECT_HISTORY.md` 최초 생성.
 
 ---
-*최종 업데이트: 2026-03-20 (세션 6)*
+*최종 업데이트: 2026-03-20 (세션 7)*
