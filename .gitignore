@@ -44,3 +44,7 @@ android/.gradle/
 android/local.properties
 ios/App/Pods/
 ios/App/build/
+
+# Android Keystore (debug keystore는 git에 포함 - release는 제외)
+android/keystore/*.jks
+android/keystore/release.keystore
