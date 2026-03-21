@@ -165,6 +165,25 @@ sed -i "s/jcenter()/mavenCentral()/g" \
 - `android/keystore/debug.keystore` — git에 포함된 공용 debug keystore
 - 모든 PC에서 동일 서명 → 재설치 없이 업데이트 설치 가능
 
+### Google 로그인 — SHA-1 핑거프린트 관리
+Google 로그인은 앱 서명 SHA-1이 Firebase Console에 등록된 값과 일치해야 동작한다.
+**증상:** 계정 선택 후 자동으로 닫히고 로그인이 완료되지 않음.
+
+현재 등록된 SHA-1 (두 PC):
+```
+1D:09:7C:59:11:25:22:D5:C4:46:49:4E:5B:F9:73:40:CE:57:F4:7A  ← 이 PC keystore
+C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE  ← 다른 PC keystore
+```
+
+**새 PC 추가 시 절차:**
+1. 현재 keystore SHA-1 확인:
+   ```bash
+   keytool -list -v -keystore android/keystore/debug.keystore -alias androiddebugkey -storepass android -keypass android
+   ```
+2. Firebase Console → 프로젝트 설정 → Android 앱 → 디지털 지문 추가
+3. 새 `google-services.json` 다운로드 → `android/app/google-services.json` 교체
+4. 빌드 후 재설치
+
 ---
 
 ## 중요 주의사항
@@ -174,6 +193,7 @@ sed -i "s/jcenter()/mavenCentral()/g" \
 3. **OAuth 토큰 만료** — accessToken 1시간 만료, 401 처리 로직 주의
 4. **랜덤 테마 대비 로직** — HSL 생성 시 접근성 대비율 보장 코드 수정 주의
 5. **Google Cloud Console** — Calendar API는 기본 비활성화, 수동 활성화 필요
+6. **SHA-1 불일치 → 로그인 무증상 실패** — 계정 선택 후 닫히면 SHA-1 미등록 의심. `google-services.json`에 해당 PC의 SHA-1이 있는지 확인
 
 ---
 
