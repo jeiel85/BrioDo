@@ -120,7 +120,7 @@ src/
 ```
 .env                        # VITE_GEMINI_API_KEY, VITE_FIREBASE_*
 android/app/google-services.json
-android/local.properties
+android/local.properties    # sdk.dir=C\:\\Users\\<username>\\AppData\\Local\\Android\\Sdk
 ```
 
 ### 빌드 순서
@@ -128,7 +128,7 @@ android/local.properties
 npm run build
 npx cap sync android
 cd android && ./gradlew assembleDebug
-adb -s <device> install -r app/build/outputs/apk/debug/app-debug.apk
+"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ### node_modules 패치 필요 (npm install 후 매번)
@@ -136,7 +136,34 @@ adb -s <device> install -r app/build/outputs/apk/debug/app-debug.apk
 - `jcenter()` → `mavenCentral()`
 - `proguard-android.txt` → `proguard-android-optimize.txt`
 
+```bash
+# 패치 명령 (npm install 후 실행)
+sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" \
+  node_modules/@capacitor-community/speech-recognition/android/build.gradle \
+  node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle
+
+sed -i "s/jcenter()/mavenCentral()/g" \
+  node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle
+```
+
 > **TODO:** `patch-package`로 자동화 예정
+
+### 새 PC 초기 설정 체크리스트
+1. `git clone` 또는 `git pull`
+2. `npm install --legacy-peer-deps`
+3. 위 node_modules 패치 적용
+4. `.env` 생성 (Firebase + Gemini 키)
+5. `android/app/google-services.json` 복사
+6. `android/local.properties` 생성 (Android SDK 경로)
+7. Claude Code 자동 승인 권한 설정 (`~/.claude/settings.json`):
+   - `Bash(npm run:*)`, `Bash(npm install:*)`, `Bash(npx cap:*)`
+   - `Bash(./gradlew:*)`, `Bash(git:*)`
+   - `Bash("C:/Users/.../adb.exe":*)`
+   - `Bash(sed -i:*)`, `Bash(cp:*)`, `Bash(mkdir:*)`
+
+### APK 서명
+- `android/keystore/debug.keystore` — git에 포함된 공용 debug keystore
+- 모든 PC에서 동일 서명 → 재설치 없이 업데이트 설치 가능
 
 ---
 
