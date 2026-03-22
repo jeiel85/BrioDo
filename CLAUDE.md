@@ -129,6 +129,7 @@ npm run build
 npx cap sync android
 cd android && ./gradlew assembleDebug
 "C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 install -r app/build/outputs/apk/debug/app-debug.apk
+"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 shell am start -n biz.todoest.app/.MainActivity
 ```
 
 ### node_modules 패치 필요 (npm install 후 매번)
