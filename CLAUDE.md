@@ -156,11 +156,39 @@ sed -i "s/jcenter()/mavenCentral()/g" \
 4. `.env` 생성 (Firebase + Gemini 키)
 5. `android/app/google-services.json` 복사
 6. `android/local.properties` 생성 (Android SDK 경로)
-7. Claude Code 자동 승인 권한 설정 (`~/.claude/settings.json`):
-   - `Bash(npm run:*)`, `Bash(npm install:*)`, `Bash(npx cap:*)`
-   - `Bash(./gradlew:*)`, `Bash(git:*)`
-   - `Bash("C:/Users/.../adb.exe":*)`
-   - `Bash(sed -i:*)`, `Bash(cp:*)`, `Bash(mkdir:*)`
+7. Claude Code 자동 승인 권한 설정 — `~/.claude/settings.json`을 아래 내용으로 생성:
+   (`<username>`은 각 PC의 Windows 사용자명으로 교체)
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(npx cap:*)",
+      "Bash(./gradlew:*)",
+      "Bash(cd \"d:/Project/BlendDo/android\" && ./gradlew:*)",
+      "Bash(git:*)",
+      "Bash(\"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe\":*)",
+      "Bash(sed -i:*)",
+      "Bash(cp:*)",
+      "Bash(mkdir:*)",
+      "Bash(tail:*)",
+      "Bash(keytool:*)",
+      "Read(//c/Users/<username>/AppData/Local/Android/Sdk/**)",
+      "Read(//c/Users/<username>/.claude/**)",
+      "Read(//d/다운로드_Downloads/**)",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\<username>\\.android",
+      "C:\\Users\\<username>\\.claude",
+      "d:\\다운로드_Downloads"
+    ]
+  }
+}
+```
 
 ### APK 서명
 - `android/keystore/debug.keystore` — git에 포함된 공용 debug keystore
