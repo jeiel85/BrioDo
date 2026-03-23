@@ -385,7 +385,7 @@ function App() {
       </div>
 
       {inputMode === 'smart' ? (
-        <button className="add-fab smart-fab" onClick={() => setShowSmartModal(true)}>
+        <button className="add-fab smart-fab" onClick={() => user ? setShowSmartModal(true) : setShowSettings(true)}>
           <span className="smart-fab-icon">✨</span>
           <span className="smart-fab-text">{lang === 'ko' ? 'AI 입력' : 'AI'}</span>
         </button>

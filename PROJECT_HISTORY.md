@@ -130,7 +130,7 @@
 
 ## 📝 최근 활동 로그 (Recent Activity)
 
-- **2026-03-20** (세션 7):
+- **2026-03-20** (세션 7 — PC A):
   - **브랜치 전략 수립**: `main` (안정/릴리즈) / `develop` (개발 중) 분리. debug 빌드에 `.dev` suffix + `BlendDo_Dev` 앱 이름 적용 → 폰에 두 앱 동시 설치 가능.
   - **릴리즈 서명 설정**: `blenddo-release.jks` 키스토어 생성, `build.gradle`에 `signingConfigs.release` 추가. `assembleRelease`로 서명된 APK 배포 가능. 키스토어는 `.gitignore` 처리.
   - **알림/리마인더 기능 구현** (`@capacitor/local-notifications@8.0.2`):
@@ -144,6 +144,23 @@
     - 삭제 시 알림 취소
     - AndroidManifest 권한 추가: `SCHEDULE_EXACT_ALARM`, `POST_NOTIFICATIONS`, `RECEIVE_BOOT_COMPLETED`
   - **develop → main 머지** 및 릴리즈 APK 폰 설치 완료.
+
+- **2026-03-22** (세션 7 — PC B):
+  - **새 PC 개발 환경 인계 작업** (이전 세션 컨텍스트 복구 후 이어서 진행).
+  - **Google 로그인 불동작 원인 진단 및 해결**:
+    - 증상: 계정 선택까지는 표시되나 이후 무증상으로 닫힘 (로그인 실패).
+    - 원인: 이전 세션에서 이 PC의 `debug.keystore`를 git에 커밋했으나, Firebase Console에는 다른 PC의 SHA-1만 등록되어 있어 Google OAuth 서버 측 검증 실패.
+      - 커밋된 keystore SHA-1: `1D:09:7C:59:11:25:22:D5:C4:46:49:4E:5B:F9:73:40:CE:57:F4:7A`
+      - Firebase에 등록된 SHA-1: `C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE`
+    - 해결: Firebase Console에서 이 PC의 SHA-1 추가 등록 → 새 `google-services.json` 다운로드 → 교체 후 빌드.
+  - **자연어 처리 불동작** — 로그인 실패의 2차 문제로 확인.
+  - **`google-services.json` 업데이트**: 두 PC의 SHA-1 모두 포함된 파일로 교체.
+  - **빌드 & 갤럭시 설치 완료**: 정상 빌드 확인 후 ADB 무선으로 Galaxy 기기에 재설치.
+  - **앱 자동 실행 추가**: 설치 후 `adb shell am start -n biz.todoest.app/.MainActivity`로 즉시 실행되도록 빌드 프로세스에 추가.
+  - **비로그인 시 AI 입력 차단**: 로그인 없이 ✨ AI 입력 버튼 클릭 시 설정 화면(로그인 유도)으로 연결.
+  - **Claude Code 자동 승인 설정 정리**: `~/.claude/settings.json` 22개 → 17개로 간소화.
+  - **CLAUDE.md 업데이트**: SHA-1 핑거프린트 관리 섹션 추가, 자동 승인 설정 JSON 명시.
+  - **공용 debug keystore**: `android/keystore/debug.keystore` 커밋 — 멀티 PC 서명 통일, Foojay 플러그인 제거로 빌드 안정화.
 
 - **2026-03-20** (세션 5):
   - **스마트 입력 모드 도입**: 단일 textarea → 저장 후 Gemini AI 비동기 분석. FAB에서 스마트/수동 모드 전환. 설정에서 모드 토글(기본: 스마트).
@@ -195,4 +212,4 @@
   - `PROJECT_HISTORY.md` 최초 생성.
 
 ---
-*최종 업데이트: 2026-03-20 (세션 7)*
+*최종 업데이트: 2026-03-23 (세션 8 — 멀티PC 동기화)*
