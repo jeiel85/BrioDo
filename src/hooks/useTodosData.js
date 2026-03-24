@@ -217,11 +217,27 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
     }
   }
 
-  const toggleComplete = async (e, id, completed) => {
+  const toggleComplete = async (e, id, completed, instanceDate = null) => {
     e.stopPropagation()
     const nowCompleting = !completed
     try {
       const target = todos.find(t => t.id === id)
+
+      // 반복 일정 인스턴스: completions 맵에 날짜별 완료 상태 저장
+      if (target?.recurrence?.type && target.recurrence.type !== 'none' && instanceDate) {
+        const updatedCompletions = { ...(target.completions || {}), [instanceDate]: nowCompleting }
+        const updatedTodo = { ...target, completions: updatedCompletions }
+        setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t))
+        await saveLocalTodo(updatedTodo)
+        if (user) {
+          if (isOnline) {
+            await setDoc(doc(db, "todos", id), { completions: updatedCompletions }, { merge: true })
+          } else {
+            await addSyncQueue('set', id, { completions: updatedCompletions })
+          }
+        }
+        return
+      }
       setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: nowCompleting } : t))
       if (target) await saveLocalTodo({ ...target, completed: nowCompleting })
       if (target) {
@@ -273,6 +289,26 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
     } catch (e) { console.error(e) }
   }
 
+  const toggleSubtaskComplete = async (todoId, subtaskId) => {
+    try {
+      const target = todos.find(t => t.id === todoId)
+      if (!target) return
+      const updatedSubtasks = (target.subtasks || []).map(st =>
+        st.id === subtaskId ? { ...st, completed: !st.completed } : st
+      )
+      const updatedTodo = { ...target, subtasks: updatedSubtasks }
+      setTodos(prev => prev.map(t => t.id === todoId ? updatedTodo : t))
+      await saveLocalTodo(updatedTodo)
+      if (user) {
+        if (isOnline) {
+          await setDoc(doc(db, "todos", todoId), { subtasks: updatedSubtasks }, { merge: true })
+        } else {
+          await addSyncQueue('set', todoId, { subtasks: updatedSubtasks })
+        }
+      }
+    } catch (e) { console.error('toggleSubtaskComplete error:', e) }
+  }
+
   const deleteTodo = async (e, id) => {
     e.stopPropagation()
     try {
@@ -299,6 +335,7 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
     isOnline,
     isAiAnalyzing,
     toggleComplete,
+    toggleSubtaskComplete,
     deleteTodo,
     getAiTagsOnly,
     getAiFullAnalysis

@@ -95,6 +95,69 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
             <span>🏷️</span>
             <input type="text" placeholder={t.tags} value={newTodo.tagInput} onChange={e => setNewTodo({ ...newTodo, tagInput: e.target.value })} />
           </div>
+          <div className="input-option-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-on-surface-variant)' }}>
+              🔁 {t.repeat}
+            </span>
+            <div className="recurrence-btns">
+              {[
+                { val: 'none',    label: t.repeatNone },
+                { val: 'daily',   label: t.repeatDaily },
+                { val: 'weekly',  label: t.repeatWeekly },
+                { val: 'monthly', label: t.repeatMonthly },
+              ].map(({ val, label }) => (
+                <button
+                  key={val}
+                  className={`recurrence-btn${(newTodo.recurrence?.type ?? 'none') === val ? ' active' : ''}`}
+                  onClick={() => setNewTodo(prev => ({ ...prev, recurrence: { ...(prev.recurrence || {}), type: val } }))}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {newTodo.recurrence?.type && newTodo.recurrence.type !== 'none' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)' }}>{t.repeatEndDate}</span>
+                <input
+                  type="date"
+                  value={newTodo.recurrence.endDate || ''}
+                  onChange={e => setNewTodo(prev => ({ ...prev, recurrence: { ...prev.recurrence, endDate: e.target.value || null } }))}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="subtasks-section">
+          <div className="subtasks-section-header">
+            <span className="subtasks-label">{t.checklist}</span>
+            <button
+              className="subtask-add-btn"
+              onClick={() => {
+                const newSt = { id: `st_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, text: '', completed: false }
+                setNewTodo(prev => ({ ...prev, subtasks: [...(prev.subtasks || []), newSt] }))
+              }}
+            >+</button>
+          </div>
+          {(newTodo.subtasks || []).map((st, idx) => (
+            <div key={st.id} className="subtask-input-row">
+              <span className="subtask-bullet">○</span>
+              <input
+                className="subtask-text-input"
+                placeholder={t.checklistPlaceholder}
+                value={st.text}
+                autoFocus={idx === (newTodo.subtasks || []).length - 1 && st.text === ''}
+                onChange={e => setNewTodo(prev => ({
+                  ...prev,
+                  subtasks: prev.subtasks.map(s => s.id === st.id ? { ...s, text: e.target.value } : s)
+                }))}
+              />
+              <button
+                className="subtask-remove-btn"
+                onClick={() => setNewTodo(prev => ({ ...prev, subtasks: prev.subtasks.filter(s => s.id !== st.id) }))}
+              >✕</button>
+            </div>
+          ))}
         </div>
 
         <div className="modal-actions">

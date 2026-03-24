@@ -5,7 +5,8 @@ import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { db } from './firebase'
 import { addSyncQueue, saveLocalTodo } from './db'
 import { syncEventToGoogle } from './calendar'
-import { formatTime } from './utils/helpers'
+import { formatTime, matchesRecurrence } from './utils/helpers'
+import { useAchievements } from './hooks/useAchievements'
 import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
 
 import { useLanguage } from './hooks/useLanguage'
@@ -16,15 +17,20 @@ import { useCalendarNav } from './hooks/useCalendarNav'
 
 import { Header } from './components/Header'
 import { TodoList } from './components/TodoList'
+import { BottomNav } from './components/BottomNav'
+import { CollectionsScreen } from './components/CollectionsScreen'
+import { StatsScreen } from './components/StatsScreen'
 import { InputModal } from './components/InputModal'
 import { SmartInputModal } from './components/SmartInputModal'
 import { SettingsModal } from './components/SettingsModal'
+import { AchievementUnlockModal } from './components/AchievementUnlockModal'
+import { AchievementsModal } from './components/AchievementsModal'
 
 import './index.css'
 
 function App() {
   const { lang, setLang, t } = useLanguage()
-  const { user, loading, handleLogin, handleLogout } = useAuth()
+  const { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired } = useAuth()
   const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme } = useTheme()
 
   // 완료 시 캘린더 처리 방식: 'status' | 'delete' (기본값: status)
@@ -53,13 +59,16 @@ function App() {
     localStorage.setItem('completionCalendarMode', mode)
   }
 
-  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode })
+  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode })
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState('date')
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false)
 
   // 입력 모드: 'smart' | 'manual' (기본값: smart)
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'smart')
@@ -76,7 +85,7 @@ function App() {
   // 할 일 입력 모달 상태
   const [showInputModal, setShowInputModal] = useState(false)
   const [editingTodoId, setEditingTodoId] = useState(null)
-  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: 0 })
+  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: 0, subtasks: [], recurrence: { type: 'none', endDate: null } })
   const [showDescInput, setShowDescInput] = useState(false)
 
   // AI 태그 자동 제안 (디바운스)
@@ -119,7 +128,18 @@ function App() {
           CapApp.exitApp()
         }
       })
-      return () => { backListener.then(l => l.remove()) }
+      // 앱 포그라운드 복귀 시 항상 오늘 탭으로 리셋
+      const resumeListener = CapApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          setViewMode('date')
+          const today = new Date().toISOString().slice(0, 10)
+          setSelectedDate(today)
+        }
+      })
+      return () => {
+        backListener.then(l => l.remove())
+        resumeListener.then(l => l.remove())
+      }
     }
   }, [])
 
@@ -129,7 +149,7 @@ function App() {
   }, [loading])
 
   const resetForm = () => {
-    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset })
+    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset, subtasks: [], recurrence: { type: 'none', endDate: null } })
     setShowDescInput(false)
     setEditingTodoId(null)
     setShowInputModal(false)
@@ -145,7 +165,9 @@ function App() {
       time: formatTime(todo.time, t.noTime),
       tagInput: (todo.tags || []).map(tg => '#' + tg).join(' '),
       priority: todo.priority ?? 'medium',
-      reminderOffset: todo.reminderOffset ?? null
+      reminderOffset: todo.reminderOffset ?? null,
+      subtasks: todo.subtasks || [],
+      recurrence: todo.recurrence || { type: 'none', endDate: null }
     })
     setShowDescInput(!!todo.description)
     setShowInputModal(true)
@@ -180,6 +202,8 @@ function App() {
     const savedTime = newTodo.time || ''
     const savedPriority = newTodo.priority ?? 'medium'
     const savedReminderOffset = newTodo.reminderOffset ?? null
+    const savedSubtasks = (newTodo.subtasks || []).filter(st => st.text.trim())
+    const savedRecurrence = newTodo.recurrence || { type: 'none', endDate: null }
     const isEdit = !!editingTodoId
     const editId = editingTodoId
 
@@ -190,7 +214,7 @@ function App() {
         // 게스트 모드: 로컬에만 저장
         if (!user) {
           const localId = `guest_${Date.now()}`
-          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, completed: false, createdAt: Date.now() }
+          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence, completions: {}, completed: false, createdAt: Date.now() }
           setTodos(prev => [...prev, localPayload])
           await saveLocalTodo(localPayload)
           scheduleNotification(localPayload)
@@ -200,7 +224,7 @@ function App() {
         // 신규 생성
         const newDocRef = doc(collection(db, "todos"))
         const newId = newDocRef.id
-        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, completed: false }
+        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence, completions: {}, completed: false }
         const localPayload = { ...initialData, id: newId, createdAt: Date.now() }
 
         setTodos(prev => [...prev, localPayload])
@@ -225,7 +249,7 @@ function App() {
         }
       } else {
         // 수정
-        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset }
+        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence }
         const oldTodo = todos.find(t => t.id === editId) || {}
         const updatedTodo = { ...oldTodo, ...updateData }
 
@@ -320,23 +344,83 @@ function App() {
   // 필터링
   const allUsedTags = useMemo(() => {
     const tags = new Set()
-    todos.forEach(todo => todo.tags?.forEach(tag => tags.add(tag)))
+    // date 뷰: 선택한 날짜의 할일 태그만, 그 외: 전체
+    const source = viewMode === 'date'
+      ? todos.filter(t => t.date === selectedDate)
+      : todos
+    source.forEach(todo => todo.tags?.forEach(tag => tags.add(tag)))
     return Array.from(tags)
-  }, [todos])
+  }, [todos, viewMode, selectedDate])
 
   const filteredTodos = useMemo(() => {
-    let list = [...todos]
-    if (viewMode === 'date') list = list.filter(todo => todo.date === selectedDate)
-    if (selectedTag) list = list.filter(todo => todo.tags?.includes(selectedTag))
-    return list.sort((a, b) => {
+    const sortByDate = (a, b) => {
       const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
       const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
       return dtA - dtB
-    })
-  }, [todos, viewMode, selectedDate, selectedTag])
+    }
+    // 검색 모드: 날짜 필터 무시, 전체에서 텍스트/태그/설명 검색
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      return [...todos].filter(todo =>
+        todo.text?.toLowerCase().includes(q) ||
+        todo.description?.toLowerCase().includes(q) ||
+        todo.tags?.some(tag => tag.toLowerCase().includes(q))
+      ).sort(sortByDate)
+    }
+    let list = []
+    if (viewMode === 'date') {
+      // 날짜별 뷰: 반복 일정 인스턴스 생성
+      for (const todo of todos) {
+        const isRecurring = todo.recurrence?.type && todo.recurrence.type !== 'none'
+        if (isRecurring) {
+          if (matchesRecurrence(todo, selectedDate)) {
+            const isCompleted = todo.completions?.[selectedDate] ?? false
+            list.push({ ...todo, _instanceDate: selectedDate, completed: isCompleted })
+          }
+        } else if (todo.date === selectedDate) {
+          list.push(todo)
+        }
+      }
+    } else {
+      list = [...todos]
+    }
+    if (selectedTag) list = list.filter(todo => todo.tags?.includes(selectedTag))
+    return list.sort(sortByDate)
+  }, [todos, viewMode, selectedDate, selectedTag, searchQuery])
 
   const activeTodos = useMemo(() => filteredTodos.filter(todo => !todo.completed), [filteredTodos])
   const completedTodos = filteredTodos.filter(todo => todo.completed)
+
+  // 전체 할일 뷰: 반복 일정 제외, 날짜순 정렬
+  const allTodosSorted = useMemo(() => {
+    const sortByDate = (a, b) => {
+      const dtA = new Date(`${a.date} ${a.time?.includes(':') ? a.time : '00:00'}`)
+      const dtB = new Date(`${b.date} ${b.time?.includes(':') ? b.time : '00:00'}`)
+      return dtA - dtB
+    }
+    const base = todos
+      .filter(t => !t.recurrence?.type || t.recurrence.type === 'none')
+      .filter(t => !selectedTag || t.tags?.includes(selectedTag))
+      .sort(sortByDate)
+    return { incomplete: base.filter(t => !t.completed), completed: base.filter(t => t.completed) }
+  }, [todos, selectedTag])
+  const allIncompleteTodos = allTodosSorted.incomplete
+  const allCompletedTodos = allTodosSorted.completed
+
+  // Deep Work Pulse: 최근 7일 일별 활동량
+  const weeklyPulse = useMemo(() => {
+    const result = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().slice(0, 10)
+      const dayTodos = todos.filter(t => t.date === dateStr)
+      result.push({ date: dateStr, total: dayTodos.length, completed: dayTodos.filter(t => t.completed).length })
+    }
+    return result
+  }, [todos])
+
+  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse })
 
   const formattedHeaderDate = useMemo(() => {
     const d = new Date(selectedDate)
@@ -371,29 +455,94 @@ function App() {
         weekdayNames={weekdayNames}
         prevMonth={prevMonth} nextMonth={nextMonth} goToMonth={goToMonth}
         setShowSettings={setShowSettings}
+        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+        isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen}
+        activeTodosCount={activeTodos.length}
+        completedTodosCount={completedTodos.length}
+        weeklyPulse={weeklyPulse}
+        allIncompleteTodosCount={allIncompleteTodos.length}
+        notificationCount={notifications.length}
+        onNotificationTap={() => { setShowAchievementsModal(true); clearNotifications() }}
       />
 
+      {tokenExpired && (
+        <div className="token-expired-banner" onClick={() => { setTokenExpired(false); handleLogin() }}>
+          {t.calendarExpired}
+        </div>
+      )}
+
       <div className="todo-list-section">
-        <TodoList
-          user={user} t={t} lang={lang}
-          activeTodos={activeTodos} completedTodos={completedTodos}
-          viewMode={viewMode}
-          openEditModal={openEditModal}
-          toggleComplete={toggleComplete}
-          deleteTodo={deleteTodo}
-        />
+        {viewMode === 'date' && (
+          <TodoList
+            user={user} t={t} lang={lang}
+            activeTodos={activeTodos}
+            completedTodos={completedTodos}
+            viewMode={viewMode}
+            showAllIncomplete={false}
+            todayStr={todayStr}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+            toggleSubtaskComplete={toggleSubtaskComplete}
+            deleteTodo={deleteTodo}
+          />
+        )}
+        {viewMode === 'all' && (
+          <TodoList
+            user={user} t={t} lang={lang}
+            activeTodos={allIncompleteTodos}
+            completedTodos={allCompletedTodos}
+            viewMode={viewMode}
+            showAllIncomplete={true}
+            todayStr={todayStr}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+            toggleSubtaskComplete={toggleSubtaskComplete}
+            deleteTodo={deleteTodo}
+          />
+        )}
+        {viewMode === 'lists' && (
+          <CollectionsScreen
+            todos={todos}
+            t={t} lang={lang}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+          />
+        )}
+        {viewMode === 'progress' && (
+          <StatsScreen
+            todos={todos}
+            todayStr={todayStr}
+            t={t} lang={lang}
+            weeklyPulse={weeklyPulse}
+            unlockedSortedByDifficulty={unlockedSortedByDifficulty}
+            unlockedIds={unlockedIds}
+            onShowAllAchievements={() => setShowAchievementsModal(true)}
+          />
+        )}
       </div>
 
-      {inputMode === 'smart' ? (
-        <button className="add-fab smart-fab" onClick={() => user ? setShowSmartModal(true) : setShowSettings(true)}>
-          <span className="smart-fab-icon">✨</span>
-          <span className="smart-fab-text">{lang === 'ko' ? 'AI 입력' : 'AI'}</span>
-        </button>
-      ) : (
-        <button className="add-fab" onClick={handleOpenAddModal}>
-          <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" /></svg>
+      {/* FAB: date/all/lists 뷰에서만 표시 */}
+      {(viewMode === 'date' || viewMode === 'all' || viewMode === 'lists') && (
+        <button
+          className="fab"
+          onClick={() => {
+            const mode = user ? inputMode : 'manual'
+            if (mode === 'smart') setShowSmartModal(true)
+            else handleOpenAddModal()
+          }}
+        >
+          {(user ? inputMode : 'manual') === 'smart'
+            ? <span style={{ fontSize: '22px', lineHeight: 1 }}>✨</span>
+            : <svg viewBox="0 0 24 24" fill="white" width="26" height="26"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          }
         </button>
       )}
+
+      <BottomNav
+        lang={lang} t={t}
+        viewMode={viewMode} setViewMode={setViewMode}
+        todayStr={todayStr} setSelectedDate={setSelectedDate}
+      />
 
       {showSmartModal && (
         <SmartInputModal
@@ -434,6 +583,19 @@ function App() {
           setShowSettings={setShowSettings}
         />
       )}
+
+      {showAchievementsModal && (
+        <AchievementsModal
+          onClose={() => setShowAchievementsModal(false)}
+          unlockedIds={unlockedIds}
+          lang={lang}
+        />
+      )}
+      <AchievementUnlockModal
+        achievement={currentUnlock}
+        onDismiss={dismissUnlock}
+        lang={lang}
+      />
 
     </div>
   )
