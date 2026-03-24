@@ -1,19 +1,7 @@
 import { useMemo } from 'react'
+import { calcStreak } from '../utils/helpers'
 
-function calcStreak(todos, todayStr) {
-  let streak = 0
-  const d = new Date(todayStr)
-  for (let i = 0; i < 365; i++) {
-    const dateStr = d.toISOString().slice(0, 10)
-    const hasDone = todos.some(t => t.completed && t.date === dateStr)
-    if (!hasDone && i > 0) break
-    if (hasDone) streak++
-    d.setDate(d.getDate() - 1)
-  }
-  return streak
-}
-
-export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse }) {
+export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse, unlockedSortedByDifficulty, onShowAllAchievements }) {
   const stats = useMemo(() => {
     const todayDone = todos.filter(t => t.completed && t.date === todayStr).length
     const weekDone = (weeklyPulse || []).reduce((sum, d) => sum + d.completed, 0)
@@ -32,26 +20,13 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse }) {
   const circum = 2 * Math.PI * 48
   const dashOffset = circum * (1 - rate)
 
-  const badges = [
-    stats.streak >= 3 && {
-      icon: '🔥',
-      label: `${stats.streak}${t.streakLabel}`,
-      sub: lang === 'ko' ? '연속 달성!' : lang === 'ja' ? '連続達成！' : lang === 'zh' ? '连续完成！' : 'On a roll!',
-      cls: 'badge-fire'
-    },
-    stats.todayActive === 0 && stats.allTotal > 0 && {
-      icon: '📥',
-      label: t.inboxZero,
-      sub: lang === 'ko' ? '오늘 할 일 모두 완료!' : lang === 'ja' ? '今日のタスク完了！' : lang === 'zh' ? '今日任务全完成！' : 'All clear today!',
-      cls: 'badge-inbox'
-    },
-    stats.allDone >= 10 && {
-      icon: '⚡',
-      label: t.focusBadge,
-      sub: lang === 'ko' ? `${stats.allDone}개 달성` : lang === 'ja' ? `${stats.allDone}件達成` : lang === 'zh' ? `已完成${stats.allDone}件` : `${stats.allDone} done`,
-      cls: 'badge-focus'
-    },
-  ].filter(Boolean)
+  const badges = (unlockedSortedByDifficulty || []).slice(0, 3).map(ach => ({
+    icon: ach.icon,
+    label: ach.name?.[lang] || ach.name?.ko || '',
+    sub: ach.desc?.[lang] || ach.desc?.ko || '',
+    cls: 'badge-custom',
+    difficulty: ach.difficulty,
+  }))
 
   return (
     <div className="stats-screen">
@@ -134,9 +109,9 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse }) {
       )}
 
       {/* Achievements */}
-      {badges.length > 0 && (
-        <div className="achievements-section">
-          <div className="stats-section-title">{t.achievements}</div>
+      <div className="achievements-section">
+        <div className="stats-section-title">{t.achievements}</div>
+        {badges.length > 0 && (
           <div className="achievements-grid">
             {badges.map((badge, i) => (
               <div key={i} className={`achievement-badge ${badge.cls}`}>
@@ -146,8 +121,11 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse }) {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+        <button className="achievements-more-btn" onClick={onShowAllAchievements}>
+          {lang === 'ko' ? '모든 업적 보기' : lang === 'ja' ? '全実績を見る' : lang === 'zh' ? '查看所有成就' : 'View All Achievements'}
+        </button>
+      </div>
 
       {/* Recent completions */}
       <div className="recent-done-section">
