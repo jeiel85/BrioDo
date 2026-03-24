@@ -36,6 +36,14 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
 
     if (isNative) {
       // 네이티브 Android 음성 인식
+      if (!isListening) {
+        // AI 및 음성 기능 사용 트래킹 (UI 차원)
+        try {
+          const { trackEngagement } = await import('../hooks/useAchievements')
+          trackEngagement('voiceUsed')
+          trackEngagement('voiceTasks', true)
+        } catch(e){}
+      }
       try {
         await SpeechRecognition.requestPermissions().catch(() => {})
         setIsListening(true)
