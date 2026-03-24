@@ -23,6 +23,17 @@
 - **로그인 버튼 단일화**: Header/TodoList의 로그인 버튼 제거, 설정 화면에서만 노출 (클라우드 기능 설명 카드 + Google 로그인 버튼).
 - **캘린더 뷰**: 주간 단위 스와이프 및 무한 스크롤 기능.
 - **다국어 지원**: 한국어, 영어, 일본어, 중국어 지원 및 시스템 언어 자동 감지.
+- **"The Mindful Curator" UI 리뉴얼** (`feature/curator-ui-renewal` 브랜치, 테스트 중):
+  - **4탭 바텀 내비게이션**: 오늘/할일/컬렉션/통계. 설정은 헤더 상단 우측 아이콘으로 이동. CSS grid `repeat(4, 1fr)` 동일 간격.
+  - **CollectionsScreen**: 태그별 컬렉션 카드 그리드, 히어로 카드 + SVG 도넛 링, 7색 액센트 자동 배정.
+  - **StatsScreen**: 연속 달성 스트릭, 오늘/주간/전체 완료 수, 최근 완료 8개, 완료 링 SVG(130px).
+    - 업적 3종: 🔥 연속 달성(streak ≥ 3일) / 📥 인박스 제로(오늘 할일 전부 완료) / ⚡ 집중 모드(전체 완료 ≥ 10개)
+  - **Momentum Orb**: 헤더 우상단 80px 원형 진행률. 텍스트 수직 정렬 수정.
+  - **할일 탭**: 전체 미완료 할일 날짜별 그룹 표시 + 완료됨 섹션.
+  - **태그 필터**: date 뷰에서 선택 날짜의 할일 태그만 표시.
+  - **Deep Work Pulse 통합**: 주간 날짜 스트립 카드 상단에 활동 미니 바 내장.
+  - **FAB**: 로그인 여부에 따라 스마트(✨) / 수동(+) 입력 분기.
+  - **인앱 브라우저 이벤트 차단**: `user-select: none; -webkit-touch-callout: none` 전체 적용.
 
 ### 2. 스마트 기능 (AI)
 - **Gemini AI 연동**: 자연어 입력을 분석하여 제목 정제, 날짜/시간 추출, 태그 자동 추천 기능 구현.
@@ -107,21 +118,20 @@
 
 ### 높은 우선순위
 - [x] **알림/리마인더**: 일정 시간에 푸시 알림 발송 (Capacitor LocalNotifications 활용) — 세션 7 완료
-- [ ] **반복 일정**: 매일/매주/매월 반복 옵션
+- [x] **반복 일정**: 매일/매주/매월 반복 옵션 — 세션 8 완료
+- [x] **검색 기능**: 제목/태그/날짜 범위 검색 — 세션 8 완료
+- [x] **하위 태스크(체크리스트)**: 큰 할 일 하위 항목 분해 — 세션 8 완료
 - [ ] **Google OAuth 토큰 자동 갱신**: accessToken 만료(1시간) 시 재로그인 없이 자동 갱신
 
 ### 중간 우선순위
-- [ ] **하위 태스크(체크리스트)**: 큰 할 일 하위 항목 분해
-- [ ] **검색 기능**: 제목/태그/날짜 범위 검색
+- [x] **바텀 내비게이션**: 오늘/할일/컬렉션/통계 4탭 (설정은 헤더 아이콘) — 세션 9~10 완료
+- [x] **Daily Momentum 게이지**: 헤더 우상단 원형 완료율 Orb — 세션 9 완료
+- [x] **통계 화면**: 스트릭, 주간 완료 수, 성취 배지 — 세션 9 완료
+- [x] **카테고리 관리 화면**: 태그별 Collection Cards + 도넛 링 — 세션 9 완료
 - [ ] **위젯**: 안드로이드 홈 화면 위젯
-- [ ] **바텀 내비게이션**: Today / Lists / Progress / Settings 탭 구조 (Aeon Focus 디자인 참고)
-- [ ] **Daily Momentum 게이지**: 오늘 완료율 원형 진행률 표시 (홈 상단)
-- [ ] **통계 화면**: 주간 완료 수, Deep Work 세션, 성취 배지
 
 ### 낮은 우선순위
-- [ ] **카테고리 관리 화면**: Collection Cards (Work/Personal/Shopping + 이미지 Hero)
 - [ ] **Focus "Orb"**: tertiary-container 색상의 플로팅 집중 지표 위젯
-- [ ] **헤더 고도화**: 사용자 아바타 + 검색 아이콘 (TopAppBar)
 - [ ] **iOS 지원**: Capacitor iOS 빌드 및 Apple 로그인 연동
 - [ ] **공유 기능**: 특정 할 일을 다른 사람과 공유
 - [ ] **patch-package 도입**: node_modules 패치 영구 적용
@@ -129,6 +139,31 @@
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-24** (세션 10 — UX 개선 및 버그 수정):
+  - **할일 탭 신규**: 바텀 내비에서 설정 제거 → `할일(viewMode=all)` 탭 추가. 전체 미완료+완료 할일 날짜별 그룹 표시.
+  - **설정 버튼 헤더 이동**: 헤더 상단 검색 버튼 오른쪽에 설정 아이콘 배치.
+  - **태그 필터 버그 수정**: date 뷰에서 선택 날짜의 할일 태그만 표시 (이전: 전체 할일 태그 표시).
+  - **할일 탭 완료됨 표시 수정**: `showAllIncomplete` 브랜치의 early return으로 완료 섹션이 렌더링 안 되던 버그 수정.
+  - **Momentum Orb 크기 개선**: SVG 64×64 r=24 → 80×80 r=32로 확대. 텍스트 여백 확보.
+  - **통계 완료율 링 크기 개선**: SVG 100×100 r=36 → 130×130 r=48로 확대.
+
+- **2026-03-24** (세션 9 — "The Mindful Curator" UI 리뉴얼):
+  - **작업 브랜치**: `feature/curator-ui-renewal` — main 머지 전 테스트 중.
+  - **인앱 브라우저 이벤트 차단**: `body`에 `user-select: none; -webkit-touch-callout: none; touch-action: manipulation` 적용. 텍스트 길게 누름 시 컨텍스트 메뉴 차단.
+  - **바텀 내비게이션 재구성** (`BottomNav.jsx` 신규):
+    - 4탭(Today/Lists/Progress/Settings) CSS grid `repeat(4, 1fr)` 동일 간격.
+    - FAB을 BottomNav에서 분리 → `App.jsx`로 이동, 뷰별 표시 제어.
+  - **비로그인 시 스마트 입력 차단**: FAB에서 `user ? inputMode : 'manual'` 분기. 비로그인 상태에서 ✨ 버튼 클릭 불가.
+  - **CollectionsScreen.jsx 신규**: 태그별 컬렉션 카드 그리드. 히어로 카드(r=28 SVG 도넛 링, 완료율 표시). 7색 액센트 해시 자동 배정. 체크박스 + 편집 클릭 지원.
+  - **StatsScreen.jsx 신규**: `calcStreak` 연속 달성일 계산. 오늘/주간/전체 완료 통계. 성취 뱃지(🔥 streak≥3, 📥 inbox zero, ⚡ allDone≥10). r=36 완료율 링. 최근 완료 항목 8개.
+  - **Header.jsx 고도화**:
+    - Deep Work Pulse 차트를 별도 섹션에서 **주간 날짜 스트립으로 통합**: 각 날짜 카드 상단에 5px 미니 바 내장. 높이=할 일 수, 그라디언트(primary→gray)=완료율. 중복 주간 표시 제거.
+    - viewMode별 인삿말/서브타이틀 분기 (date/lists/progress).
+    - Momentum Orb 텍스트 수직 정렬 수정: `momentum-text` 래퍼 + `gap: 2px`, `margin-top` 제거.
+  - **App.jsx 확장**: `viewMode` `'all'` → `'lists'` / `'progress'` 로 교체. `weeklyPulse` useMemo 추가 (최근 7일 활동량 배열). CollectionsScreen / StatsScreen 조건부 렌더링.
+  - **translations.js**: lists/progress/stats 관련 키 추가 (ko/en/ja/zh 4개 언어).
+  - **Android 자동생성 파일 gitignore 처리**: `capacitor.build.gradle`, `capacitor.settings.gradle`을 `.gitignore`에 추가 + `git rm --cached`로 추적 제거.
 
 - **2026-03-20** (세션 7 — PC A):
   - **브랜치 전략 수립**: `main` (안정/릴리즈) / `develop` (개발 중) 분리. debug 빌드에 `.dev` suffix + `BlendDo_Dev` 앱 이름 적용 → 폰에 두 앱 동시 설치 가능.
@@ -212,4 +247,4 @@
   - `PROJECT_HISTORY.md` 최초 생성.
 
 ---
-*최종 업데이트: 2026-03-23 (세션 8 — 멀티PC 동기화)*
+*최종 업데이트: 2026-03-24 (세션 10 — UX 개선 및 버그 수정)*

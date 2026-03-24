@@ -8,12 +8,13 @@ export const getCalendarAccessToken = () => {
 }
 
 // 토큰 자동 갱신 (50분 경과 시 GoogleAuth.refresh() 호출)
+// 반환: { success: boolean, expired: boolean }
 export const refreshAccessTokenIfNeeded = async () => {
-  if (!Capacitor.isNativePlatform()) return
+  if (!Capacitor.isNativePlatform()) return { success: true, expired: false }
   const savedAt = parseInt(localStorage.getItem('googleAccessTokenSavedAt') || '0')
-  if (!savedAt) return
+  if (!savedAt) return { success: false, expired: true }
   const age = Date.now() - savedAt
-  if (age < 50 * 60 * 1000) return  // 50분 미만이면 skip
+  if (age < 50 * 60 * 1000) return { success: true, expired: false }  // 50분 미만이면 skip
 
   try {
     const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
@@ -22,9 +23,12 @@ export const refreshAccessTokenIfNeeded = async () => {
       localStorage.setItem('googleAccessToken', refreshed.accessToken)
       localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
       console.log('Calendar token refreshed ✓')
+      return { success: true, expired: false }
     }
+    return { success: false, expired: true }
   } catch (e) {
     console.warn('Token refresh failed:', e)
+    return { success: false, expired: age > 60 * 60 * 1000 }
   }
 }
 
