@@ -44,6 +44,8 @@ firebase.json
 android/app/build/
 android/.gradle/
 android/local.properties
+android/app/capacitor.build.gradle
+android/capacitor.settings.gradle
 ios/App/Pods/
 ios/App/build/
 
