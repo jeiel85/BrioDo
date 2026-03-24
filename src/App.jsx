@@ -60,7 +60,6 @@ function App() {
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState('date')
-  const [showAllIncomplete, setShowAllIncomplete] = useState(false)
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -330,9 +329,13 @@ function App() {
   // 필터링
   const allUsedTags = useMemo(() => {
     const tags = new Set()
-    todos.forEach(todo => todo.tags?.forEach(tag => tags.add(tag)))
+    // date 뷰: 선택한 날짜의 할일 태그만, 그 외: 전체
+    const source = viewMode === 'date'
+      ? todos.filter(t => t.date === selectedDate)
+      : todos
+    source.forEach(todo => todo.tags?.forEach(tag => tags.add(tag)))
     return Array.from(tags)
-  }, [todos])
+  }, [todos, viewMode, selectedDate])
 
   const filteredTodos = useMemo(() => {
     const sortByDate = (a, b) => {
@@ -437,8 +440,6 @@ function App() {
         activeTodosCount={activeTodos.length}
         completedTodosCount={completedTodos.length}
         weeklyPulse={weeklyPulse}
-        showAllIncomplete={showAllIncomplete}
-        setShowAllIncomplete={setShowAllIncomplete}
         allIncompleteTodosCount={allIncompleteTodos.length}
       />
 
@@ -452,10 +453,24 @@ function App() {
         {viewMode === 'date' && (
           <TodoList
             user={user} t={t} lang={lang}
-            activeTodos={showAllIncomplete ? allIncompleteTodos : activeTodos}
-            completedTodos={showAllIncomplete ? [] : completedTodos}
+            activeTodos={activeTodos}
+            completedTodos={completedTodos}
             viewMode={viewMode}
-            showAllIncomplete={showAllIncomplete}
+            showAllIncomplete={false}
+            todayStr={todayStr}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+            toggleSubtaskComplete={toggleSubtaskComplete}
+            deleteTodo={deleteTodo}
+          />
+        )}
+        {viewMode === 'all' && (
+          <TodoList
+            user={user} t={t} lang={lang}
+            activeTodos={allIncompleteTodos}
+            completedTodos={[]}
+            viewMode={viewMode}
+            showAllIncomplete={true}
             todayStr={todayStr}
             openEditModal={openEditModal}
             toggleComplete={toggleComplete}
@@ -481,8 +496,8 @@ function App() {
         )}
       </div>
 
-      {/* FAB: date/lists 뷰에서만 표시 */}
-      {(viewMode === 'date' || viewMode === 'lists') && (
+      {/* FAB: date/all/lists 뷰에서만 표시 */}
+      {(viewMode === 'date' || viewMode === 'all' || viewMode === 'lists') && (
         <button
           className="fab"
           onClick={() => {
@@ -502,7 +517,6 @@ function App() {
         lang={lang} t={t}
         viewMode={viewMode} setViewMode={setViewMode}
         todayStr={todayStr} setSelectedDate={setSelectedDate}
-        setShowSettings={setShowSettings}
       />
 
       {showSmartModal && (

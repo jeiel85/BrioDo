@@ -18,7 +18,7 @@ export function Header({
   activeTodosCount,
   completedTodosCount,
   weeklyPulse,
-  showAllIncomplete, setShowAllIncomplete, allIncompleteTodosCount,
+  allIncompleteTodosCount,
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
@@ -54,7 +54,9 @@ export function Header({
     ? (lang === 'ko' ? '컬렉션' : lang === 'ja' ? 'コレクション' : lang === 'zh' ? '收藏' : 'Collections')
     : viewMode === 'progress'
       ? (lang === 'ko' ? '나의 통계' : lang === 'ja' ? '私の統計' : lang === 'zh' ? '我的统计' : 'My Stats')
-      : (lang === 'ko'
+      : viewMode === 'all'
+        ? (lang === 'ko' ? '전체 할 일' : lang === 'ja' ? '全タスク' : lang === 'zh' ? '全部任务' : 'All Tasks')
+        : (lang === 'ko'
           ? (firstName ? `안녕하세요, ${firstName}님!` : '안녕하세요!')
           : lang === 'ja'
             ? (firstName ? `こんにちは、${firstName}さん！` : 'こんにちは！')
@@ -66,7 +68,9 @@ export function Header({
     ? (lang === 'ko' ? `${allUsedTags.length}개 카테고리` : lang === 'ja' ? `${allUsedTags.length}カテゴリ` : lang === 'zh' ? `${allUsedTags.length}个分类` : `${allUsedTags.length} categories`)
     : viewMode === 'progress'
       ? (lang === 'ko' ? `${completedTodosCount + activeTodosCount}개 할 일 추적 중` : lang === 'ja' ? `${completedTodosCount + activeTodosCount}件を追跡中` : lang === 'zh' ? `追踪${completedTodosCount + activeTodosCount}件任务` : `Tracking ${completedTodosCount + activeTodosCount} tasks`)
-      : activeTodosCount === 0 && completedTodosCount === 0
+      : viewMode === 'all'
+        ? (lang === 'ko' ? `${allIncompleteTodosCount}개 남은 할 일` : lang === 'ja' ? `残り ${allIncompleteTodosCount} 件` : lang === 'zh' ? `还有 ${allIncompleteTodosCount} 件任务` : `${allIncompleteTodosCount} task${allIncompleteTodosCount !== 1 ? 's' : ''} remaining`)
+        : activeTodosCount === 0 && completedTodosCount === 0
         ? (lang === 'ko' ? '할 일이 없어요 🎉' : lang === 'ja' ? 'タスクがありません 🎉' : lang === 'zh' ? '没有任务 🎉' : 'Nothing to do 🎉')
         : lang === 'ko'
           ? `${activeTodosCount}개 남은 할 일`
@@ -110,6 +114,15 @@ export function Header({
             >
               <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                 <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+              </svg>
+            </button>
+            <button
+              className="curator-icon-btn"
+              onClick={() => setShowSettings(true)}
+              aria-label={lang === 'ko' ? '설정' : 'Settings'}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
               </svg>
             </button>
           </div>
@@ -259,27 +272,6 @@ export function Header({
                 )}
               </div>
             )}
-          </div>
-        )}
-
-        {/* ─── 오늘 / 전체 미완료 토글 (date 뷰 전용) ─── */}
-        {viewMode === 'date' && (
-          <div className="incomplete-toggle">
-            <button
-              className={!showAllIncomplete ? 'active' : ''}
-              onClick={() => setShowAllIncomplete(false)}
-            >
-              {lang === 'ko' ? '오늘' : lang === 'ja' ? '今日' : lang === 'zh' ? '今天' : 'Today'}
-            </button>
-            <button
-              className={showAllIncomplete ? 'active' : ''}
-              onClick={() => setShowAllIncomplete(true)}
-            >
-              {lang === 'ko' ? '전체 미완료' : lang === 'ja' ? '未完了' : lang === 'zh' ? '未完成' : 'All Pending'}
-              {allIncompleteTodosCount > 0 && (
-                <span className="incomplete-badge">{allIncompleteTodosCount}</span>
-              )}
-            </button>
           </div>
         )}
 
