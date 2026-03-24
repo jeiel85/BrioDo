@@ -8,7 +8,7 @@ const PRIORITY_LABELS = {
   en: { low: 'Low', medium: 'Med', high: 'High', urgent: 'Urgent' },
 }
 
-export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, openEditModal, toggleComplete, toggleSubtaskComplete, deleteTodo }) {
+export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, showAllIncomplete, todayStr, openEditModal, toggleComplete, toggleSubtaskComplete, deleteTodo }) {
   const [showCompleted, setShowCompleted] = useState(false)
   const [expandedSubtasks, setExpandedSubtasks] = useState(new Set())
 
@@ -94,6 +94,48 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
       </div>
     </div>
   )
+
+  // 전체 미완료 뷰: 날짜 그룹 렌더링
+  if (showAllIncomplete) {
+    const groups = {}
+    for (const todo of activeTodos) {
+      if (!groups[todo.date]) groups[todo.date] = []
+      groups[todo.date].push(todo)
+    }
+    const sortedDates = Object.keys(groups).sort()
+    const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+
+    const getDateLabel = (dateStr) => {
+      const diff = Math.round((new Date(dateStr + 'T00:00:00') - new Date(todayStr + 'T00:00:00')) / 86400000)
+      const formatted = new Date(dateStr + 'T00:00:00').toLocaleDateString(locale, { month: 'numeric', day: 'numeric' })
+      if (diff < -1) return { label: lang === 'ko' ? `${formatted} · ${Math.abs(diff)}일 초과` : lang === 'ja' ? `${formatted} · ${Math.abs(diff)}日超過` : `${formatted} · ${Math.abs(diff)}d overdue`, overdue: true }
+      if (diff === -1) return { label: lang === 'ko' ? `어제 · 기한 초과` : lang === 'ja' ? '昨日・期限超過' : 'Yesterday · Overdue', overdue: true }
+      if (diff === 0) return { label: lang === 'ko' ? '오늘' : lang === 'ja' ? '今日' : lang === 'zh' ? '今天' : 'Today', overdue: false }
+      if (diff === 1) return { label: lang === 'ko' ? '내일' : lang === 'ja' ? '明日' : lang === 'zh' ? '明天' : 'Tomorrow', overdue: false }
+      return { label: formatted, overdue: false }
+    }
+
+    return (
+      <div className="active-list">
+        {sortedDates.length === 0 ? (
+          <p className="empty-message">{t.doneAll}</p>
+        ) : (
+          sortedDates.map(date => {
+            const { label, overdue } = getDateLabel(date)
+            return (
+              <div key={date} className="date-group">
+                <div className={`date-group-header ${overdue ? 'overdue' : ''}`}>
+                  <span className="date-group-label">{label}</span>
+                  <span className="date-group-count">{groups[date].length}</span>
+                </div>
+                {groups[date].map(todo => renderTodoCard(todo, false))}
+              </div>
+            )
+          })
+        )}
+      </div>
+    )
+  }
 
   return (
     <>

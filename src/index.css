@@ -1550,6 +1550,126 @@ body.modal-open { overflow: hidden; }
 }
 
 /* ─── Login Card (Guest State) ─── */
+/* ─── 오늘 / 전체 미완료 토글 ─── */
+.incomplete-toggle {
+  display: flex;
+  background: var(--color-surface-container);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+  margin: 6px 0 4px;
+}
+
+.incomplete-toggle button {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font-size: calc(12px * var(--font-scale));
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.incomplete-toggle button.active {
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.incomplete-badge {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 10px;
+  line-height: 1.4;
+}
+
+/* ─── 날짜 그룹 헤더 (전체 미완료 뷰) ─── */
+.date-group {
+  margin-bottom: 8px;
+}
+
+.date-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 4px 6px 2px;
+  margin-bottom: 4px;
+}
+
+.date-group-label {
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  letter-spacing: 0.03em;
+}
+
+.date-group-header.overdue .date-group-label {
+  color: var(--color-error);
+}
+
+.date-group-count {
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container);
+  padding: 1px 8px;
+  border-radius: 8px;
+}
+
+/* ─── 캘린더 권한 업데이트 버튼 ─── */
+.calendar-permission-btn {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--color-primary);
+  font-size: calc(14px * var(--font-scale));
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
+}
+.calendar-permission-btn:active {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+/* ─── 로그아웃 버튼 ─── */
+.logout-footer-btn {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid color-mix(in srgb, var(--color-error) 35%, var(--color-outline-variant));
+  background: color-mix(in srgb, var(--color-error) 6%, transparent);
+  color: var(--color-error);
+  font-size: calc(14px * var(--font-scale));
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+.logout-footer-btn:active {
+  background: color-mix(in srgb, var(--color-error) 14%, transparent);
+}
+
 .login-card {
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-container-lowest));
   border-radius: 16px;

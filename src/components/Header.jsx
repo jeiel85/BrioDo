@@ -18,6 +18,7 @@ export function Header({
   activeTodosCount,
   completedTodosCount,
   weeklyPulse,
+  showAllIncomplete, setShowAllIncomplete, allIncompleteTodosCount,
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
@@ -182,7 +183,7 @@ export function Header({
                       <div
                         key={date.full}
                         className={`date-item ${selectedDate === date.full ? 'active' : ''} ${getDayClass(date.dayOfWeek)}`}
-                        onClick={() => setSelectedDate(date.full)}
+                        onClick={() => { setSelectedDate(date.full); setShowAllIncomplete(false) }}
                       >
                         <div className="date-activity-bar">
                           <div
@@ -258,6 +259,27 @@ export function Header({
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── 오늘 / 전체 미완료 토글 (date 뷰 전용) ─── */}
+        {viewMode === 'date' && (
+          <div className="incomplete-toggle">
+            <button
+              className={!showAllIncomplete ? 'active' : ''}
+              onClick={() => setShowAllIncomplete(false)}
+            >
+              {lang === 'ko' ? '오늘' : lang === 'ja' ? '今日' : lang === 'zh' ? '今天' : 'Today'}
+            </button>
+            <button
+              className={showAllIncomplete ? 'active' : ''}
+              onClick={() => setShowAllIncomplete(true)}
+            >
+              {lang === 'ko' ? '전체 미완료' : lang === 'ja' ? '未完了' : lang === 'zh' ? '未完成' : 'All Pending'}
+              {allIncompleteTodosCount > 0 && (
+                <span className="incomplete-badge">{allIncompleteTodosCount}</span>
+              )}
+            </button>
           </div>
         )}
 

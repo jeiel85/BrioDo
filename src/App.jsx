@@ -60,6 +60,7 @@ function App() {
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState('date')
+  const [showAllIncomplete, setShowAllIncomplete] = useState(false)
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -372,6 +373,19 @@ function App() {
   const activeTodos = useMemo(() => filteredTodos.filter(todo => !todo.completed), [filteredTodos])
   const completedTodos = filteredTodos.filter(todo => todo.completed)
 
+  // 전체 미완료 뷰: 반복 일정 제외, 날짜순 정렬
+  const allIncompleteTodos = useMemo(() => {
+    const sortByDate = (a, b) => {
+      const dtA = new Date(`${a.date} ${a.time?.includes(':') ? a.time : '00:00'}`)
+      const dtB = new Date(`${b.date} ${b.time?.includes(':') ? b.time : '00:00'}`)
+      return dtA - dtB
+    }
+    return todos
+      .filter(t => !t.completed && (!t.recurrence?.type || t.recurrence.type === 'none'))
+      .filter(t => !selectedTag || t.tags?.includes(selectedTag))
+      .sort(sortByDate)
+  }, [todos, selectedTag])
+
   // Deep Work Pulse: 최근 7일 일별 활동량
   const weeklyPulse = useMemo(() => {
     const result = []
@@ -423,6 +437,9 @@ function App() {
         activeTodosCount={activeTodos.length}
         completedTodosCount={completedTodos.length}
         weeklyPulse={weeklyPulse}
+        showAllIncomplete={showAllIncomplete}
+        setShowAllIncomplete={setShowAllIncomplete}
+        allIncompleteTodosCount={allIncompleteTodos.length}
       />
 
       {tokenExpired && (
@@ -435,8 +452,11 @@ function App() {
         {viewMode === 'date' && (
           <TodoList
             user={user} t={t} lang={lang}
-            activeTodos={activeTodos} completedTodos={completedTodos}
+            activeTodos={showAllIncomplete ? allIncompleteTodos : activeTodos}
+            completedTodos={showAllIncomplete ? [] : completedTodos}
             viewMode={viewMode}
+            showAllIncomplete={showAllIncomplete}
+            todayStr={todayStr}
             openEditModal={openEditModal}
             toggleComplete={toggleComplete}
             toggleSubtaskComplete={toggleSubtaskComplete}
