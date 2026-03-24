@@ -157,11 +157,13 @@ export function SettingsModal({
                 : 'Required to sync events bidirectionally with Google Calendar.'}
             </p>
             <button
-              className="login-btn"
-              style={{ width: '100%', textAlign: 'center', background: 'transparent', border: '2px solid var(--color-primary)', color: 'var(--color-primary)', fontWeight: 'bold' }}
+              className="calendar-permission-btn"
               onClick={() => { setShowSettings(false); handleLogin() }}
             >
-              {lang === 'ko' ? '캘린더 권한 업데이트 🔄' : 'Grant Calendar Permissions 🔄'}
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+              </svg>
+              {lang === 'ko' ? '캘린더 권한 업데이트' : 'Grant Calendar Permissions'}
             </button>
 
             <h3 style={{ marginTop: '18px' }}>{lang === 'ko' ? '완료 시 캘린더 처리' : 'On Completion'}</h3>
@@ -193,9 +195,11 @@ export function SettingsModal({
           {user ? (
             <button
               className="logout-footer-btn"
-              style={{ width: '100%', textAlign: 'center', marginTop: '10px' }}
               onClick={() => { setShowSettings(false); handleLogout() }}
             >
+              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+              </svg>
               {lang === 'ko' ? '로그아웃 / 계정 전환' : 'Logout / Change Account'}
             </button>
           ) : (
