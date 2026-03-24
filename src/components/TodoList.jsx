@@ -1,8 +1,18 @@
 import { useState } from 'react'
 import { formatTime } from '../utils/helpers'
 
-export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, openEditModal, toggleComplete, deleteTodo }) {
+export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, openEditModal, toggleComplete, toggleSubtaskComplete, deleteTodo }) {
   const [showCompleted, setShowCompleted] = useState(false)
+  const [expandedSubtasks, setExpandedSubtasks] = useState(new Set())
+
+  const toggleSubtaskExpand = (e, todoId) => {
+    e.stopPropagation()
+    setExpandedSubtasks(prev => {
+      const next = new Set(prev)
+      next.has(todoId) ? next.delete(todoId) : next.add(todoId)
+      return next
+    })
+  }
 
   return (
     <>
@@ -11,7 +21,7 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
         {activeTodos.map(todo => (
           <div key={todo.id} className="todo-item" onClick={() => openEditModal(todo)}>
             <div className={`priority-indicator ${todo.priority ?? 'medium'}`} />
-            <div className="checkbox" onClick={(e) => toggleComplete(e, todo.id, todo.completed)}></div>
+            <div className="checkbox" onClick={(e) => toggleComplete(e, todo.id, todo.completed, todo._instanceDate || null)}></div>
             <div className="todo-body">
               <div className="todo-main-row">
                 <span className="todo-text">{todo.text}</span>
@@ -26,6 +36,28 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
               {todo.tags?.length > 0 && (
                 <div className="tags-row">
                   {todo.tags.map(tag => <span key={tag} className="tag-pill">#{tag}</span>)}
+                </div>
+              )}
+              {todo.subtasks?.length > 0 && (
+                <div className="subtask-summary" onClick={e => toggleSubtaskExpand(e, todo.id)}>
+                  <span className="subtask-toggle-icon">{expandedSubtasks.has(todo.id) ? '▼' : '▶'}</span>
+                  <span className="subtask-count">{todo.subtasks.filter(s => s.completed).length}/{todo.subtasks.length}</span>
+                  <div className="subtask-progress-bar">
+                    <div
+                      className="subtask-progress-fill"
+                      style={{ width: `${(todo.subtasks.filter(s => s.completed).length / todo.subtasks.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              {todo.subtasks?.length > 0 && expandedSubtasks.has(todo.id) && (
+                <div className="subtask-list">
+                  {todo.subtasks.map(st => (
+                    <div key={st.id} className="subtask-item" onClick={e => { e.stopPropagation(); toggleSubtaskComplete(todo.id, st.id) }}>
+                      <span className={`subtask-checkbox ${st.completed ? 'checked' : ''}`} />
+                      <span className={`subtask-item-text ${st.completed ? 'completed' : ''}`}>{st.text}</span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -50,7 +82,7 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
               {completedTodos.map(todo => (
                 <div key={todo.id} className="todo-item" onClick={() => openEditModal(todo)} style={{ opacity: 0.6 }}>
                   <div className={`priority-indicator ${todo.priority ?? 'medium'}`} />
-                  <div className="checkbox checked" onClick={(e) => toggleComplete(e, todo.id, todo.completed)}></div>
+                  <div className="checkbox checked" onClick={(e) => toggleComplete(e, todo.id, todo.completed, todo._instanceDate || null)}></div>
                   <div className="todo-body">
                     <div className="todo-main-row">
                       <span className="todo-text completed">{todo.text}</span>

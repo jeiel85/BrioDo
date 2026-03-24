@@ -5,7 +5,7 @@ import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { db } from './firebase'
 import { addSyncQueue, saveLocalTodo } from './db'
 import { syncEventToGoogle } from './calendar'
-import { formatTime } from './utils/helpers'
+import { formatTime, matchesRecurrence } from './utils/helpers'
 import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
 
 import { useLanguage } from './hooks/useLanguage'
@@ -24,7 +24,7 @@ import './index.css'
 
 function App() {
   const { lang, setLang, t } = useLanguage()
-  const { user, loading, handleLogin, handleLogout } = useAuth()
+  const { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired } = useAuth()
   const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme } = useTheme()
 
   // 완료 시 캘린더 처리 방식: 'status' | 'delete' (기본값: status)
@@ -53,13 +53,15 @@ function App() {
     localStorage.setItem('completionCalendarMode', mode)
   }
 
-  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode })
+  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode })
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState('date')
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   // 입력 모드: 'smart' | 'manual' (기본값: smart)
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'smart')
@@ -76,7 +78,7 @@ function App() {
   // 할 일 입력 모달 상태
   const [showInputModal, setShowInputModal] = useState(false)
   const [editingTodoId, setEditingTodoId] = useState(null)
-  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: 0 })
+  const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: 0, subtasks: [], recurrence: { type: 'none', endDate: null } })
   const [showDescInput, setShowDescInput] = useState(false)
 
   // AI 태그 자동 제안 (디바운스)
@@ -129,7 +131,7 @@ function App() {
   }, [loading])
 
   const resetForm = () => {
-    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset })
+    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset, subtasks: [], recurrence: { type: 'none', endDate: null } })
     setShowDescInput(false)
     setEditingTodoId(null)
     setShowInputModal(false)
@@ -145,7 +147,9 @@ function App() {
       time: formatTime(todo.time, t.noTime),
       tagInput: (todo.tags || []).map(tg => '#' + tg).join(' '),
       priority: todo.priority ?? 'medium',
-      reminderOffset: todo.reminderOffset ?? null
+      reminderOffset: todo.reminderOffset ?? null,
+      subtasks: todo.subtasks || [],
+      recurrence: todo.recurrence || { type: 'none', endDate: null }
     })
     setShowDescInput(!!todo.description)
     setShowInputModal(true)
@@ -180,6 +184,8 @@ function App() {
     const savedTime = newTodo.time || ''
     const savedPriority = newTodo.priority ?? 'medium'
     const savedReminderOffset = newTodo.reminderOffset ?? null
+    const savedSubtasks = (newTodo.subtasks || []).filter(st => st.text.trim())
+    const savedRecurrence = newTodo.recurrence || { type: 'none', endDate: null }
     const isEdit = !!editingTodoId
     const editId = editingTodoId
 
@@ -190,7 +196,7 @@ function App() {
         // 게스트 모드: 로컬에만 저장
         if (!user) {
           const localId = `guest_${Date.now()}`
-          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, completed: false, createdAt: Date.now() }
+          const localPayload = { id: localId, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence, completions: {}, completed: false, createdAt: Date.now() }
           setTodos(prev => [...prev, localPayload])
           await saveLocalTodo(localPayload)
           scheduleNotification(localPayload)
@@ -200,7 +206,7 @@ function App() {
         // 신규 생성
         const newDocRef = doc(collection(db, "todos"))
         const newId = newDocRef.id
-        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, completed: false }
+        const initialData = { uid: user.uid, text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence, completions: {}, completed: false }
         const localPayload = { ...initialData, id: newId, createdAt: Date.now() }
 
         setTodos(prev => [...prev, localPayload])
@@ -225,7 +231,7 @@ function App() {
         }
       } else {
         // 수정
-        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset }
+        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence }
         const oldTodo = todos.find(t => t.id === editId) || {}
         const updatedTodo = { ...oldTodo, ...updateData }
 
@@ -325,15 +331,40 @@ function App() {
   }, [todos])
 
   const filteredTodos = useMemo(() => {
-    let list = [...todos]
-    if (viewMode === 'date') list = list.filter(todo => todo.date === selectedDate)
-    if (selectedTag) list = list.filter(todo => todo.tags?.includes(selectedTag))
-    return list.sort((a, b) => {
+    const sortByDate = (a, b) => {
       const dtA = new Date(`${a.date} ${a.time && a.time.includes(':') ? a.time : '00:00'}`)
       const dtB = new Date(`${b.date} ${b.time && b.time.includes(':') ? b.time : '00:00'}`)
       return dtA - dtB
-    })
-  }, [todos, viewMode, selectedDate, selectedTag])
+    }
+    // 검색 모드: 날짜 필터 무시, 전체에서 텍스트/태그/설명 검색
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      return [...todos].filter(todo =>
+        todo.text?.toLowerCase().includes(q) ||
+        todo.description?.toLowerCase().includes(q) ||
+        todo.tags?.some(tag => tag.toLowerCase().includes(q))
+      ).sort(sortByDate)
+    }
+    let list = []
+    if (viewMode === 'date') {
+      // 날짜별 뷰: 반복 일정 인스턴스 생성
+      for (const todo of todos) {
+        const isRecurring = todo.recurrence?.type && todo.recurrence.type !== 'none'
+        if (isRecurring) {
+          if (matchesRecurrence(todo, selectedDate)) {
+            const isCompleted = todo.completions?.[selectedDate] ?? false
+            list.push({ ...todo, _instanceDate: selectedDate, completed: isCompleted })
+          }
+        } else if (todo.date === selectedDate) {
+          list.push(todo)
+        }
+      }
+    } else {
+      list = [...todos]
+    }
+    if (selectedTag) list = list.filter(todo => todo.tags?.includes(selectedTag))
+    return list.sort(sortByDate)
+  }, [todos, viewMode, selectedDate, selectedTag, searchQuery])
 
   const activeTodos = useMemo(() => filteredTodos.filter(todo => !todo.completed), [filteredTodos])
   const completedTodos = filteredTodos.filter(todo => todo.completed)
@@ -371,7 +402,15 @@ function App() {
         weekdayNames={weekdayNames}
         prevMonth={prevMonth} nextMonth={nextMonth} goToMonth={goToMonth}
         setShowSettings={setShowSettings}
+        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+        isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen}
       />
+
+      {tokenExpired && (
+        <div className="token-expired-banner" onClick={() => { setTokenExpired(false); handleLogin() }}>
+          {t.calendarExpired}
+        </div>
+      )}
 
       <div className="todo-list-section">
         <TodoList
@@ -380,6 +419,7 @@ function App() {
           viewMode={viewMode}
           openEditModal={openEditModal}
           toggleComplete={toggleComplete}
+          toggleSubtaskComplete={toggleSubtaskComplete}
           deleteTodo={deleteTodo}
         />
       </div>
