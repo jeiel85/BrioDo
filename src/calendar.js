@@ -19,7 +19,15 @@ export const refreshAccessTokenIfNeeded = async () => {
   try {
     const { GoogleAuth } = await import('@codetrix-studio/capacitor-google-auth')
     const refreshed = await GoogleAuth.refresh()
-    if (refreshed?.accessToken) {
+    
+    // Sometimes GoogleAuth.refresh() itself doesn't return accessToken but it updates internal state.
+    // Try to get token via signIn or similar if needed, but for now just getting the refreshed info.
+    if (refreshed?.authentication?.accessToken) {
+      localStorage.setItem('googleAccessToken', refreshed.authentication.accessToken)
+      localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
+      console.log('Calendar token refreshed ✓')
+      return { success: true, expired: false }
+    } else if (refreshed?.accessToken) {
       localStorage.setItem('googleAccessToken', refreshed.accessToken)
       localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
       console.log('Calendar token refreshed ✓')
