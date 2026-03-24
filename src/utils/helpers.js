@@ -46,3 +46,16 @@ export const formatTime = (timeStr, noTimeLabel) => {
   if (/^\d{2}:\d{2}/.test(timeStr)) return timeStr.slice(0, 5)
   return timeStr
 }
+
+export function calcStreak(todos, todayStr) {
+  let streak = 0
+  const d = new Date(todayStr)
+  for (let i = 0; i < 365; i++) {
+    const dateStr = d.toISOString().slice(0, 10)
+    const hasDone = todos.some(t => t.completed && t.date === dateStr)
+    if (!hasDone && i > 0) break
+    if (hasDone) streak++
+    d.setDate(d.getDate() - 1)
+  }
+  return streak
+}

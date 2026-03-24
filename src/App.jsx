@@ -6,6 +6,7 @@ import { db } from './firebase'
 import { addSyncQueue, saveLocalTodo } from './db'
 import { syncEventToGoogle } from './calendar'
 import { formatTime, matchesRecurrence } from './utils/helpers'
+import { useAchievements } from './hooks/useAchievements'
 import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
 
 import { useLanguage } from './hooks/useLanguage'
@@ -22,6 +23,8 @@ import { StatsScreen } from './components/StatsScreen'
 import { InputModal } from './components/InputModal'
 import { SmartInputModal } from './components/SmartInputModal'
 import { SettingsModal } from './components/SettingsModal'
+import { AchievementUnlockModal } from './components/AchievementUnlockModal'
+import { AchievementsModal } from './components/AchievementsModal'
 
 import './index.css'
 
@@ -65,6 +68,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false)
 
   // 입력 모드: 'smart' | 'manual' (기본값: smart)
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'smart')
@@ -124,7 +128,18 @@ function App() {
           CapApp.exitApp()
         }
       })
-      return () => { backListener.then(l => l.remove()) }
+      // 앱 포그라운드 복귀 시 항상 오늘 탭으로 리셋
+      const resumeListener = CapApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) {
+          setViewMode('date')
+          const today = new Date().toISOString().slice(0, 10)
+          setSelectedDate(today)
+        }
+      })
+      return () => {
+        backListener.then(l => l.remove())
+        resumeListener.then(l => l.remove())
+      }
     }
   }, [])
 
@@ -405,6 +420,8 @@ function App() {
     return result
   }, [todos])
 
+  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse })
+
   const formattedHeaderDate = useMemo(() => {
     const d = new Date(selectedDate)
     const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
@@ -444,6 +461,8 @@ function App() {
         completedTodosCount={completedTodos.length}
         weeklyPulse={weeklyPulse}
         allIncompleteTodosCount={allIncompleteTodos.length}
+        notificationCount={notifications.length}
+        onNotificationTap={() => { setShowAchievementsModal(true); clearNotifications() }}
       />
 
       {tokenExpired && (
@@ -495,6 +514,9 @@ function App() {
             todayStr={todayStr}
             t={t} lang={lang}
             weeklyPulse={weeklyPulse}
+            unlockedSortedByDifficulty={unlockedSortedByDifficulty}
+            unlockedIds={unlockedIds}
+            onShowAllAchievements={() => setShowAchievementsModal(true)}
           />
         )}
       </div>
@@ -561,6 +583,19 @@ function App() {
           setShowSettings={setShowSettings}
         />
       )}
+
+      {showAchievementsModal && (
+        <AchievementsModal
+          onClose={() => setShowAchievementsModal(false)}
+          unlockedIds={unlockedIds}
+          lang={lang}
+        />
+      )}
+      <AchievementUnlockModal
+        achievement={currentUnlock}
+        onDismiss={dismissUnlock}
+        lang={lang}
+      />
 
     </div>
   )
