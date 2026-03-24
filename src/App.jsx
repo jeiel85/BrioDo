@@ -16,6 +16,9 @@ import { useCalendarNav } from './hooks/useCalendarNav'
 
 import { Header } from './components/Header'
 import { TodoList } from './components/TodoList'
+import { BottomNav } from './components/BottomNav'
+import { CollectionsScreen } from './components/CollectionsScreen'
+import { StatsScreen } from './components/StatsScreen'
 import { InputModal } from './components/InputModal'
 import { SmartInputModal } from './components/SmartInputModal'
 import { SettingsModal } from './components/SettingsModal'
@@ -369,6 +372,19 @@ function App() {
   const activeTodos = useMemo(() => filteredTodos.filter(todo => !todo.completed), [filteredTodos])
   const completedTodos = filteredTodos.filter(todo => todo.completed)
 
+  // Deep Work Pulse: 최근 7일 일별 활동량
+  const weeklyPulse = useMemo(() => {
+    const result = []
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().slice(0, 10)
+      const dayTodos = todos.filter(t => t.date === dateStr)
+      result.push({ date: dateStr, total: dayTodos.length, completed: dayTodos.filter(t => t.completed).length })
+    }
+    return result
+  }, [todos])
+
   const formattedHeaderDate = useMemo(() => {
     const d = new Date(selectedDate)
     const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
@@ -404,6 +420,9 @@ function App() {
         setShowSettings={setShowSettings}
         searchQuery={searchQuery} setSearchQuery={setSearchQuery}
         isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen}
+        activeTodosCount={activeTodos.length}
+        completedTodosCount={completedTodos.length}
+        weeklyPulse={weeklyPulse}
       />
 
       {tokenExpired && (
@@ -413,27 +432,58 @@ function App() {
       )}
 
       <div className="todo-list-section">
-        <TodoList
-          user={user} t={t} lang={lang}
-          activeTodos={activeTodos} completedTodos={completedTodos}
-          viewMode={viewMode}
-          openEditModal={openEditModal}
-          toggleComplete={toggleComplete}
-          toggleSubtaskComplete={toggleSubtaskComplete}
-          deleteTodo={deleteTodo}
-        />
+        {viewMode === 'date' && (
+          <TodoList
+            user={user} t={t} lang={lang}
+            activeTodos={activeTodos} completedTodos={completedTodos}
+            viewMode={viewMode}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+            toggleSubtaskComplete={toggleSubtaskComplete}
+            deleteTodo={deleteTodo}
+          />
+        )}
+        {viewMode === 'lists' && (
+          <CollectionsScreen
+            todos={todos}
+            t={t} lang={lang}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+          />
+        )}
+        {viewMode === 'progress' && (
+          <StatsScreen
+            todos={todos}
+            todayStr={todayStr}
+            t={t} lang={lang}
+            weeklyPulse={weeklyPulse}
+          />
+        )}
       </div>
 
-      {inputMode === 'smart' ? (
-        <button className="add-fab smart-fab" onClick={() => user ? setShowSmartModal(true) : setShowSettings(true)}>
-          <span className="smart-fab-icon">✨</span>
-          <span className="smart-fab-text">{lang === 'ko' ? 'AI 입력' : 'AI'}</span>
-        </button>
-      ) : (
-        <button className="add-fab" onClick={handleOpenAddModal}>
-          <svg viewBox="0 0 24 24"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z" /></svg>
+      {/* FAB: date/lists 뷰에서만 표시 */}
+      {(viewMode === 'date' || viewMode === 'lists') && (
+        <button
+          className="fab"
+          onClick={() => {
+            const mode = user ? inputMode : 'manual'
+            if (mode === 'smart') setShowSmartModal(true)
+            else handleOpenAddModal()
+          }}
+        >
+          {(user ? inputMode : 'manual') === 'smart'
+            ? <span style={{ fontSize: '22px', lineHeight: 1 }}>✨</span>
+            : <svg viewBox="0 0 24 24" fill="white" width="26" height="26"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          }
         </button>
       )}
+
+      <BottomNav
+        lang={lang} t={t}
+        viewMode={viewMode} setViewMode={setViewMode}
+        todayStr={todayStr} setSelectedDate={setSelectedDate}
+        setShowSettings={setShowSettings}
+      />
 
       {showSmartModal && (
         <SmartInputModal
