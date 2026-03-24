@@ -116,24 +116,37 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
     }
 
     return (
-      <div className="active-list">
-        {sortedDates.length === 0 ? (
-          <p className="empty-message">{t.doneAll}</p>
-        ) : (
-          sortedDates.map(date => {
-            const { label, overdue } = getDateLabel(date)
-            return (
-              <div key={date} className="date-group">
-                <div className={`date-group-header ${overdue ? 'overdue' : ''}`}>
-                  <span className="date-group-label">{label}</span>
-                  <span className="date-group-count">{groups[date].length}</span>
+      <>
+        <div className="active-list">
+          {sortedDates.length === 0 ? (
+            <p className="empty-message">{t.doneAll}</p>
+          ) : (
+            sortedDates.map(date => {
+              const { label, overdue } = getDateLabel(date)
+              return (
+                <div key={date} className="date-group">
+                  <div className={`date-group-header ${overdue ? 'overdue' : ''}`}>
+                    <span className="date-group-label">{label}</span>
+                    <span className="date-group-count">{groups[date].length}</span>
+                  </div>
+                  {groups[date].map(todo => renderTodoCard(todo, false))}
                 </div>
-                {groups[date].map(todo => renderTodoCard(todo, false))}
-              </div>
-            )
-          })
+              )
+            })
+          )}
+        </div>
+        {completedTodos.length > 0 && (
+          <div style={{ marginTop: '20px' }}>
+            <div className="completed-section-header" onClick={() => setShowCompleted(!showCompleted)}>
+              <span style={{ fontSize: '10px', transition: 'transform 0.2s', transform: showCompleted ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' }}>▶</span>
+              <span>{t.completed} {completedTodos.length}</span>
+            </div>
+            {showCompleted && (
+              <div>{completedTodos.map(todo => renderTodoCard(todo, true))}</div>
+            )}
+          </div>
         )}
-      </div>
+      </>
     )
   }
 

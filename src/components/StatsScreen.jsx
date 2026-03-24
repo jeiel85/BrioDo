@@ -29,7 +29,7 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse }) {
   }, [todos, todayStr, weeklyPulse])
 
   const rate = stats.allTotal > 0 ? stats.allDone / stats.allTotal : 0
-  const circum = 2 * Math.PI * 36
+  const circum = 2 * Math.PI * 48
   const dashOffset = circum * (1 - rate)
 
   const badges = [
@@ -74,17 +74,17 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse }) {
       {/* Completion Ring */}
       <div className="stats-ring-section">
         <div className="stats-ring-wrapper">
-          <svg width="100" height="100" viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="36" fill="none" stroke="var(--color-surface-container-high)" strokeWidth="8"/>
+          <svg width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="48" fill="none" stroke="var(--color-surface-container-high)" strokeWidth="8"/>
             <circle
-              cx="50" cy="50" r="36"
+              cx="65" cy="65" r="48"
               fill="none"
               stroke="var(--color-primary)"
               strokeWidth="8"
               strokeDasharray={circum}
               strokeDashoffset={dashOffset}
               strokeLinecap="round"
-              style={{ transform: 'rotate(-90deg)', transformOrigin: '50px 50px', transition: 'stroke-dashoffset 0.8s ease' }}
+              style={{ transform: 'rotate(-90deg)', transformOrigin: '65px 65px', transition: 'stroke-dashoffset 0.8s ease' }}
             />
           </svg>
           <div className="stats-ring-inner">

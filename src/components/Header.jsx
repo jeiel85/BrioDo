@@ -44,7 +44,7 @@ export function Header({
   // Momentum orb 계산
   const total = activeTodosCount + completedTodosCount
   const rate = total > 0 ? completedTodosCount / total : 0
-  const circum = 2 * Math.PI * 24
+  const circum = 2 * Math.PI * 32
   const dashOffset = circum * (1 - rate)
   const pct = Math.round(rate * 100)
 
@@ -136,15 +136,15 @@ export function Header({
             <p className="greeting-subtitle">{taskSubtitle}</p>
           </div>
           <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
-            <svg width="64" height="64" viewBox="0 0 64 64">
+            <svg width="80" height="80" viewBox="0 0 80 80">
               <circle
-                cx="32" cy="32" r="24"
+                cx="40" cy="40" r="32"
                 fill="none"
                 stroke="var(--color-surface-container-high)"
                 strokeWidth="5"
               />
               <circle
-                cx="32" cy="32" r="24"
+                cx="40" cy="40" r="32"
                 fill="none"
                 stroke="var(--color-primary)"
                 strokeWidth="5"
@@ -153,7 +153,7 @@ export function Header({
                 strokeLinecap="round"
                 style={{
                   transform: 'rotate(-90deg)',
-                  transformOrigin: '32px 32px',
+                  transformOrigin: '40px 40px',
                   transition: 'stroke-dashoffset 0.6s ease'
                 }}
               />
