@@ -89,7 +89,7 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
                       </div>
                       <div className="ach-list-info">
                         <div className="ach-list-name">
-                          {unlocked ? name : (lang === 'ko' ? '???  (잠김)' : lang === 'ja' ? '??? (ロック中)' : lang === 'zh' ? '??? (已锁定)' : '??? (Locked)')}
+                          {name} {!unlocked && <span className="locked-badge">🔒</span>}
                         </div>
                         <div className="ach-list-stars">
                           {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
