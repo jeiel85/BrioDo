@@ -1,5 +1,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { calcStreak } from '../utils/helpers'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { db } from '../firebase'
 
 const n = (ko, en, ja, zh) => ({ ko, en, ja, zh })
 
@@ -162,7 +164,44 @@ export function useAchievements({ todos, todayStr, weeklyPulse }) {
     }
   }, [todos, todayStr, weeklyPulse])
 
-  const unlockedIds = useMemo(() => {
+  const [persistedUnlocked, setPersistedUnlocked] = useState(() => {
+    return new Set(JSON.parse(localStorage.getItem('blenddo_unlocked_ids') || '[]'))
+  })
+
+  // Load from Firestore on login
+  useEffect(() => {
+    if (!user?.uid) return
+    const syncFirestore = async () => {
+      try {
+        const docRef = doc(db, 'userSettings', user.uid)
+        const snap = await getDoc(docRef)
+        if (snap.exists()) {
+          const data = snap.data()
+          const remoteUnlocks = data.unlockedIds || []
+          const remoteFlags = data.engagementFlags || {}
+          
+          const localFlags = JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}')
+          const mergedFlags = { ...remoteFlags, ...localFlags }
+          for (const k in remoteFlags) {
+            if (typeof remoteFlags[k] === 'number') {
+              mergedFlags[k] = Math.max(remoteFlags[k], localFlags[k] || 0)
+            }
+          }
+          localStorage.setItem('blenddo_engagement_flags', JSON.stringify(mergedFlags))
+          
+          setPersistedUnlocked(prev => {
+            const next = new Set(prev)
+            remoteUnlocks.forEach(id => next.add(id))
+            localStorage.setItem('blenddo_unlocked_ids', JSON.stringify([...next]))
+            return next
+          })
+        }
+      } catch (e) { console.error('Achievement sync error:', e) }
+    }
+    syncFirestore()
+  }, [user?.uid])
+
+  const computedUnlocked = useMemo(() => {
     const firstPass = ACHIEVEMENT_DEFS.filter(a => {
       if (a.id === 'E1' || a.id === 'E6' || a.id === 'E7') return false
       try { return a.check(stats) } catch { return false }
@@ -174,21 +213,30 @@ export function useAchievements({ todos, todayStr, weeklyPulse }) {
     )
   }, [stats])
 
+  const unlockedIds = useMemo(() => {
+    return new Set([...persistedUnlocked, ...computedUnlocked])
+  }, [persistedUnlocked, computedUnlocked])
+
+  // Detect newly unlocked via computed stats
   useEffect(() => {
-    if (isFirstMount.current) {
-      isFirstMount.current = false
-      localStorage.setItem('blenddo_unlocked_ids', JSON.stringify([...unlockedIds]))
-      return
-    }
-    const stored = new Set(JSON.parse(localStorage.getItem('blenddo_unlocked_ids') || '[]'))
-    const newOnes = [...unlockedIds].filter(id => !stored.has(id))
+    const newOnes = [...computedUnlocked].filter(id => !persistedUnlocked.has(id))
     if (newOnes.length > 0) {
+      const nextPersisted = new Set([...persistedUnlocked, ...newOnes])
+      setPersistedUnlocked(nextPersisted)
+      localStorage.setItem('blenddo_unlocked_ids', JSON.stringify([...nextPersisted]))
+      
       const newAchs = newOnes.map(id => ACHIEVEMENT_DEFS.find(a => a.id === id)).filter(Boolean)
       setNotifications(prev => [...prev, ...newAchs])
       setUnlockQueue(prev => [...prev, ...newAchs])
-      localStorage.setItem('blenddo_unlocked_ids', JSON.stringify([...unlockedIds]))
+
+      if (user?.uid) {
+        setDoc(doc(db, 'userSettings', user.uid), {
+          unlockedIds: [...nextPersisted],
+          engagementFlags: JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}')
+        }, { merge: true }).catch(console.error)
+      }
     }
-  }, [unlockedIds])
+  }, [computedUnlocked, persistedUnlocked, user?.uid])
 
   useEffect(() => {
     if (!currentUnlock && unlockQueue.length > 0) {
