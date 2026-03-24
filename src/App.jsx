@@ -6,7 +6,7 @@ import { db } from './firebase'
 import { addSyncQueue, saveLocalTodo } from './db'
 import { syncEventToGoogle } from './calendar'
 import { formatTime, matchesRecurrence } from './utils/helpers'
-import { useAchievements } from './hooks/useAchievements'
+import { useAchievements, trackEngagement } from './hooks/useAchievements'
 import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
 
 import { useLanguage } from './hooks/useLanguage'
@@ -70,6 +70,10 @@ function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [showAchievementsModal, setShowAchievementsModal] = useState(false)
 
+  useEffect(() => {
+    if (viewMode === 'lists') trackEngagement('collectionVisited')
+  }, [viewMode])
+
   // 입력 모드: 'smart' | 'manual' (기본값: smart)
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'smart')
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
@@ -79,8 +83,35 @@ function App() {
   const [smartText, setSmartText] = useState('')
   const [smartReminderOffset, setSmartReminderOffset] = useState(null)
 
-  // 알림 채널 초기화 (앱 시작 시 1회)
-  useEffect(() => { initNotificationChannels() }, [])
+  // 알림 채널 초기화 및 앱 사용 빈도 트래킹 (앱 시작 시 1회)
+  useEffect(() => { 
+    initNotificationChannels() 
+    
+    // 일일 접속 및 연속 접속 트래킹
+    trackEngagement('totalOpens', true)
+    try {
+      const today = new Date().toISOString().slice(0, 10)
+      const flags = JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}')
+      if (flags.lastOpenDate !== today) {
+        if (flags.lastOpenDate) {
+          const lastDate = new Date(flags.lastOpenDate)
+          const now = new Date(today)
+          const diffDays = (now - lastDate) / (1000 * 60 * 60 * 24)
+          if (diffDays === 1) {
+            trackEngagement('appStreak', true)
+          } else if (diffDays > 1) {
+            flags.appStreak = 1
+            localStorage.setItem('blenddo_engagement_flags', JSON.stringify(flags))
+          }
+        } else {
+          flags.appStreak = 1
+          localStorage.setItem('blenddo_engagement_flags', JSON.stringify(flags))
+        }
+        flags.lastOpenDate = today
+        localStorage.setItem('blenddo_engagement_flags', JSON.stringify(flags))
+      }
+    } catch(e) {}
+  }, [])
 
   // 할 일 입력 모달 상태
   const [showInputModal, setShowInputModal] = useState(false)
@@ -284,6 +315,10 @@ function App() {
   const handleSmartSave = async (text) => {
     if (!text.trim()) return
     const savedText = text.trim()
+    
+    // AI 사용 플래그
+    trackEngagement('aiUsed')
+    trackEngagement('aiTasks', true)
     const savedReminderOffset = smartReminderOffset
     const today = todayStr
     setShowSmartModal(false)
@@ -420,7 +455,7 @@ function App() {
     return result
   }, [todos])
 
-  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse })
+  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse, user })
 
   const formattedHeaderDate = useMemo(() => {
     const d = new Date(selectedDate)
@@ -455,7 +490,7 @@ function App() {
         weekdayNames={weekdayNames}
         prevMonth={prevMonth} nextMonth={nextMonth} goToMonth={goToMonth}
         setShowSettings={setShowSettings}
-        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+        searchQuery={searchQuery} setSearchQuery={(q) => { setSearchQuery(q); if (q.trim()) trackEngagement('searchUsed'); }}
         isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen}
         activeTodosCount={activeTodos.length}
         completedTodosCount={completedTodos.length}

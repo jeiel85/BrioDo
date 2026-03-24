@@ -134,11 +134,22 @@
 - [ ] **Focus "Orb"**: tertiary-container 색상의 플로팅 집중 지표 위젯
 - [ ] **iOS 지원**: Capacitor iOS 빌드 및 Apple 로그인 연동
 - [ ] **공유 기능**: 특정 할 일을 다른 사람과 공유
-- [ ] **patch-package 도입**: node_modules 패치 영구 적용
+- [x] **patch-package 도입**: node_modules 패치 영구 적용
 
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-24** (세션 12 — 업적 시스템 구현):
+  - **업적 추적 로직(js)**: `useAchievements.js` 내에 정의된 50개 업적(`D1..D6`, `W1..W5`, `R1..R4`, `T1..T4`, `ST1..ST4`, `P1..P4`, `AI1..AI4`, `CAL1..CAL2`, `N1..N2`, `E1..E7`, `SP1..SP3`)의 트리거 조건(`check()`)을 모두 채워 넣음.
+  - **데이터 모델 반영**: `useTodosData`의 `toggleComplete`에서 `completedAt` 타임스탬프를 부여하도록 구조화하여 시간 판별(스피드런, 얼리버드 등) 지원.
+  - **사용량 지표 (Engagement)**: `App.jsx` 내부에서 `trackEngagement` 훅을 호출하여 앱 실행 횟수(`totalOpens`), 접속 연속일(`appStreak`), 검색 기능 사용, AI 및 음성 입력 사용 데이터를 감정하도록 연결.
+  - **오프라인 큐**: `completedAt`과 트래킹 요소가 오프라인에서도 작동하도록 `addSyncQueue`에 페이로드 갱신.
+  - **Firestore 동기화**: 앱 재설치 시 데이터 유실 방지를 위해 로그인이 감지되면 `userSettings/{uid}`에서 달성된 `unlockedIds`와 트래커를 불러와 로컬 스토리지와 동기화(`union`). 신규 달성 시 Cloud Firestore로 백업.
+
+- **2026-03-24** (세션 11 — 기타 기능 및 유지보수):
+  - **patch-package 도입**: 매번 번거롭게 진행하던 `@capacitor-community/speech-recognition` 및 `@codetrix-studio/capacitor-google-auth` 플러그인의 `android/build.gradle` 다운로드 시 발생하는 오류 패치 자동화 (npx patch-package 적용).
+  - **Google OAuth 토큰 자동 갱신**: 앱에서 구글 캘린더 접근 토큰의 만료 시간을 추적하여 백그라운드에서 자동 재갱신 (`GoogleAuth.refresh()` 결과 다양성 대응).
 
 - **2026-03-24** (세션 10 — UX 개선 및 버그 수정):
   - **할일 탭 신규**: 바텀 내비에서 설정 제거 → `할일(viewMode=all)` 탭 추가. 전체 미완료+완료 할일 날짜별 그룹 표시.

@@ -238,8 +238,15 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
         }
         return
       }
-      setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: nowCompleting } : t))
-      if (target) await saveLocalTodo({ ...target, completed: nowCompleting })
+      const updatePayload = { completed: nowCompleting }
+      if (nowCompleting) {
+        updatePayload.completedAt = Date.now()
+      } else {
+        updatePayload.completedAt = null
+      }
+
+      setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updatePayload } : t))
+      if (target) await saveLocalTodo({ ...target, ...updatePayload })
       if (target) {
         if (nowCompleting) {
           // 완료 시 알림 취소
@@ -252,7 +259,7 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
 
       if (user) {
         if (isOnline) {
-          await setDoc(doc(db, "todos", id), { completed: nowCompleting }, { merge: true })
+          await setDoc(doc(db, "todos", id), updatePayload, { merge: true })
 
           if (completionCalendarMode === 'delete') {
             if (nowCompleting) {
@@ -283,7 +290,7 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
             }
           }
         } else {
-          await addSyncQueue('set', id, { completed: nowCompleting })
+          await addSyncQueue('set', id, updatePayload)
         }
       }
     } catch (e) { console.error(e) }
