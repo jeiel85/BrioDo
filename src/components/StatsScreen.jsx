@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { calcStreak } from '../utils/helpers'
+import { ACHIEVEMENT_DEFS } from '../hooks/useAchievements'
 
-export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse, unlockedSortedByDifficulty, onShowAllAchievements }) {
+export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse, unlockedIds, onShowAllAchievements }) {
   const stats = useMemo(() => {
     const todayDone = todos.filter(t => t.completed && t.date === todayStr).length
     const weekDone = (weeklyPulse || []).reduce((sum, d) => sum + d.completed, 0)
@@ -20,13 +21,15 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse, unlockedSor
   const circum = 2 * Math.PI * 48
   const dashOffset = circum * (1 - rate)
 
-  const badges = (unlockedSortedByDifficulty || []).slice(0, 3).map(ach => ({
-    icon: ach.icon,
-    label: ach.name?.[lang] || ach.name?.ko || '',
-    sub: ach.desc?.[lang] || ach.desc?.ko || '',
-    cls: 'badge-custom',
-    difficulty: ach.difficulty,
-  }))
+  const badges = [...ACHIEVEMENT_DEFS]
+    .sort((a, b) => b.difficulty - a.difficulty)
+    .slice(0, 3)
+    .map(ach => ({
+      ...ach,
+      isUnlocked: unlockedIds?.has(ach.id) || false,
+      label: ach.name?.[lang] || ach.name?.ko || '',
+      sub: ach.desc?.[lang] || ach.desc?.ko || '',
+    }))
 
   return (
     <div className="stats-screen">
@@ -114,10 +117,12 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse, unlockedSor
         {badges.length > 0 && (
           <div className="achievements-grid">
             {badges.map((badge, i) => (
-              <div key={i} className={`achievement-badge ${badge.cls}`}>
-                <div className="badge-icon">{badge.icon}</div>
+              <div key={i} className={`achievement-badge badge-custom ${!badge.isUnlocked ? 'locked' : ''}`}>
+                <div className={`badge-icon ${!badge.isUnlocked ? 'locked-icon' : ''}`}>
+                  {badge.isUnlocked ? badge.icon : '🔒'}
+                </div>
                 <div className="badge-label">{badge.label}</div>
-                <div className="badge-sub">{badge.sub}</div>
+                {badge.isUnlocked && <div className="badge-sub">{badge.sub}</div>}
               </div>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import confetti from 'canvas-confetti'
 
 const PARTICLES = [
   { tx: -70, ty: -100, color: '#FFD700', delay: 0 },
@@ -21,10 +22,34 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
   useEffect(() => {
     if (achievement) {
       setVisible(true)
-      const timer = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 300) }, 4000)
+      
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#FF6B6B', '#4FC3F7', '#81C784', '#CE93D8']
+      })
+      setTimeout(() => {
+        confetti({
+          particleCount: 80,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: ['#FFD700', '#FF6B6B', '#4FC3F7']
+        })
+        confetti({
+          particleCount: 80,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: ['#81C784', '#CE93D8', '#FFD700']
+        })
+      }, 250)
+
+      const timer = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 300) }, 5000)
       return () => clearTimeout(timer)
     }
-  }, [achievement])
+  }, [achievement, onDismiss])
 
   if (!achievement) return null
 

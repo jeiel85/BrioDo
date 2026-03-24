@@ -23,6 +23,7 @@ import { StatsScreen } from './components/StatsScreen'
 import { InputModal } from './components/InputModal'
 import { SmartInputModal } from './components/SmartInputModal'
 import { SettingsModal } from './components/SettingsModal'
+import { NotificationsModal } from './components/NotificationsModal'
 import { AchievementUnlockModal } from './components/AchievementUnlockModal'
 import { AchievementsModal } from './components/AchievementsModal'
 
@@ -69,6 +70,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [showAchievementsModal, setShowAchievementsModal] = useState(false)
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false)
 
   useEffect(() => {
     if (viewMode === 'lists') trackEngagement('collectionVisited')
@@ -497,8 +499,17 @@ function App() {
         weeklyPulse={weeklyPulse}
         allIncompleteTodosCount={allIncompleteTodos.length}
         notificationCount={notifications.length}
-        onNotificationTap={() => { setShowAchievementsModal(true); clearNotifications() }}
+        onNotificationTap={() => setShowNotificationsModal(true)}
       />
+
+      {showNotificationsModal && (
+        <NotificationsModal
+          onClose={() => { setShowNotificationsModal(false); clearNotifications() }}
+          notifications={notifications}
+          onShowAllAchievements={() => { setShowNotificationsModal(false); clearNotifications(); setShowAchievementsModal(true) }}
+          lang={lang}
+        />
+      )}
 
       {tokenExpired && (
         <div className="token-expired-banner" onClick={() => { setTokenExpired(false); handleLogin() }}>
@@ -549,7 +560,6 @@ function App() {
             todayStr={todayStr}
             t={t} lang={lang}
             weeklyPulse={weeklyPulse}
-            unlockedSortedByDifficulty={unlockedSortedByDifficulty}
             unlockedIds={unlockedIds}
             onShowAllAchievements={() => setShowAchievementsModal(true)}
           />
