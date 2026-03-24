@@ -11,7 +11,7 @@ import {
   signOut
 } from "firebase/auth"
 import { auth, googleProvider } from '../firebase'
-import { resetCalendarSession } from '../calendar'
+import { resetCalendarSession, refreshAccessTokenIfNeeded } from '../calendar'
 
 // Android/iOS: @codetrix-studio/capacitor-google-auth 플러그인으로 OAuth2 accessToken 획득
 // Web: signInWithPopup 사용
@@ -19,6 +19,7 @@ import { resetCalendarSession } from '../calendar'
 export function useAuth() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [tokenExpired, setTokenExpired] = useState(false)
 
   // 로딩이 5초 이상 지속되면 강제 해제
   useEffect(() => {
@@ -97,6 +98,16 @@ export function useAuth() {
     return () => unsubscribe()
   }, [])
 
+  // 로그인 상태 + 네이티브 환경에서 5분마다 토큰 갱신 체크
+  useEffect(() => {
+    if (!user || !Capacitor.isNativePlatform()) return
+    const interval = setInterval(async () => {
+      const result = await refreshAccessTokenIfNeeded()
+      if (!result.success && result.expired) setTokenExpired(true)
+    }, 5 * 60 * 1000)
+    return () => clearInterval(interval)
+  }, [user])
+
   const handleLogin = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
@@ -116,6 +127,7 @@ export function useAuth() {
         if (accessToken) {
           localStorage.setItem('googleAccessToken', accessToken)
           localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
+          setTokenExpired(false)
           console.log("Native: Calendar accessToken saved ✓")
         } else {
           console.warn("Native: accessToken not returned")
@@ -151,5 +163,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loading, handleLogin, handleLogout }
+  return { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired }
 }

@@ -13,7 +13,8 @@ export function Header({
   monthGridDates,
   weekdayNames,
   prevMonth, nextMonth, goToMonth,
-  setShowSettings
+  setShowSettings,
+  searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
@@ -63,9 +64,34 @@ export function Header({
                 {lang === 'ko' ? '전체' : 'All'}
               </button>
             </div>
+            <button
+              className={`search-toggle-btn ${isSearchOpen ? 'active' : ''}`}
+              onClick={() => {
+                const next = !isSearchOpen
+                setIsSearchOpen(next)
+                if (!next) setSearchQuery('')
+              }}
+              aria-label={t.search}
+            >🔍</button>
             <button className="settings-btn" onClick={() => setShowSettings(true)}>⚙️</button>
           </div>
         </div>
+
+        {isSearchOpen && (
+          <div className="search-bar-row">
+            <input
+              className="search-input"
+              autoFocus
+              type="text"
+              placeholder={t.searchPlaceholder}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button className="search-clear-btn" onClick={() => setSearchQuery('')}>✕</button>
+            )}
+          </div>
+        )}
 
         {viewMode === 'date' && (
           <div className="date-nav-container">

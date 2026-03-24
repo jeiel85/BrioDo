@@ -20,7 +20,18 @@ export const translations = {
     langName: '한국어',
     login: '로그인',
     logout: '로그아웃',
-    loading: '연결 중...'
+    loading: '연결 중...',
+    search: '검색',
+    searchPlaceholder: '제목, 태그, 설명 검색...',
+    calendarExpired: '캘린더 연결이 만료됐습니다. 탭하여 재연결하세요.',
+    repeat: '반복',
+    repeatNone: '없음',
+    repeatDaily: '매일',
+    repeatWeekly: '매주',
+    repeatMonthly: '매월',
+    repeatEndDate: '종료일',
+    checklist: '체크리스트',
+    checklistPlaceholder: '세부 항목...'
   },
   en: {
     reminders: 'BlendDo',
@@ -43,7 +54,18 @@ export const translations = {
     langName: 'English',
     login: 'Login',
     logout: 'Logout',
-    loading: 'Connecting...'
+    loading: 'Connecting...',
+    search: 'Search',
+    searchPlaceholder: 'Search title, tags, description...',
+    calendarExpired: 'Calendar connection expired. Tap to reconnect.',
+    repeat: 'Repeat',
+    repeatNone: 'None',
+    repeatDaily: 'Daily',
+    repeatWeekly: 'Weekly',
+    repeatMonthly: 'Monthly',
+    repeatEndDate: 'End date',
+    checklist: 'Checklist',
+    checklistPlaceholder: 'Sub-item...'
   },
   ja: {
     reminders: 'BlendDo',
@@ -66,7 +88,18 @@ export const translations = {
     langName: '日本語',
     login: 'ログイン',
     logout: 'ログアウト',
-    loading: '接続中...'
+    loading: '接続中...',
+    search: '検索',
+    searchPlaceholder: 'タイトル、タグ、説明を検索...',
+    calendarExpired: 'カレンダー接続が切れました。タップして再接続。',
+    repeat: '繰り返し',
+    repeatNone: 'なし',
+    repeatDaily: '毎日',
+    repeatWeekly: '毎週',
+    repeatMonthly: '毎月',
+    repeatEndDate: '終了日',
+    checklist: 'チェックリスト',
+    checklistPlaceholder: 'サブ項目...'
   },
   zh: {
     reminders: 'BlendDo',
@@ -89,6 +122,17 @@ export const translations = {
     langName: '中文',
     login: '登录',
     logout: '登出',
-    loading: '同步中...'
+    loading: '同步中...',
+    search: '搜索',
+    searchPlaceholder: '搜索标题、标签、描述...',
+    calendarExpired: '日历连接已过期，点击重新连接。',
+    repeat: '重复',
+    repeatNone: '无',
+    repeatDaily: '每天',
+    repeatWeekly: '每周',
+    repeatMonthly: '每月',
+    repeatEndDate: '结束日',
+    checklist: '清单',
+    checklistPlaceholder: '子项目...'
   }
 }
