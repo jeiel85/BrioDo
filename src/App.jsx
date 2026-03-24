@@ -376,18 +376,21 @@ function App() {
   const activeTodos = useMemo(() => filteredTodos.filter(todo => !todo.completed), [filteredTodos])
   const completedTodos = filteredTodos.filter(todo => todo.completed)
 
-  // 전체 미완료 뷰: 반복 일정 제외, 날짜순 정렬
-  const allIncompleteTodos = useMemo(() => {
+  // 전체 할일 뷰: 반복 일정 제외, 날짜순 정렬
+  const allTodosSorted = useMemo(() => {
     const sortByDate = (a, b) => {
       const dtA = new Date(`${a.date} ${a.time?.includes(':') ? a.time : '00:00'}`)
       const dtB = new Date(`${b.date} ${b.time?.includes(':') ? b.time : '00:00'}`)
       return dtA - dtB
     }
-    return todos
-      .filter(t => !t.completed && (!t.recurrence?.type || t.recurrence.type === 'none'))
+    const base = todos
+      .filter(t => !t.recurrence?.type || t.recurrence.type === 'none')
       .filter(t => !selectedTag || t.tags?.includes(selectedTag))
       .sort(sortByDate)
+    return { incomplete: base.filter(t => !t.completed), completed: base.filter(t => t.completed) }
   }, [todos, selectedTag])
+  const allIncompleteTodos = allTodosSorted.incomplete
+  const allCompletedTodos = allTodosSorted.completed
 
   // Deep Work Pulse: 최근 7일 일별 활동량
   const weeklyPulse = useMemo(() => {
@@ -468,7 +471,7 @@ function App() {
           <TodoList
             user={user} t={t} lang={lang}
             activeTodos={allIncompleteTodos}
-            completedTodos={[]}
+            completedTodos={allCompletedTodos}
             viewMode={viewMode}
             showAllIncomplete={true}
             todayStr={todayStr}
