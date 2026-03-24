@@ -145,6 +145,7 @@
   - **데이터 모델 반영**: `useTodosData`의 `toggleComplete`에서 `completedAt` 타임스탬프를 부여하도록 구조화하여 시간 판별(스피드런, 얼리버드 등) 지원.
   - **사용량 지표 (Engagement)**: `App.jsx` 내부에서 `trackEngagement` 훅을 호출하여 앱 실행 횟수(`totalOpens`), 접속 연속일(`appStreak`), 검색 기능 사용, AI 및 음성 입력 사용 데이터를 감정하도록 연결.
   - **오프라인 큐**: `completedAt`과 트래킹 요소가 오프라인에서도 작동하도록 `addSyncQueue`에 페이로드 갱신.
+  - **Firestore 동기화**: 앱 재설치 시 데이터 유실 방지를 위해 로그인이 감지되면 `userSettings/{uid}`에서 달성된 `unlockedIds`와 트래커를 불러와 로컬 스토리지와 동기화(`union`). 신규 달성 시 Cloud Firestore로 백업.
 
 - **2026-03-24** (세션 11 — 기타 기능 및 유지보수):
   - **patch-package 도입**: 매번 번거롭게 진행하던 `@capacitor-community/speech-recognition` 및 `@codetrix-studio/capacitor-google-auth` 플러그인의 `android/build.gradle` 다운로드 시 발생하는 오류 패치 자동화 (npx patch-package 적용).
