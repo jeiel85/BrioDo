@@ -134,11 +134,15 @@
 - [ ] **Focus "Orb"**: tertiary-container 색상의 플로팅 집중 지표 위젯
 - [ ] **iOS 지원**: Capacitor iOS 빌드 및 Apple 로그인 연동
 - [ ] **공유 기능**: 특정 할 일을 다른 사람과 공유
-- [ ] **patch-package 도입**: node_modules 패치 영구 적용
+- [x] **patch-package 도입**: node_modules 패치 영구 적용
 
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-24** (세션 11 — 기타 기능 및 유지보수):
+  - **patch-package 도입**: 매번 번거롭게 진행하던 `@capacitor-community/speech-recognition` 및 `@codetrix-studio/capacitor-google-auth` 플러그인의 `android/build.gradle` 다운로드 시 발생하는 오류 패치 자동화 (npx patch-package 적용).
+  - **Google OAuth 토큰 자동 갱신**: 앱에서 구글 캘린더 접근 토큰의 만료 시간을 추적하여 백그라운드에서 자동 재갱신 (`GoogleAuth.refresh()` 결과 다양성 대응).
 
 - **2026-03-24** (세션 10 — UX 개선 및 버그 수정):
   - **할일 탭 신규**: 바텀 내비에서 설정 제거 → `할일(viewMode=all)` 탭 추가. 전체 미완료+완료 할일 날짜별 그룹 표시.
