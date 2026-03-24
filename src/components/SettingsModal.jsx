@@ -20,6 +20,7 @@ export function SettingsModal({
           <button className="settings-close" onClick={() => setShowSettings(false)}>✕</button>
         </div>
 
+        <div className="settings-scroll-body">
         <div className="settings-section">
           <h3>{lang === 'ko' ? '글자 크기' : 'Font Size'}</h3>
           <div className="font-size-selector" style={{ marginBottom: '14px' }}>
@@ -235,6 +236,7 @@ export function SettingsModal({
               </button>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>
