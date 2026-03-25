@@ -1,5 +1,16 @@
 import { getLocalDateString } from '../utils/helpers'
 
+const LOCK_BUTTON_DEFS = [
+  { id: 'torch',      emoji: '🔦', label_ko: '손전등',     label_en: 'Flashlight' },
+  { id: 'camera',     emoji: '📷', label_ko: '카메라',     label_en: 'Camera' },
+  { id: 'qr',         emoji: '⬛', label_ko: 'QR 스캐너',  label_en: 'QR Scan' },
+  { id: 'timer',      emoji: '⏱',  label_ko: '타이머',     label_en: 'Timer' },
+  { id: 'calculator', emoji: '🧮', label_ko: '계산기',     label_en: 'Calculator' },
+  { id: 'playPause',  emoji: '▶',  label_ko: '재생',       label_en: 'Play/Pause' },
+  { id: 'alarm',      emoji: '⏰', label_ko: '알람',       label_en: 'Alarm' },
+  { id: 'stopwatch',  emoji: '⏲',  label_ko: '스톱워치',   label_en: 'Stopwatch' },
+]
+
 export function SettingsModal({
   lang,
   fontScale, setFontScale,
@@ -12,6 +23,10 @@ export function SettingsModal({
   user, handleLogin, handleLogout,
   lockScreenEnabled, setLockScreenEnabled,
   lockScreenButtonLayout, setLockScreenButtonLayout,
+  lockScreenTodoMode, setLockScreenTodoMode,
+  lockScreenShowCompleted, setLockScreenShowCompleted,
+  lockScreenFontScale, setLockScreenFontScale,
+  lockScreenButtons, setLockScreenButtons,
   calendarSyncEnabled, setCalendarSyncEnabled,
   onPreviewLockScreen,
   setShowSettings
@@ -168,8 +183,9 @@ export function SettingsModal({
           </p>
           {lockScreenEnabled && (
             <>
+              {/* 버튼 위치 */}
               <h3 style={{ marginBottom: '8px' }}>{lang === 'ko' ? '버튼 위치' : 'Button Position'}</h3>
-              <div className="font-size-selector" style={{ marginBottom: '12px' }}>
+              <div className="font-size-selector" style={{ marginBottom: '16px' }}>
                 <button
                   className={lockScreenButtonLayout === 'corners' ? 'active' : ''}
                   onClick={() => setLockScreenButtonLayout('corners')}
@@ -182,9 +198,99 @@ export function SettingsModal({
                   onClick={() => setLockScreenButtonLayout('clock')}
                 >
                   <span style={{ fontSize: '16px' }}>🕐</span>
-                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '2안: 시계 근처' : '2: Near Clock'}</span>
+                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '2안: 시계 하단' : '2: Below Clock'}</span>
                 </button>
               </div>
+
+              {/* 퀵버튼 선택 (최대 6개) */}
+              <h3 style={{ marginBottom: '4px' }}>
+                {lang === 'ko' ? '빠른 버튼 선택' : 'Quick Buttons'}
+                <span style={{ fontSize: '11px', fontWeight: 400, color: 'var(--color-on-surface-variant)', marginLeft: '6px' }}>
+                  {lockScreenButtons.length}/6
+                </span>
+              </h3>
+              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', lineHeight: '1.4' }}>
+                {lang === 'ko'
+                  ? '잠금화면에 표시할 버튼을 선택하세요 (최대 6개). 순서는 탭 순서대로.'
+                  : 'Select up to 6 buttons for the lock screen.'}
+              </p>
+              <div className="lock-btn-picker">
+                {LOCK_BUTTON_DEFS.map(({ id, emoji, label_ko, label_en }) => {
+                  const selected = lockScreenButtons.includes(id)
+                  const atMax = lockScreenButtons.length >= 6
+                  return (
+                    <button
+                      key={id}
+                      className={`lock-btn-pick-item${selected ? ' selected' : ''}${!selected && atMax ? ' disabled' : ''}`}
+                      onClick={() => {
+                        if (selected) {
+                          setLockScreenButtons(lockScreenButtons.filter(b => b !== id))
+                        } else if (!atMax) {
+                          setLockScreenButtons([...lockScreenButtons, id])
+                        }
+                      }}
+                    >
+                      <span style={{ fontSize: '20px' }}>{emoji}</span>
+                      <span style={{ fontSize: '10px', marginTop: '2px' }}>{lang === 'ko' ? label_ko : label_en}</span>
+                      {selected && <span className="lock-btn-pick-check">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* 할일 표시 설정 */}
+              <h3 style={{ marginTop: '18px', marginBottom: '8px' }}>{lang === 'ko' ? '할 일 표시 범위' : 'Todo Display'}</h3>
+              <div className="font-size-selector" style={{ marginBottom: '10px' }}>
+                <button
+                  className={lockScreenTodoMode === 'today' ? 'active' : ''}
+                  onClick={() => setLockScreenTodoMode('today')}
+                >
+                  <span>📅</span>
+                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '오늘만' : 'Today'}</span>
+                </button>
+                <button
+                  className={lockScreenTodoMode === 'all' ? 'active' : ''}
+                  onClick={() => setLockScreenTodoMode('all')}
+                >
+                  <span>📋</span>
+                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '전체' : 'All'}</span>
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--color-on-surface-variant)' }}>
+                  {lang === 'ko' ? '완료된 할 일도 표시' : 'Show completed tasks'}
+                </span>
+                <label className="settings-toggle">
+                  <input type="checkbox" checked={lockScreenShowCompleted} onChange={e => setLockScreenShowCompleted(e.target.checked)} />
+                  <span className="settings-toggle-track" />
+                </label>
+              </div>
+
+              {/* 잠금화면 글자 크기 */}
+              <h3 style={{ marginBottom: '10px' }}>{lang === 'ko' ? '잠금화면 글자 크기' : 'Lock Screen Font Size'}</h3>
+              <div className="font-size-selector" style={{ marginBottom: '10px' }}>
+                {[{ val: 2, label: lang === 'ko' ? '작게' : 'S', size: '13px' },
+                  { val: 4, label: lang === 'ko' ? '중간' : 'M', size: '16px' },
+                  { val: 6, label: lang === 'ko' ? '크게' : 'L', size: '20px' }
+                ].map(({ val, label, size }) => (
+                  <button key={val} className={lockScreenFontScale === val ? 'active' : ''} onClick={() => setLockScreenFontScale(val)}>
+                    <span style={{ fontSize: size }}>A</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', minWidth: '8px' }}>1</span>
+                <input
+                  type="range" min="1" max="7" step="1"
+                  value={lockScreenFontScale}
+                  onChange={e => setLockScreenFontScale(Number(e.target.value))}
+                  style={{ flex: 1, accentColor: 'var(--color-primary)', height: '4px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', minWidth: '8px' }}>7</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary)', minWidth: '16px', textAlign: 'right' }}>{lockScreenFontScale}</span>
+              </div>
+
               <button
                 className="calendar-permission-btn"
                 onClick={onPreviewLockScreen}

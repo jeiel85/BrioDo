@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react'
 
 function pad(n) { return String(n).padStart(2, '0') }
 
+const lockFontScaleMap = { 1: 0.70, 2: 0.82, 3: 0.91, 4: 1.00, 5: 1.10, 6: 1.20, 7: 1.35 }
+
+// ─── SVG 아이콘 ───────────────────────────────────────────────
 const IconFlash = ({ on }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
     <path d={on
@@ -29,16 +32,57 @@ const IconTimer = () => (
   </svg>
 )
 
+const IconCalculator = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3h2v2h-2V6zm-4 0h2v2H8V6zm0 4h2v2H8v-2zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-8 4h2v6H8v-6zm4 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z"/>
+  </svg>
+)
+
+const IconPlayPause = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path d="M8 5v14l11-7L8 5z"/>
+  </svg>
+)
+
+const IconAlarm = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path d="M22 5.72l-4.6-3.86-1.29 1.53 4.6 3.86L22 5.72zM7.88 3.39L6.6 1.86 2 5.71l1.29 1.53 4.59-3.85zM12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9a9 9 0 0 0 0-18zm0 16c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7zm.5-13H11v6l4.75 2.85.75-1.23-4-2.37V7z"/>
+  </svg>
+)
+
+const IconStopwatch = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path d="M15.07 1.01h-6v2h6v-2zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C17.07 4.74 15.61 4 14 4c-3.87 0-7 3.13-7 7s3.12 7 7 7 7-3.13 7-7c0-1.61-.74-3.07-1.9-4.6zM14 16c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+  </svg>
+)
+
 const IconPlus = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
     <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
   </svg>
 )
 
+// ─── 버튼 정의 (id → 아이콘 컴포넌트) ─────────────────────────
+// 각 컴포넌트는 on prop을 받지만 대부분 무시 (torch만 사용)
+const BUTTON_ICONS = {
+  torch:     ({ on }) => <IconFlash on={on} />,
+  camera:    () => <IconCamera />,
+  qr:        () => <IconQR />,
+  timer:     () => <IconTimer />,
+  calculator:() => <IconCalculator />,
+  playPause: () => <IconPlayPause />,
+  alarm:     () => <IconAlarm />,
+  stopwatch: () => <IconStopwatch />,
+}
+
 export function LockScreenView({
   todos, lang, onOpen, todayStr, isPreview,
-  onAddTodo, onToggleTorch, onOpenCamera, onOpenQrScanner, onOpenTimer,
-  buttonLayout = 'corners'
+  onAddTodo, buttonLayout = 'corners',
+  buttons = ['torch', 'camera', 'qr', 'timer'],
+  todoMode = 'today', showCompleted = false,
+  lockFontScale = 4,
+  onToggleTorch, onOpenCamera, onOpenQrScanner, onOpenTimer,
+  onOpenCalculator, onToggleMediaPlayPause, onOpenAlarm, onOpenStopwatch,
 }) {
   const [now, setNow] = useState(new Date())
   const [torchOn, setTorchOn] = useState(false)
@@ -56,7 +100,19 @@ export function LockScreenView({
     if (showInput) inputRef.current?.focus()
   }, [showInput])
 
-  const topTodos = todos.filter(t => !t.completed && t.date === todayStr)
+  // 할일 필터링
+  let displayTodos = todos
+  if (todoMode === 'today') {
+    displayTodos = displayTodos.filter(t => t.date === todayStr)
+  }
+  if (!showCompleted) {
+    displayTodos = displayTodos.filter(t => !t.completed)
+  }
+  displayTodos = [...displayTodos].sort((a, b) => {
+    const da = `${a.date} ${a.time || '00:00'}`
+    const db = `${b.date} ${b.time || '00:00'}`
+    return da < db ? -1 : da > db ? 1 : 0
+  })
 
   const hours = pad(now.getHours())
   const minutes = pad(now.getMinutes())
@@ -78,14 +134,28 @@ export function LockScreenView({
   const openLabel = isPreview
     ? (lang === 'ko' ? '닫기' : lang === 'ja' ? '閉じる' : lang === 'zh' ? '关闭' : 'Close Preview')
     : (lang === 'ko' ? '앱 열기' : lang === 'ja' ? 'アプリを開く' : lang === 'zh' ? '打开应用' : 'Open App')
-  const todayLabel = lang === 'ko' ? '오늘 할 일' : lang === 'ja' ? '今日のタスク' : lang === 'zh' ? '今日任务' : "Today's Tasks"
-  const doneAllLabel = lang === 'ko' ? '오늘 할 일을 모두 완료했어요! 🎉' : lang === 'ja' ? '今日のタスクはすべて完了！🎉' : lang === 'zh' ? '今天的任务全部完成！🎉' : 'All done for today! 🎉'
+
+  const todayLabel = todoMode === 'all'
+    ? (lang === 'ko' ? '전체 할 일' : lang === 'ja' ? '全タスク' : lang === 'zh' ? '所有任务' : 'All Tasks')
+    : (lang === 'ko' ? '오늘 할 일' : lang === 'ja' ? '今日のタスク' : lang === 'zh' ? '今日任务' : "Today's Tasks")
+
+  const doneAllLabel = lang === 'ko' ? '할 일이 없어요 🎉' : lang === 'ja' ? 'タスクはありません🎉' : lang === 'zh' ? '没有任务🎉' : 'Nothing here! 🎉'
   const addPlaceholder = lang === 'ko' ? '할 일 빠르게 추가...' : lang === 'ja' ? 'タスクを素早く追加...' : lang === 'zh' ? '快速添加任务...' : 'Quick add task...'
 
-  const handleTorch = async () => {
-    const next = !torchOn
-    setTorchOn(next)
-    await onToggleTorch?.(next)
+  // ─── 버튼 핸들러 맵 ─────────────────────────────────────────
+  const buttonHandlers = {
+    torch: async () => {
+      const next = !torchOn
+      setTorchOn(next)
+      await onToggleTorch?.(next)
+    },
+    camera:     () => onOpenCamera?.(),
+    qr:         () => onOpenQrScanner?.(),
+    timer:      () => onOpenTimer?.(),
+    calculator: () => onOpenCalculator?.(),
+    playPause:  () => onToggleMediaPlayPause?.(),
+    alarm:      () => onOpenAlarm?.(),
+    stopwatch:  () => onOpenStopwatch?.(),
   }
 
   const handleAddTodo = async () => {
@@ -103,43 +173,27 @@ export function LockScreenView({
     if (e.key === 'Escape') { setShowInput(false); setTodoInput('') }
   }
 
-  // 1안(corners)용: 손전등 + 카메라 2개
-  const CornersButtons = () => (
-    <>
-      <button
-        className={`lock-quick-btn${torchOn ? ' active' : ''}`}
-        onClick={handleTorch}
-        aria-label="flashlight"
-      >
-        <IconFlash on={torchOn} />
-      </button>
-      <button className="lock-quick-btn" onClick={() => onOpenCamera?.()} aria-label="camera">
-        <IconCamera />
-      </button>
-    </>
-  )
+  const scale = lockFontScaleMap[lockFontScale] ?? 1
 
-  // 2안(side)용: 손전등 + 카메라 + QR + 타이머 4개
-  const SideButtons = () => (
-    <>
+  // 1안(corners)은 처음 2개 버튼만, 2안(side)은 전체
+  const cornersIds = buttons.slice(0, 2)
+  const sideIds = buttons
+
+  const renderButtons = (ids) => ids.map(id => {
+    const BtnIcon = BUTTON_ICONS[id]
+    if (!BtnIcon) return null
+    const isActive = id === 'torch' && torchOn
+    return (
       <button
-        className={`lock-quick-btn${torchOn ? ' active' : ''}`}
-        onClick={handleTorch}
-        aria-label="flashlight"
+        key={id}
+        className={`lock-quick-btn${isActive ? ' active' : ''}`}
+        onClick={buttonHandlers[id]}
+        aria-label={id}
       >
-        <IconFlash on={torchOn} />
+        <BtnIcon on={torchOn} />
       </button>
-      <button className="lock-quick-btn" onClick={() => onOpenCamera?.()} aria-label="camera">
-        <IconCamera />
-      </button>
-      <button className="lock-quick-btn" onClick={() => onOpenQrScanner?.()} aria-label="qr scanner">
-        <IconQR />
-      </button>
-      <button className="lock-quick-btn" onClick={() => onOpenTimer?.()} aria-label="timer">
-        <IconTimer />
-      </button>
-    </>
-  )
+    )
+  })
 
   return (
     <div className="lock-screen-overlay">
@@ -147,7 +201,7 @@ export function LockScreenView({
       <div className="lock-bg-blob blob-2" />
       <div className="lock-bg-blob blob-3" />
 
-      <div className="lock-screen-content">
+      <div className="lock-screen-content" style={{ '--lock-font-scale': scale }}>
         {/* 시계 패널 */}
         <div className="lock-clock-panel">
           <div className="lock-time">{hours}<span className="lock-colon">:</span>{minutes}</div>
@@ -157,7 +211,7 @@ export function LockScreenView({
         {/* 2안: 시계 하단 우측 버튼 패널 */}
         {buttonLayout === 'clock' && (
           <div className="lock-quick-btns-side">
-            <SideButtons />
+            {renderButtons(sideIds)}
           </div>
         )}
 
@@ -199,15 +253,16 @@ export function LockScreenView({
 
           {/* 스크롤 가능한 할일 목록 */}
           <div className="lock-tasks-scroll">
-            {topTodos.length === 0 ? (
+            {displayTodos.length === 0 ? (
               <div className="lock-tasks-empty">{doneAllLabel}</div>
             ) : (
               <ul className="lock-tasks-list">
-                {topTodos.map(todo => (
-                  <li key={todo.id} className="lock-task-item">
-                    <span className="lock-task-dot" />
+                {displayTodos.map(todo => (
+                  <li key={todo.id} className={`lock-task-item${todo.completed ? ' lock-task-done' : ''}`}>
+                    <span className={`lock-task-dot${todo.completed ? ' done' : ''}`} />
                     <span className="lock-task-text">{todo.text}</span>
                     {todo.time && <span className="lock-task-time">{todo.time}</span>}
+                    {todoMode === 'all' && <span className="lock-task-date">{todo.date}</span>}
                   </li>
                 ))}
               </ul>
@@ -224,7 +279,7 @@ export function LockScreenView({
       {/* 1안: 모서리 버튼 */}
       {buttonLayout === 'corners' && (
         <div className="lock-quick-btns-corners">
-          <CornersButtons />
+          {renderButtons(cornersIds)}
         </div>
       )}
     </div>

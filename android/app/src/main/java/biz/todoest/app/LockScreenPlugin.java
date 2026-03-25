@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
+import android.media.AudioManager;
 import android.os.Build;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
+import android.view.KeyEvent;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -81,6 +83,54 @@ public class LockScreenPlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             call.reject("Timer not available: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void openCalculator(PluginCall call) {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_APP_CALCULATOR);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            getContext().startActivity(intent);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Calculator not available: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void toggleMediaPlayPause(PluginCall call) {
+        AudioManager am = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        KeyEvent down = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+        KeyEvent up = new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+        am.dispatchMediaKeyEvent(down);
+        am.dispatchMediaKeyEvent(up);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void openAlarm(PluginCall call) {
+        Intent intent = new Intent(AlarmClock.ACTION_SHOW_ALARMS);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            getContext().startActivity(intent);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Alarm app not available: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void openStopwatch(PluginCall call) {
+        Intent intent = new Intent("android.intent.action.SET_STOPWATCH");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            getContext().startActivity(intent);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Stopwatch not available: " + e.getMessage());
         }
     }
 }

@@ -179,6 +179,44 @@ function App() {
     localStorage.setItem('lockScreenButtonLayout', val)
   }
 
+  // 잠금화면 할일 표시 모드: 'today' | 'all'
+  const [lockScreenTodoMode, setLockScreenTodoMode] = useState(
+    () => localStorage.getItem('lockScreenTodoMode') || 'today'
+  )
+  const setLockScreenTodoModePersisted = (val) => {
+    setLockScreenTodoMode(val)
+    localStorage.setItem('lockScreenTodoMode', val)
+  }
+
+  // 잠금화면 완료된 할일 표시 여부
+  const [lockScreenShowCompleted, setLockScreenShowCompleted] = useState(
+    () => localStorage.getItem('lockScreenShowCompleted') === 'true'
+  )
+  const setLockScreenShowCompletedPersisted = (val) => {
+    setLockScreenShowCompleted(val)
+    localStorage.setItem('lockScreenShowCompleted', String(val))
+  }
+
+  // 잠금화면 글자 크기 (1~7, 기본 4)
+  const [lockScreenFontScale, setLockScreenFontScale] = useState(() => {
+    const v = parseInt(localStorage.getItem('lockScreenFontScale'))
+    return (v >= 1 && v <= 7) ? v : 4
+  })
+  const setLockScreenFontScalePersisted = (val) => {
+    setLockScreenFontScale(val)
+    localStorage.setItem('lockScreenFontScale', String(val))
+  }
+
+  // 잠금화면 선택 버튼 목록 (최대 6개)
+  const [lockScreenButtons, setLockScreenButtons] = useState(() => {
+    const saved = localStorage.getItem('lockScreenButtons')
+    return saved ? JSON.parse(saved) : ['torch', 'camera', 'qr', 'timer']
+  })
+  const setLockScreenButtonsPersisted = (val) => {
+    setLockScreenButtons(val)
+    localStorage.setItem('lockScreenButtons', JSON.stringify(val))
+  }
+
   const checkLockScreen = async () => {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
     try {
@@ -212,6 +250,22 @@ function App() {
 
   const handleLockOpenTimer = async () => {
     try { await LockScreenNative?.openTimer() } catch(e) {}
+  }
+
+  const handleLockOpenCalculator = async () => {
+    try { await LockScreenNative?.openCalculator() } catch(e) {}
+  }
+
+  const handleLockToggleMediaPlayPause = async () => {
+    try { await LockScreenNative?.toggleMediaPlayPause() } catch(e) {}
+  }
+
+  const handleLockOpenAlarm = async () => {
+    try { await LockScreenNative?.openAlarm() } catch(e) {}
+  }
+
+  const handleLockOpenStopwatch = async () => {
+    try { await LockScreenNative?.openStopwatch() } catch(e) {}
   }
 
   const handleLockAddTodo = async (text) => {
@@ -602,11 +656,19 @@ function App() {
         onOpen={() => { setIsLockScreen(false); setShowLockPreview(false) }}
         isPreview={showLockPreview}
         onAddTodo={handleLockAddTodo}
+        buttonLayout={lockScreenButtonLayout}
+        buttons={lockScreenButtons}
+        todoMode={lockScreenTodoMode}
+        showCompleted={lockScreenShowCompleted}
+        lockFontScale={lockScreenFontScale}
         onToggleTorch={handleLockToggleTorch}
         onOpenCamera={handleLockOpenCamera}
         onOpenQrScanner={handleLockOpenQrScanner}
         onOpenTimer={handleLockOpenTimer}
-        buttonLayout={lockScreenButtonLayout}
+        onOpenCalculator={handleLockOpenCalculator}
+        onToggleMediaPlayPause={handleLockToggleMediaPlayPause}
+        onOpenAlarm={handleLockOpenAlarm}
+        onOpenStopwatch={handleLockOpenStopwatch}
       />
     )
   }
@@ -777,6 +839,10 @@ function App() {
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
           lockScreenEnabled={lockScreenEnabled} setLockScreenEnabled={setLockScreenEnabledPersisted}
           lockScreenButtonLayout={lockScreenButtonLayout} setLockScreenButtonLayout={setLockScreenButtonLayoutPersisted}
+          lockScreenTodoMode={lockScreenTodoMode} setLockScreenTodoMode={setLockScreenTodoModePersisted}
+          lockScreenShowCompleted={lockScreenShowCompleted} setLockScreenShowCompleted={setLockScreenShowCompletedPersisted}
+          lockScreenFontScale={lockScreenFontScale} setLockScreenFontScale={setLockScreenFontScalePersisted}
+          lockScreenButtons={lockScreenButtons} setLockScreenButtons={setLockScreenButtonsPersisted}
           calendarSyncEnabled={calendarSyncEnabled} setCalendarSyncEnabled={setCalendarSyncEnabledPersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           setShowSettings={setShowSettings}

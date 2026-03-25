@@ -3194,7 +3194,7 @@ body.modal-open { overflow: hidden; }
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 .lock-time {
-  font-size: 72px;
+  font-size: calc(72px * var(--lock-font-scale, 1));
   font-weight: 800;
   color: #ffffff;
   letter-spacing: -2px;
@@ -3211,7 +3211,7 @@ body.modal-open { overflow: hidden; }
 }
 .lock-date {
   margin-top: 8px;
-  font-size: 15px;
+  font-size: calc(15px * var(--lock-font-scale, 1));
   font-weight: 600;
   color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.3px;
@@ -3231,7 +3231,7 @@ body.modal-open { overflow: hidden; }
   padding: 16px 18px;
 }
 .lock-tasks-title {
-  font-size: 11px;
+  font-size: calc(11px * var(--lock-font-scale, 1));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -3240,7 +3240,7 @@ body.modal-open { overflow: hidden; }
   flex-shrink: 0;
 }
 .lock-tasks-empty {
-  font-size: 14px;
+  font-size: calc(14px * var(--lock-font-scale, 1));
   color: rgba(255, 255, 255, 0.7);
   text-align: center;
   padding: 8px 0;
@@ -3276,18 +3276,31 @@ body.modal-open { overflow: hidden; }
 }
 .lock-task-text {
   flex: 1;
-  font-size: 14px;
+  font-size: calc(14px * var(--lock-font-scale, 1));
   font-weight: 500;
   color: rgba(255, 255, 255, 0.88);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.lock-task-item.lock-task-done .lock-task-text {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+.lock-task-dot.done {
+  background: rgba(255, 255, 255, 0.3);
+}
 .lock-task-time {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--lock-font-scale, 1));
   color: rgba(255, 255, 255, 0.5);
   font-weight: 600;
+}
+.lock-task-date {
+  flex-shrink: 0;
+  font-size: calc(10px * var(--lock-font-scale, 1));
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 500;
 }
 
 /* 앱 열기 버튼 */
@@ -3300,7 +3313,7 @@ body.modal-open { overflow: hidden; }
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 20px;
   color: #ffffff;
-  font-size: 16px;
+  font-size: calc(16px * var(--lock-font-scale, 1));
   font-weight: 700;
   cursor: pointer;
   letter-spacing: 0.3px;
@@ -3325,7 +3338,7 @@ body.modal-open { overflow: hidden; }
   border: 1px dashed rgba(255, 255, 255, 0.35);
   border-radius: 14px;
   color: rgba(255, 255, 255, 0.75);
-  font-size: 14px;
+  font-size: calc(14px * var(--lock-font-scale, 1));
   font-family: 'Manrope', sans-serif;
   cursor: pointer;
   transition: background 0.2s;
@@ -3354,7 +3367,7 @@ body.modal-open { overflow: hidden; }
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 14px;
   color: #ffffff;
-  font-size: 14px;
+  font-size: calc(14px * var(--lock-font-scale, 1));
   font-family: 'Manrope', sans-serif;
   outline: none;
 }
@@ -3410,6 +3423,47 @@ body.modal-open { overflow: hidden; }
   color: #ffd040;
 }
 .lock-quick-btn:active { background: rgba(255,255,255,0.28); }
+
+/* ─── 잠금화면 버튼 선택 그리드 (설정 모달) ─── */
+.lock-btn-picker {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.lock-btn-pick-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 4px 8px;
+  background: var(--color-surface-container-low);
+  border: 1.5px solid var(--color-outline-variant);
+  border-radius: 12px;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Manrope', sans-serif;
+}
+.lock-btn-pick-item.selected {
+  background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.lock-btn-pick-item.disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.lock-btn-pick-check {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
 
 /* ─── 잠금화면 퀵버튼 (2안: 시계 하단 우측 정렬 패널) ─── */
 .lock-quick-btns-side {
