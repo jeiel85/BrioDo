@@ -169,12 +169,48 @@ function App() {
     localStorage.setItem('calendarSyncEnabled', String(val))
   }
 
+  // 잠금화면 버튼 레이아웃: 'corners' | 'clock'
+  const [lockScreenButtonLayout, setLockScreenButtonLayout] = useState(
+    () => localStorage.getItem('lockScreenButtonLayout') || 'corners'
+  )
+  const setLockScreenButtonLayoutPersisted = (val) => {
+    setLockScreenButtonLayout(val)
+    localStorage.setItem('lockScreenButtonLayout', val)
+  }
+
   const checkLockScreen = async () => {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
     try {
       const { locked } = await LockScreenNative.isLocked()
       setIsLockScreen(locked)
     } catch(e) {}
+  }
+
+  const handleLockToggleTorch = async (on) => {
+    try { await LockScreenNative?.toggleTorch({ on }) } catch(e) {}
+  }
+
+  const handleLockOpenCamera = async () => {
+    try { await LockScreenNative?.openCamera() } catch(e) {}
+  }
+
+  const handleLockAddTodo = async (text) => {
+    if (!text.trim()) return
+    if (!user) {
+      const localId = `guest_${Date.now()}`
+      const payload = { id: localId, text: text.trim(), description: '', date: todayStr, time: '', tags: [], priority: 'medium', reminderOffset: null, subtasks: [], recurrence: { type: 'none', endDate: null }, completions: {}, completed: false, createdAt: Date.now() }
+      setTodos(prev => [...prev, payload])
+      await saveLocalTodo(payload)
+      return
+    }
+    try {
+      const newDocRef = doc(collection(db, "todos"))
+      const initialData = { uid: user.uid, text: text.trim(), description: '', date: todayStr, time: '', tags: [], priority: 'medium', reminderOffset: null, subtasks: [], recurrence: { type: 'none', endDate: null }, completions: {}, completed: false }
+      const localPayload = { ...initialData, id: newDocRef.id, createdAt: Date.now() }
+      setTodos(prev => [...prev, localPayload])
+      await saveLocalTodo(localPayload)
+      if (isOnline) await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
+    } catch(e) { console.error('Lock add todo error:', e) }
   }
 
   // 뒤로가기 처리 (Android)
@@ -545,6 +581,10 @@ function App() {
         todayStr={todayStr}
         onOpen={() => { setIsLockScreen(false); setShowLockPreview(false) }}
         isPreview={showLockPreview}
+        onAddTodo={handleLockAddTodo}
+        onToggleTorch={handleLockToggleTorch}
+        onOpenCamera={handleLockOpenCamera}
+        buttonLayout={lockScreenButtonLayout}
       />
     )
   }
@@ -714,6 +754,7 @@ function App() {
           allDayReminderTime={allDayReminderTime} setAllDayReminderTime={setAllDayReminderTimePersisted}
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
           lockScreenEnabled={lockScreenEnabled} setLockScreenEnabled={setLockScreenEnabledPersisted}
+          lockScreenButtonLayout={lockScreenButtonLayout} setLockScreenButtonLayout={setLockScreenButtonLayoutPersisted}
           calendarSyncEnabled={calendarSyncEnabled} setCalendarSyncEnabled={setCalendarSyncEnabledPersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           setShowSettings={setShowSettings}
