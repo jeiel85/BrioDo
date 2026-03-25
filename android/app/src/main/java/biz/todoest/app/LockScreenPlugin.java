@@ -2,6 +2,11 @@ package biz.todoest.app;
 
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraManager;
+import android.os.Build;
+import android.provider.MediaStore;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -12,6 +17,8 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "LockScreen")
 public class LockScreenPlugin extends Plugin {
 
+    private boolean torchOn = false;
+
     @PluginMethod
     public void isLocked(PluginCall call) {
         KeyguardManager km = (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
@@ -19,5 +26,32 @@ public class LockScreenPlugin extends Plugin {
         JSObject ret = new JSObject();
         ret.put("locked", locked);
         call.resolve(ret);
+    }
+
+    @PluginMethod
+    public void toggleTorch(PluginCall call) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            call.reject("Torch not supported below Android 6.0");
+            return;
+        }
+        CameraManager cm = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
+        try {
+            String cameraId = cm.getCameraIdList()[0];
+            torchOn = !torchOn;
+            cm.setTorchMode(cameraId, torchOn);
+            JSObject ret = new JSObject();
+            ret.put("on", torchOn);
+            call.resolve(ret);
+        } catch (CameraAccessException e) {
+            call.reject("Torch error: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void openCamera(PluginCall call) {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        getContext().startActivity(intent);
+        call.resolve();
     }
 }

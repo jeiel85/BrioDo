@@ -11,6 +11,7 @@ export function SettingsModal({
   allDayReminderTime, setAllDayReminderTime,
   user, handleLogin, handleLogout,
   lockScreenEnabled, setLockScreenEnabled,
+  lockScreenButtonLayout, setLockScreenButtonLayout,
   calendarSyncEnabled, setCalendarSyncEnabled,
   onPreviewLockScreen,
   setShowSettings
@@ -166,15 +167,34 @@ export function SettingsModal({
               : 'Shows today\'s tasks on the lock screen.'}
           </p>
           {lockScreenEnabled && (
-            <button
-              className="calendar-permission-btn"
-              onClick={onPreviewLockScreen}
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-              </svg>
-              {lang === 'ko' ? '미리보기' : 'Preview'}
-            </button>
+            <>
+              <h3 style={{ marginBottom: '8px' }}>{lang === 'ko' ? '버튼 위치' : 'Button Position'}</h3>
+              <div className="font-size-selector" style={{ marginBottom: '12px' }}>
+                <button
+                  className={lockScreenButtonLayout === 'corners' ? 'active' : ''}
+                  onClick={() => setLockScreenButtonLayout('corners')}
+                >
+                  <span style={{ fontSize: '16px' }}>⬛</span>
+                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '1안: 하단 모서리' : '1: Corners'}</span>
+                </button>
+                <button
+                  className={lockScreenButtonLayout === 'clock' ? 'active' : ''}
+                  onClick={() => setLockScreenButtonLayout('clock')}
+                >
+                  <span style={{ fontSize: '16px' }}>🕐</span>
+                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '2안: 시계 근처' : '2: Near Clock'}</span>
+                </button>
+              </div>
+              <button
+                className="calendar-permission-btn"
+                onClick={onPreviewLockScreen}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                  <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                </svg>
+                {lang === 'ko' ? '미리보기' : 'Preview'}
+              </button>
+            </>
           )}
         </div>
 
