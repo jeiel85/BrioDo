@@ -279,5 +279,55 @@
   - `.gitignore`에 `.claude/` 추가.
   - `PROJECT_HISTORY.md` 최초 생성.
 
+- **2026-03-25** (세션 11 — 음성 인식 안정화 및 UX 개선):
+  - **SmartInputModal 전면 개선**:
+    - 알림(reminder) 섹션 제거 — 기본값 자동 적용
+    - 마이크 버튼 → `.mic-large-btn` 전체 너비 점선 버튼으로 교체
+    - 에러 메시지 친절한 한국어/영어로 변경
+    - `getLangLocale()` 헬퍼 `helpers.js`로 추출 (기존 중복 코드 통합)
+    - 동적 import → 정적 import (trackEngagement)
+    - 미사용 props(reminderOffset 등) 정리
+  - **Samsung SpeechRecognizer 버그 수정**:
+    - 근본 원인: `partialResults: true`가 Samsung Galaxy S24에서 즉시 `ERROR_NO_MATCH` 유발
+    - `partialResults: false`로 변경 후 정상 동작 확인
+    - `popup: false` 복원
+  - **자동 음성 재시도 구현**:
+    - `no match` / `no speech` 에러 시 1회 자동 재시도
+    - 재시도 중 파형 대신 "🎤 마이크를 준비 중이에요..." 표시 (isRetrying 상태)
+    - `retryingRef`로 재시도 중 `setIsListening(false)` 방지 → 파형 연속 유지
+  - **이벤트 버블링 버그 수정**: `voice-stop-btn`, `mic-large-btn` 모두 `e.stopPropagation()` 추가
+  - **컬렉션 탭 TOP3 너비 수정**:
+    - `top-achievements-row`를 `insight-stats-section` 바깥으로 이동 (이중 패딩 제거)
+    - CSS padding `0 16px 8px` → `4px 0 8px` 조정
+  - **업적 모달 X 버튼 CSS 추가**: `.modal-close-btn` 스타일 정의
+  - **App.jsx useMemo 최적화**: `headerActiveTodosCount`, `headerCompletedTodosCount` 검색 중 불필요한 filter 방지
+  - **autoStartVoice 로직**: FAB 탭 시 600ms delay 후 음성 자동 시작 (Samsung One UI 전환 대기)
+
 ---
-*최종 업데이트: 2026-03-24 (세션 10 — UX 개선 및 버그 수정)*
+
+## 🗺️ 다음 개발 로드맵
+
+### 킬링 포인트 기능
+1. ✅ 자연어 처리 (Gemini AI)
+2. ✅ 캘린더 연동 (Google Calendar 동기화)
+3. ✅ 업적 시스템 (Firestore 클라우드 동기화)
+4. ⬜ 잠금화면 바로 보기 (Android Activity FLAG_SHOW_WHEN_LOCKED)
+
+### 단기 작업 (우선순위 순)
+1. **잠금화면 지원**: `android/app/src/.../MainActivity` `FLAG_SHOW_WHEN_LOCKED` 추가 → 빠른 구현
+2. **로컬 푸시 알림**: `@capacitor/local-notifications` — 업적 달성 알림, 할일 리마인더
+3. **반복 일정**: 이미 plan 수립됨 (`plan` 파일 참조) — `recurrence` 필드 + 뷰 레벨 인스턴스 생성 전략
+4. **검색 기능**: 이미 plan 수립됨 — 전체 todos 텍스트/태그/설명 검색
+5. **하위 태스크**: 이미 plan 수립됨 — `subtasks` 배열 필드
+
+### 중기 작업
+- OAuth 토큰 자동 갱신 (5분 주기 체크, 만료 배너)
+- 업적 시스템 확장 (새 업적 추가: `useAchievements.js`의 `ACHIEVEMENT_DEFS` 배열에 직접 추가)
+- patch-package로 node_modules 패치 자동화
+
+### 업적 시스템 관리 방침
+- 현 단계: `useAchievements.js`의 `ACHIEVEMENT_DEFS` 배열에 직접 추가 후 재배포
+- Firebase 이관 고려 시점: 사용자 수 증가 or 업적 추가 빈도 높아질 때
+
+---
+*최종 업데이트: 2026-03-25 (세션 11 — 음성 인식 안정화, 재시도 로직, TOP3 너비, 업적 X 버튼)*

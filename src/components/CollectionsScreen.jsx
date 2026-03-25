@@ -17,9 +17,12 @@ function getAccent(tag) {
   return ACCENT_COLORS[Math.abs(hash) % ACCENT_COLORS.length]
 }
 
-export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplete, todayStr, weeklyPulse, unlockedIds, onShowAllAchievements }) {
+const INCOMPLETE_KEY = '__incomplete__'
+
+export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplete, todayStr, weeklyPulse, unlockedIds, unlockedSortedByDifficulty, onShowAllAchievements }) {
   const [expandedTag, setExpandedTag] = useState(null)
-  const [incompleteExpanded, setIncompleteExpanded] = useState(false)
+  const [showAllTagsModal, setShowAllTagsModal] = useState(false)
+  const [modalExpandedTag, setModalExpandedTag] = useState(null)
 
   const { allTotal, allDone, byTag, uncategorized } = useMemo(() => {
     const tagMap = {}
@@ -61,7 +64,10 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
   const circum = 2 * Math.PI * 28
   const dashOffset = circum * (1 - allRate)
 
-  const tags = Object.keys(byTag).sort()
+  // 태그를 태스크 수 내림차순 정렬
+  const tags = Object.keys(byTag).sort((a, b) => byTag[b].length - byTag[a].length)
+  const visibleTags = tags.slice(0, 3)
+  const hasMoreTags = tags.length > 3
 
   const renderTodoItem = (todo) => (
     <div key={todo.id} className="coll-task-item" onClick={() => openEditModal(todo)}>
@@ -76,28 +82,38 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
     </div>
   )
 
-  const renderCollectionCard = (tag, taskList, accent) => {
+  // expTagOverride / setExpTagOverride: 모달 내부 별도 expand 상태 지원
+  const renderCollectionCard = (tag, taskList, accent, isIncomplete = false, fullWidth = false, expTagOverride, setExpTagOverride) => {
     const done = taskList.filter(t => t.completed).length
     const total = taskList.length
     const rate = total > 0 ? done / total : 0
-    const isExpanded = expandedTag === tag
+    const cardKey = isIncomplete ? INCOMPLETE_KEY : tag
+    const activeExpTag = expTagOverride !== undefined ? expTagOverride : expandedTag
+    const activeSetExpTag = setExpTagOverride || setExpandedTag
+    const isExpanded = activeExpTag === cardKey
+    const isAlwaysFull = isIncomplete || fullWidth
 
     return (
-      <div key={tag} className={`collection-card ${accent.cls}`}>
-        <div className="collection-card-header" onClick={() => setExpandedTag(isExpanded ? null : tag)}>
+      <div key={cardKey} className={`collection-card ${accent.cls}${isExpanded ? ' expanded' : ''}${isAlwaysFull ? ' coll-full' : ''}`}>
+        <div className="collection-card-header" onClick={() => activeSetExpTag(isExpanded ? null : cardKey)}>
           <div className="collection-card-title-row">
             <span className="collection-card-emoji">{accent.emoji}</span>
-            <span className="collection-card-name">#{tag}</span>
+            <span className="collection-card-name">{isIncomplete ? tag : `#${tag}`}</span>
             <span className="collection-expand-icon">{isExpanded ? '▼' : '▶'}</span>
           </div>
-          <div className="collection-card-stats">
+          <div className="collection-card-stats" style={isIncomplete ? { marginBottom: 0 } : undefined}>
             <span className="collection-card-count">
-              {done}/{total}
+              {isIncomplete
+                ? `${total}${lang === 'ko' ? '개' : lang === 'ja' ? '件' : lang === 'zh' ? '项' : ' tasks'}`
+                : `${done}/${total}`
+              }
             </span>
           </div>
-          <div className="collection-progress-bar">
-            <div className="collection-progress-fill" style={{ width: `${rate * 100}%` }} />
-          </div>
+          {!isIncomplete && (
+            <div className="collection-progress-bar">
+              <div className="collection-progress-fill" style={{ width: `${rate * 100}%` }} />
+            </div>
+          )}
         </div>
         {isExpanded && (
           <div className="coll-task-list">
@@ -112,11 +128,41 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
   const weekLabel = lang === 'ko' ? '주간 완료' : lang === 'ja' ? '週間完了' : lang === 'zh' ? '本周完成' : 'This Week'
   const streakLabel = lang === 'ko' ? '연속 달성' : lang === 'ja' ? '連続達成' : lang === 'zh' ? '连续完成' : 'Streak'
   const dayLabel = lang === 'ko' ? '일' : lang === 'ja' ? '日' : lang === 'zh' ? '天' : 'd'
-  const incompleteTitle = lang === 'ko' ? '미완료 할일' : lang === 'ja' ? '未完了タスク' : lang === 'zh' ? '未完成任务' : 'Incomplete Tasks'
+  const incompleteTitle = lang === 'ko' ? '미완료 할일' : lang === 'ja' ? '未完了タスク' : lang === 'zh' ? '未完成任务' : 'Incomplete'
   const allDoneLabel = lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'done'
+  const allTagsLabel = lang === 'ko' ? '모든 태그 보기' : lang === 'ja' ? 'すべてのタグ' : lang === 'zh' ? '查看全部标签' : 'All Tags'
+
+  const top3Achievements = unlockedSortedByDifficulty?.slice(0, 3) || []
 
   return (
     <div className="collections-screen insight-screen">
+
+      {/* ── Hero Card: 전체 완료율 (맨 위) ── */}
+      <div className="hero-collection-card">
+        <div className="hero-coll-text">
+          <div className="hero-coll-title">{t.allTasks}</div>
+          <div className="hero-coll-sub">
+            {allDone}/{allTotal} {allDoneLabel}
+          </div>
+        </div>
+        <div className="hero-coll-ring">
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="6"/>
+            <circle
+              cx="36" cy="36" r="28"
+              fill="none"
+              stroke="white"
+              strokeWidth="6"
+              strokeDasharray={circum}
+              strokeDashoffset={dashOffset}
+              strokeLinecap="round"
+              style={{ transform: 'rotate(-90deg)', transformOrigin: '36px 36px', transition: 'stroke-dashoffset 0.6s ease' }}
+            />
+          </svg>
+          <div className="hero-coll-pct">{Math.round(allRate * 100)}%</div>
+        </div>
+      </div>
+
       {/* ── Stats 요약 섹션 ── */}
       <div className="insight-stats-section">
         <div className="insight-stats-numbers">
@@ -169,85 +215,61 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
           </div>
         )}
 
-        {/* 업적 보기 버튼 */}
-        {onShowAllAchievements && (
-          <button className="achievements-more-btn" style={{ marginBottom: '4px' }} onClick={onShowAllAchievements}>
-            {lang === 'ko' ? '🏆 모든 업적 보기' : lang === 'ja' ? '🏆 全実績を見る' : lang === 'zh' ? '🏆 查看所有成就' : '🏆 View All Achievements'}
-          </button>
-        )}
       </div>
+
+      {/* TOP3 업적 */}
+      {top3Achievements.length > 0 && (
+        <div className="top-achievements-row">
+          {top3Achievements.map((ach, idx) => (
+            <div key={ach.id} className={`top-ach-badge rank-${idx + 1}`}>
+              <span className="top-ach-icon">{ach.icon}</span>
+              <span className="top-ach-name">{ach.name[lang] || ach.name.ko}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 업적 보기 버튼 */}
+      {onShowAllAchievements && (
+        <button className="achievements-more-btn" style={{ marginBottom: '4px' }} onClick={onShowAllAchievements}>
+          {lang === 'ko' ? '🏆 모든 업적 보기' : lang === 'ja' ? '🏆 全実績を見る' : lang === 'zh' ? '🏆 查看所有成就' : '🏆 View All Achievements'}
+        </button>
+      )}
 
       <div className="insight-divider" />
 
-      {/* Hero Card: 전체 완료율 */}
-      <div className="hero-collection-card" style={{ margin: '16px 16px 0' }}>
-        <div className="hero-coll-text">
-          <div className="hero-coll-title">{t.allTasks}</div>
-          <div className="hero-coll-sub">
-            {allDone}/{allTotal} {allDoneLabel}
-          </div>
+      {/* ── 미완료 할일 (전체 할일 바로 하단, 태그 카드 UX 동일) ── */}
+      {incompleteTodos.length > 0 && (
+        <div className="collections-grid">
+          {renderCollectionCard(incompleteTitle, incompleteTodos, { cls: 'coll-gray', emoji: '⏳' }, true)}
         </div>
-        <div className="hero-coll-ring">
-          <svg width="72" height="72" viewBox="0 0 72 72">
-            <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="6"/>
-            <circle
-              cx="36" cy="36" r="28"
-              fill="none"
-              stroke="white"
-              strokeWidth="6"
-              strokeDasharray={circum}
-              strokeDashoffset={dashOffset}
-              strokeLinecap="round"
-              style={{ transform: 'rotate(-90deg)', transformOrigin: '36px 36px', transition: 'stroke-dashoffset 0.6s ease' }}
-            />
-          </svg>
-          <div className="hero-coll-pct">{Math.round(allRate * 100)}%</div>
-        </div>
-      </div>
+      )}
 
-      {/* Tag Collections */}
+      {/* Tag Collections (상위 3개) */}
       {tags.length > 0 && (
         <div className="collections-grid">
-          {tags.map(tag => renderCollectionCard(tag, byTag[tag], getAccent(tag)))}
+          {visibleTags.map(tag => renderCollectionCard(tag, byTag[tag], getAccent(tag)))}
+          {hasMoreTags && (
+            <div className="collection-card coll-more" onClick={() => setShowAllTagsModal(true)}>
+              <div className="collection-card-header">
+                <div className="collection-card-title-row">
+                  <span className="collection-card-emoji">🗂️</span>
+                  <span className="collection-card-name">{allTagsLabel}</span>
+                  <span className="collection-expand-icon">▶</span>
+                </div>
+                <div className="collection-card-stats">
+                  <span className="collection-card-count">+{tags.length - 3}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Uncategorized */}
-      {uncategorized.length > 0 && renderCollectionCard(
-        t.uncategorized,
-        uncategorized,
-        { cls: 'coll-gray', emoji: '📋' }
-      )}
-
-      {/* ── 미완료 할일 섹션 ── */}
-      {incompleteTodos.length > 0 && (
-        <div className="incomplete-todos-section">
-          <div className="incomplete-todos-header">{incompleteTitle}</div>
-          <div className="incomplete-todos-card">
-            <div className="incomplete-todos-summary" onClick={() => setIncompleteExpanded(v => !v)}>
-              <div className="incomplete-todos-summary-left">
-                <span className="incomplete-todos-emoji">⏳</span>
-                <div>
-                  <div className="incomplete-todos-title">{incompleteTitle}</div>
-                  <div className="incomplete-todos-count">
-                    {incompleteTodos.length}{lang === 'ko' ? '개' : lang === 'ja' ? '件' : lang === 'zh' ? '项' : ' tasks'}
-                  </div>
-                </div>
-              </div>
-              <span className="incomplete-todos-expand">{incompleteExpanded ? '▼' : '▶'}</span>
-            </div>
-            {incompleteExpanded && (
-              <div className="incomplete-todos-list">
-                {incompleteTodos.map(todo => (
-                  <div key={todo.id} className="incomplete-todo-item" onClick={() => openEditModal(todo)}>
-                    <div className="incomplete-todo-dot" />
-                    <span className="incomplete-todo-text">{todo.text}</span>
-                    {todo.date && <span className="incomplete-todo-date">{todo.date.slice(5)}</span>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+      {uncategorized.length > 0 && (
+        <div className="collections-grid">
+          {renderCollectionCard(t.uncategorized, uncategorized, { cls: 'coll-gray', emoji: '📋' }, false, true)}
         </div>
       )}
 
@@ -256,6 +278,22 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
         <div className="coll-empty">
           <div className="coll-empty-icon">📭</div>
           <p>{t.doneAll}</p>
+        </div>
+      )}
+
+      {/* ── 모든 태그 보기 모달 (그리드 + 펼치기 UX) ── */}
+      {showAllTagsModal && (
+        <div className="input-overlay" onClick={() => { setShowAllTagsModal(false); setModalExpandedTag(null) }}>
+          <div className="all-tags-modal" onClick={e => e.stopPropagation()}>
+            <div className="notif-drag-handle" />
+            <div className="settings-header">
+              <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800 }}>🗂️ {allTagsLabel}</h2>
+              <button className="settings-close" onClick={() => { setShowAllTagsModal(false); setModalExpandedTag(null) }}>✕</button>
+            </div>
+            <div className="all-tags-list">
+              {tags.map(tag => renderCollectionCard(tag, byTag[tag], getAccent(tag), false, false, modalExpandedTag, setModalExpandedTag))}
+            </div>
+          </div>
         </div>
       )}
     </div>

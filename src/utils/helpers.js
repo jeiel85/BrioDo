@@ -40,6 +40,9 @@ export const getLocalDateString = (d) => {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0]
 }
 
+export const getLangLocale = (lang) =>
+  lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+
 export const formatTime = (timeStr, noTimeLabel) => {
   if (!timeStr || timeStr === noTimeLabel) return ''
   if (/^\d{2}:\d{2}$/.test(timeStr)) return timeStr

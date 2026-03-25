@@ -142,22 +142,40 @@ function App() {
     return () => clearTimeout(debounceTimer.current)
   }, [newTodo.text, showInputModal])
 
+  const [showExitToast, setShowExitToast] = useState(false)
+  const lastBackPressRef = useRef(0)
+
   // 뒤로가기 처리 (Android)
-  const modalStateRef = useRef({ showInputModal, showSettings })
+  const modalStateRef = useRef({ showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal })
   useEffect(() => {
-    modalStateRef.current = { showInputModal, showSettings }
-  }, [showInputModal, showSettings])
+    modalStateRef.current = { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal }
+  }, [showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal])
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       const backListener = CapApp.addListener('backButton', () => {
-        const { showInputModal, showSettings } = modalStateRef.current
+        const { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal } = modalStateRef.current
         if (showInputModal) {
           resetForm()
+        } else if (showSmartModal) {
+          setShowSmartModal(false)
+          setSmartText('')
+          setSmartReminderOffset(null)
         } else if (showSettings) {
           setShowSettings(false)
+        } else if (showAchievementsModal) {
+          setShowAchievementsModal(false)
+        } else if (showNotificationsModal) {
+          setShowNotificationsModal(false)
         } else {
-          CapApp.exitApp()
+          const now = Date.now()
+          if (now - lastBackPressRef.current < 2000) {
+            CapApp.exitApp()
+          } else {
+            lastBackPressRef.current = now
+            setShowExitToast(true)
+            setTimeout(() => setShowExitToast(false), 2000)
+          }
         }
       })
       // 앱 포그라운드 복귀 시 항상 오늘 탭으로 리셋
@@ -199,7 +217,8 @@ function App() {
       priority: todo.priority ?? 'medium',
       reminderOffset: todo.reminderOffset ?? null,
       subtasks: todo.subtasks || [],
-      recurrence: todo.recurrence || { type: 'none', endDate: null }
+      recurrence: todo.recurrence || { type: 'none', endDate: null },
+      completed: todo.completed ?? false
     })
     setShowDescInput(!!todo.description)
     setShowInputModal(true)
@@ -236,6 +255,7 @@ function App() {
     const savedReminderOffset = newTodo.reminderOffset ?? null
     const savedSubtasks = (newTodo.subtasks || []).filter(st => st.text.trim())
     const savedRecurrence = newTodo.recurrence || { type: 'none', endDate: null }
+    const savedCompleted = newTodo.completed ?? false
     const isEdit = !!editingTodoId
     const editId = editingTodoId
 
@@ -281,7 +301,7 @@ function App() {
         }
       } else {
         // 수정
-        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence }
+        const updateData = { text: savedText, description: savedDesc, date: savedDate, time: savedTime, tags: inputTags, priority: savedPriority, reminderOffset: savedReminderOffset, subtasks: savedSubtasks, recurrence: savedRecurrence, completed: savedCompleted }
         const oldTodo = todos.find(t => t.id === editId) || {}
         const updatedTodo = { ...oldTodo, ...updateData }
 
@@ -427,6 +447,16 @@ function App() {
   const activeTodos = useMemo(() => filteredTodos.filter(todo => !todo.completed), [filteredTodos])
   const completedTodos = filteredTodos.filter(todo => todo.completed)
 
+  // 검색 중에도 헤더 완료율은 전체 기준 유지
+  const headerActiveTodosCount = useMemo(
+    () => searchQuery.trim() ? todos.filter(t => !t.completed).length : activeTodos.length,
+    [searchQuery, todos, activeTodos]
+  )
+  const headerCompletedTodosCount = useMemo(
+    () => searchQuery.trim() ? todos.filter(t => t.completed).length : completedTodos.length,
+    [searchQuery, todos, completedTodos]
+  )
+
   // 전체 할일 뷰: 반복 일정 제외, 날짜순 정렬
   const allTodosSorted = useMemo(() => {
     const sortByDate = (a, b) => {
@@ -493,8 +523,8 @@ function App() {
         setShowSettings={setShowSettings}
         searchQuery={searchQuery} setSearchQuery={(q) => { setSearchQuery(q); if (q.trim()) trackEngagement('searchUsed'); }}
         isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen}
-        activeTodosCount={activeTodos.length}
-        completedTodosCount={completedTodos.length}
+        activeTodosCount={headerActiveTodosCount}
+        completedTodosCount={headerCompletedTodosCount}
         weeklyPulse={weeklyPulse}
         allIncompleteTodosCount={allIncompleteTodos.length}
         notificationCount={notifications.length}
@@ -545,7 +575,7 @@ function App() {
             deleteTodo={deleteTodo}
           />
         )}
-        {viewMode === 'lists' && (
+        {viewMode === 'lists' && !searchQuery.trim() && (
           <CollectionsScreen
             todos={todos}
             t={t} lang={lang}
@@ -554,7 +584,23 @@ function App() {
             todayStr={todayStr}
             weeklyPulse={weeklyPulse}
             unlockedIds={unlockedIds}
+            unlockedSortedByDifficulty={unlockedSortedByDifficulty}
             onShowAllAchievements={() => setShowAchievementsModal(true)}
+          />
+        )}
+        {/* 검색 활성화 시: viewMode 무관하게 검색 결과 표시 */}
+        {searchQuery.trim() && viewMode === 'lists' && (
+          <TodoList
+            user={user} t={t} lang={lang}
+            activeTodos={activeTodos}
+            completedTodos={completedTodos}
+            viewMode='all'
+            showAllIncomplete={true}
+            todayStr={todayStr}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+            toggleSubtaskComplete={toggleSubtaskComplete}
+            deleteTodo={deleteTodo}
           />
         )}
       </div>
@@ -592,6 +638,7 @@ function App() {
           onSave={handleSmartSave}
           reminderOffset={smartReminderOffset} setReminderOffset={setSmartReminderOffset}
           defaultReminderOffset={defaultReminderOffset}
+          autoStartVoice={!smartText}
         />
       )}
 
@@ -629,6 +676,12 @@ function App() {
           unlockedIds={unlockedIds}
           lang={lang}
         />
+      )}
+
+      {showExitToast && (
+        <div className="exit-toast">
+          {lang === 'ko' ? '한 번 더 누르면 종료됩니다' : lang === 'ja' ? 'もう一度押すと終了します' : lang === 'zh' ? '再按一次退出' : 'Press again to exit'}
+        </div>
       )}
       <AchievementUnlockModal
         achievement={currentUnlock}

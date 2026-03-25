@@ -8,16 +8,24 @@ const PRIORITY_LABELS = {
 export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setShowDescInput, isAiAnalyzing, editingTodoId, resetForm, handleSaveTodo }) {
   const pLabels = PRIORITY_LABELS[lang] || PRIORITY_LABELS.en
   const priority = newTodo.priority ?? 'medium'
+  const isEditing = !!editingTodoId
 
   return (
     <div className="input-overlay" onClick={resetForm}>
       <div className="input-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-handle" />
 
+        {/* 텍스트 입력 + 완료 체크박스(편집 모드) + 상세 토글 */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+          {isEditing && (
+            <div
+              className={`edit-modal-checkbox ${newTodo.completed ? 'checked' : ''}`}
+              onClick={() => setNewTodo(prev => ({ ...prev, completed: !prev.completed }))}
+            />
+          )}
           <input
             className="main-input"
-            style={{ flex: 1, marginBottom: 0 }}
+            style={{ flex: 1, marginBottom: 0, textDecoration: isEditing && newTodo.completed ? 'line-through' : 'none', opacity: isEditing && newTodo.completed ? 0.6 : 1 }}
             type="text"
             placeholder={t.placeholder}
             autoFocus
@@ -126,38 +134,41 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
               </div>
             )}
           </div>
-        </div>
 
-        <div className="subtasks-section">
-          <div className="subtasks-section-header">
-            <span className="subtasks-label">{t.checklist}</span>
-            <button
-              className="subtask-add-btn"
-              onClick={() => {
-                const newSt = { id: `st_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, text: '', completed: false }
-                setNewTodo(prev => ({ ...prev, subtasks: [...(prev.subtasks || []), newSt] }))
-              }}
-            >+</button>
-          </div>
-          {(newTodo.subtasks || []).map((st, idx) => (
-            <div key={st.id} className="subtask-input-row">
-              <span className="subtask-bullet">○</span>
-              <input
-                className="subtask-text-input"
-                placeholder={t.checklistPlaceholder}
-                value={st.text}
-                autoFocus={idx === (newTodo.subtasks || []).length - 1 && st.text === ''}
-                onChange={e => setNewTodo(prev => ({
-                  ...prev,
-                  subtasks: prev.subtasks.map(s => s.id === st.id ? { ...s, text: e.target.value } : s)
-                }))}
-              />
+          {/* 체크리스트 — 다른 옵션 항목과 동일한 스타일 */}
+          <div className="input-option-item" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-on-surface-variant)' }}>
+                ✅ {t.checklist}
+              </span>
               <button
-                className="subtask-remove-btn"
-                onClick={() => setNewTodo(prev => ({ ...prev, subtasks: prev.subtasks.filter(s => s.id !== st.id) }))}
-              >✕</button>
+                className="subtask-add-btn"
+                onClick={() => {
+                  const newSt = { id: `st_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, text: '', completed: false }
+                  setNewTodo(prev => ({ ...prev, subtasks: [...(prev.subtasks || []), newSt] }))
+                }}
+              >+</button>
             </div>
-          ))}
+            {(newTodo.subtasks || []).map((st, idx) => (
+              <div key={st.id} className="subtask-input-row" style={{ width: '100%' }}>
+                <span className="subtask-bullet">○</span>
+                <input
+                  className="subtask-text-input"
+                  placeholder={t.checklistPlaceholder}
+                  value={st.text}
+                  autoFocus={idx === (newTodo.subtasks || []).length - 1 && st.text === ''}
+                  onChange={e => setNewTodo(prev => ({
+                    ...prev,
+                    subtasks: prev.subtasks.map(s => s.id === st.id ? { ...s, text: e.target.value } : s)
+                  }))}
+                />
+                <button
+                  className="subtask-remove-btn"
+                  onClick={() => setNewTodo(prev => ({ ...prev, subtasks: prev.subtasks.filter(s => s.id !== st.id) }))}
+                >✕</button>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="modal-actions">

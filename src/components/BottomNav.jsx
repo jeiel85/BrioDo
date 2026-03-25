@@ -4,6 +4,8 @@ export function BottomNav({ viewMode, setViewMode, todayStr, setSelectedDate, la
   const goTo = (mode) => {
     setViewMode(mode)
     if (showSettings) setShowSettings(false)
+    // 오늘 탭이 아닌 다른 탭으로 이동 시 날짜를 오늘로 리셋
+    if (mode !== 'date') setSelectedDate(todayStr)
   }
 
   return (
