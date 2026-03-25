@@ -146,10 +146,25 @@
 - [ ] **공유 기능**: 특정 할 일을 다른 사람과 공유
 - [x] **patch-package 도입**: node_modules 패치 영구 적용
 - [x] **업적 시스템**: 50개 업적 정의, 언락 모달, 알림 센터, 통계 배지 — 세션 12~13 완료
+- [x] **업적 확장**: 50개 추가(총 106개) — 세션 15 완료
+- [x] **잠금화면 위젯**: 잠금화면 감지 플러그인 + 심플 위젯 UI (블러 frosted glass) — 세션 15 완료
 
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-25** (세션 15 — 업적 50개 추가 + 잠금화면 위젯 구현):
+  - **업적 106개**: 기존 56개에 50개 추가. S6-S9(스트릭), C7-C11(완료), D7-D10(일간), W6-W8(주간), R5-R8(반복), T5-T8(태그), ST5-ST7(하위태스크), P5-P8(우선순위), AI5-AI8(AI/음성), CAL3-CAL4(캘린더), N3-N5(설명), SP4-SP8(특별날짜), E8-E12(참여). `perfectWeek`, `calSyncCount` 신규 stats 추가.
+  - **잠금화면 위젯 (LockScreenPlugin.java)**: Capacitor 8 네이티브 플러그인 신규 생성. `isLocked()` — `KeyguardManager.isKeyguardLocked()` 반환. MainActivity에 `registerPlugin(LockScreenPlugin.class)` 등록.
+  - **LockScreenView.jsx 신규**: 잠금화면 감지 시 표시되는 심플 위젯 UI. 애니메이션 그라디언트 배경(블러 배경화면 느낌) + frosted glass 패널. 현재 시간 + 오늘 미완료 상위 5개 할일 표시. "앱 열기" 버튼으로 전체 앱 전환.
+  - **컬렉션 탭 UI 개선** (세션 14): 태그 모달 펼치기 버그 수정(flex-wrap), 너비 통일, TOP3 업적 배지 금/은/동 스타일, 업적 버튼 1.5배 확대.
+  - **모든 업적 보기 버튼**: padding 10→15px, font-size 13→15px (1.5배 확대).
+
+- **2026-03-25** (세션 14 — 음성 인식 안정화 및 컬렉션 UI):
+  - **Samsung SpeechRecognizer 버그 수정**: `partialResults: true` 대신 `false` 사용. `ERROR_NO_MATCH` 발생 시 1회 자동 재시도 + "🎤 마이크를 준비 중이에요..." 메시지.
+  - **이벤트 버블링 수정**: 음성 버튼 클릭 `e.stopPropagation()` 추가.
+  - **업적 모달 X 버튼** `.modal-close-btn` CSS 추가.
+  - **TOP3 너비**: `insight-stats-section` 바깥으로 이동하여 이중 패딩 수정.
 
 - **2026-03-25** (세션 13 — 업적 시스템 연동 고도화 및 브랜치 정리):
   - **앱 포그라운드 복귀 시 오늘 탭 자동 리셋**: `CapApp.addListener('appStateChange')` 리스너 추가. 앱이 백그라운드에서 포그라운드로 복귀할 때(`isActive === true`) 항상 `viewMode='date'`로 복귀하고 날짜를 오늘로 리셋.

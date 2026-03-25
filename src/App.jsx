@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import { App as CapApp } from '@capacitor/app'
 import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { db } from './firebase'
@@ -25,8 +25,11 @@ import { SettingsModal } from './components/SettingsModal'
 import { NotificationsModal } from './components/NotificationsModal'
 import { AchievementUnlockModal } from './components/AchievementUnlockModal'
 import { AchievementsModal } from './components/AchievementsModal'
+import { LockScreenView } from './components/LockScreenView'
 
 import './index.css'
+
+const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScreen') : null
 
 function App() {
   const { lang, setLang, t } = useLanguage()
@@ -145,6 +148,16 @@ function App() {
   const [showExitToast, setShowExitToast] = useState(false)
   const lastBackPressRef = useRef(0)
 
+  // 잠금화면 모드
+  const [isLockScreen, setIsLockScreen] = useState(false)
+  const checkLockScreen = async () => {
+    if (!LockScreenNative) return
+    try {
+      const { locked } = await LockScreenNative.isLocked()
+      setIsLockScreen(locked)
+    } catch(e) {}
+  }
+
   // 뒤로가기 처리 (Android)
   const modalStateRef = useRef({ showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal })
   useEffect(() => {
@@ -178,14 +191,17 @@ function App() {
           }
         }
       })
-      // 앱 포그라운드 복귀 시 항상 오늘 탭으로 리셋
+      // 앱 포그라운드 복귀 시 잠금화면 감지 + 오늘 탭으로 리셋
       const resumeListener = CapApp.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
+          checkLockScreen()
           setViewMode('date')
           const today = new Date().toISOString().slice(0, 10)
           setSelectedDate(today)
         }
       })
+      // 앱 최초 실행 시 잠금화면 체크
+      checkLockScreen()
       return () => {
         backListener.then(l => l.remove())
         resumeListener.then(l => l.remove())
@@ -499,6 +515,17 @@ function App() {
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)', fontWeight: 600 }}>
         {t.loading}
       </div>
+    )
+  }
+
+  if (isLockScreen) {
+    return (
+      <LockScreenView
+        todos={todos}
+        lang={lang}
+        todayStr={todayStr}
+        onOpen={() => setIsLockScreen(false)}
+      />
     )
   }
 
