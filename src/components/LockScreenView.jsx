@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 function pad(n) { return String(n).padStart(2, '0') }
 
 const IconFlash = ({ on }) => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
     <path d={on
       ? "M7 2v11h3v9l7-12h-4l4-8z"
       : "M7 2v11h3v9l7-12h-4l4-8z M3.27 1L2 2.27l5.73 5.73H7v11h3v9l7-12h-4l2.45-4.45L19.73 23 21 21.73 3.27 1z"}
@@ -12,8 +12,20 @@ const IconFlash = ({ on }) => (
 )
 
 const IconCamera = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26">
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
     <path d="M12 15.2A3.2 3.2 0 0 1 8.8 12 3.2 3.2 0 0 1 12 8.8 3.2 3.2 0 0 1 15.2 12 3.2 3.2 0 0 1 12 15.2M9 3L7.17 5H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.17L15 3H9m3 15a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6z"/>
+  </svg>
+)
+
+const IconQR = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path d="M3 11h2v2H3v-2m8-6h2v4h-2V5m-2 6h4v4h-2v-2H9v-2m6 0h2v2h2v-2h2v2h-2v2h2v4h-2v2h-2v-2h-4v2h-2v-4h4v-2h2v-2h-2v-2m4 8v-4h-2v4h2M15 3h6v6h-6V3m2 2v2h2V5h-2M3 3h6v6H3V3m2 2v2h2V5H5m-2 8h6v6H3v-6m2 2v2h2v-2H5z"/>
+  </svg>
+)
+
+const IconTimer = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path d="M10 2h4v2h-4V2m4.84 11.41L13 11.67V8h-2v4.5l2.27 2.27 1.57-1.36M12 4a9 9 0 0 1 9 9 9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9m0 2a7 7 0 0 0-7 7 7 7 0 0 0 7 7 7 7 0 0 0 7-7 7 7 0 0 0-7-7z"/>
   </svg>
 )
 
@@ -25,8 +37,8 @@ const IconPlus = () => (
 
 export function LockScreenView({
   todos, lang, onOpen, todayStr, isPreview,
-  onAddTodo, onToggleTorch, onOpenCamera,
-  buttonLayout = 'corners'  // 'corners' | 'clock'
+  onAddTodo, onToggleTorch, onOpenCamera, onOpenQrScanner, onOpenTimer,
+  buttonLayout = 'corners'
 }) {
   const [now, setNow] = useState(new Date())
   const [torchOn, setTorchOn] = useState(false)
@@ -44,9 +56,7 @@ export function LockScreenView({
     if (showInput) inputRef.current?.focus()
   }, [showInput])
 
-  const topTodos = todos
-    .filter(t => !t.completed && t.date === todayStr)
-    .slice(0, 4)
+  const topTodos = todos.filter(t => !t.completed && t.date === todayStr)
 
   const hours = pad(now.getHours())
   const minutes = pad(now.getMinutes())
@@ -78,10 +88,6 @@ export function LockScreenView({
     await onToggleTorch?.(next)
   }
 
-  const handleCamera = async () => {
-    await onOpenCamera?.()
-  }
-
   const handleAddTodo = async () => {
     const text = todoInput.trim()
     if (!text) return
@@ -97,7 +103,8 @@ export function LockScreenView({
     if (e.key === 'Escape') { setShowInput(false); setTodoInput('') }
   }
 
-  const QuickBtns = () => (
+  // 1안(corners)용: 손전등 + 카메라 2개
+  const CornersButtons = () => (
     <>
       <button
         className={`lock-quick-btn${torchOn ? ' active' : ''}`}
@@ -106,12 +113,30 @@ export function LockScreenView({
       >
         <IconFlash on={torchOn} />
       </button>
-      <button
-        className="lock-quick-btn"
-        onClick={handleCamera}
-        aria-label="camera"
-      >
+      <button className="lock-quick-btn" onClick={() => onOpenCamera?.()} aria-label="camera">
         <IconCamera />
+      </button>
+    </>
+  )
+
+  // 2안(side)용: 손전등 + 카메라 + QR + 타이머 4개
+  const SideButtons = () => (
+    <>
+      <button
+        className={`lock-quick-btn${torchOn ? ' active' : ''}`}
+        onClick={handleTorch}
+        aria-label="flashlight"
+      >
+        <IconFlash on={torchOn} />
+      </button>
+      <button className="lock-quick-btn" onClick={() => onOpenCamera?.()} aria-label="camera">
+        <IconCamera />
+      </button>
+      <button className="lock-quick-btn" onClick={() => onOpenQrScanner?.()} aria-label="qr scanner">
+        <IconQR />
+      </button>
+      <button className="lock-quick-btn" onClick={() => onOpenTimer?.()} aria-label="timer">
+        <IconTimer />
       </button>
     </>
   )
@@ -123,35 +148,24 @@ export function LockScreenView({
       <div className="lock-bg-blob blob-3" />
 
       <div className="lock-screen-content">
-        {/* 시계 */}
+        {/* 시계 패널 */}
         <div className="lock-clock-panel">
-          {buttonLayout === 'clock' && (
-            <div className="lock-quick-btns-clock">
-              <QuickBtns />
-            </div>
-          )}
           <div className="lock-time">{hours}<span className="lock-colon">:</span>{minutes}</div>
           <div className="lock-date">{dateStr} {wday}</div>
         </div>
 
-        {/* 오늘 할 일 */}
+        {/* 2안: 시계 하단 우측 버튼 패널 */}
+        {buttonLayout === 'clock' && (
+          <div className="lock-quick-btns-side">
+            <SideButtons />
+          </div>
+        )}
+
+        {/* 할일 패널 */}
         <div className="lock-tasks-panel">
           <div className="lock-tasks-title">{todayLabel}</div>
-          {topTodos.length === 0 ? (
-            <div className="lock-tasks-empty">{doneAllLabel}</div>
-          ) : (
-            <ul className="lock-tasks-list">
-              {topTodos.map(todo => (
-                <li key={todo.id} className="lock-task-item">
-                  <span className="lock-task-dot" />
-                  <span className="lock-task-text">{todo.text}</span>
-                  {todo.time && <span className="lock-task-time">{todo.time}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
 
-          {/* 빠른 할 일 추가 */}
+          {/* 빠른 할일 추가 — 리스트 상단 고정 */}
           {showInput ? (
             <div className="lock-add-row">
               <input
@@ -182,6 +196,23 @@ export function LockScreenView({
                 )}
             </button>
           )}
+
+          {/* 스크롤 가능한 할일 목록 */}
+          <div className="lock-tasks-scroll">
+            {topTodos.length === 0 ? (
+              <div className="lock-tasks-empty">{doneAllLabel}</div>
+            ) : (
+              <ul className="lock-tasks-list">
+                {topTodos.map(todo => (
+                  <li key={todo.id} className="lock-task-item">
+                    <span className="lock-task-dot" />
+                    <span className="lock-task-text">{todo.text}</span>
+                    {todo.time && <span className="lock-task-time">{todo.time}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         {/* 열기 버튼 */}
@@ -193,7 +224,7 @@ export function LockScreenView({
       {/* 1안: 모서리 버튼 */}
       {buttonLayout === 'corners' && (
         <div className="lock-quick-btns-corners">
-          <QuickBtns />
+          <CornersButtons />
         </div>
       )}
     </div>

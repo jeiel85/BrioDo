@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
+import android.provider.AlarmClock;
 import android.provider.MediaStore;
 
 import com.getcapacitor.JSObject;
@@ -53,5 +54,33 @@ public class LockScreenPlugin extends Plugin {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         getContext().startActivity(intent);
         call.resolve();
+    }
+
+    @PluginMethod
+    public void openQrScanner(PluginCall call) {
+        // 삼성 QR 스캐너 시도 → 없으면 카메라로 대체
+        Intent intent = new Intent("android.intent.action.QR_CODE_SCANNER");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (intent.resolveActivity(getContext().getPackageManager()) != null) {
+            getContext().startActivity(intent);
+        } else {
+            Intent camIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            camIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            getContext().startActivity(camIntent);
+        }
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void openTimer(PluginCall call) {
+        Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER);
+        intent.putExtra(AlarmClock.EXTRA_SKIP_UI, false);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            getContext().startActivity(intent);
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Timer not available: " + e.getMessage());
+        }
     }
 }

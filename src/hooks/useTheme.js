@@ -131,5 +131,21 @@ export function useTheme() {
     localStorage.setItem('blenddo-font-scale', fontScale)
   }, [fontScale])
 
-  return { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme }
+  const syncStatusBar = async () => {
+    if (!Capacitor.isNativePlatform()) return
+    try {
+      const bodyBg = getComputedStyle(document.body).backgroundColor
+      const hexMatch = bodyBg.match(/\d+/g)
+      let hexColor = '#FFFFFF'
+      if (hexMatch && hexMatch.length >= 3) {
+        hexColor = '#' + hexMatch.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase()
+      }
+      await StatusBar.setBackgroundColor({ color: hexColor })
+      const [r, g, b] = hexMatch ? hexMatch.slice(0, 3).map(Number) : [255, 255, 255]
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000
+      await StatusBar.setStyle({ style: brightness > 128 ? Style.Light : Style.Dark })
+    } catch (e) {}
+  }
+
+  return { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar }
 }

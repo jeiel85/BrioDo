@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { Capacitor, registerPlugin } from '@capacitor/core'
+import { StatusBar, Style } from '@capacitor/status-bar'
 import { App as CapApp } from '@capacitor/app'
 import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore"
 import { db } from './firebase'
@@ -34,7 +35,7 @@ const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScre
 function App() {
   const { lang, setLang, t } = useLanguage()
   const { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired } = useAuth()
-  const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme } = useTheme()
+  const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar } = useTheme()
 
   // 완료 시 캘린더 처리 방식: 'status' | 'delete' (기본값: status)
   const [completionCalendarMode, setCompletionCalendarMode] = useState(
@@ -186,12 +187,31 @@ function App() {
     } catch(e) {}
   }
 
+  // 잠금화면 표시 시 상태바 아이콘을 흰색으로, 닫을 때 테마 복원
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    if (isLockScreen || showLockPreview) {
+      StatusBar.setBackgroundColor({ color: '#0a0a1a' }).catch(() => {})
+      StatusBar.setStyle({ style: Style.Dark }).catch(() => {})
+    } else {
+      syncStatusBar()
+    }
+  }, [isLockScreen, showLockPreview])
+
   const handleLockToggleTorch = async (on) => {
     try { await LockScreenNative?.toggleTorch({ on }) } catch(e) {}
   }
 
   const handleLockOpenCamera = async () => {
     try { await LockScreenNative?.openCamera() } catch(e) {}
+  }
+
+  const handleLockOpenQrScanner = async () => {
+    try { await LockScreenNative?.openQrScanner() } catch(e) {}
+  }
+
+  const handleLockOpenTimer = async () => {
+    try { await LockScreenNative?.openTimer() } catch(e) {}
   }
 
   const handleLockAddTodo = async (text) => {
@@ -584,6 +604,8 @@ function App() {
         onAddTodo={handleLockAddTodo}
         onToggleTorch={handleLockToggleTorch}
         onOpenCamera={handleLockOpenCamera}
+        onOpenQrScanner={handleLockOpenQrScanner}
+        onOpenTimer={handleLockOpenTimer}
         buttonLayout={lockScreenButtonLayout}
       />
     )
