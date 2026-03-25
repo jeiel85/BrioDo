@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 function pad(n) { return String(n).padStart(2, '0') }
 
-export function LockScreenView({ todos, lang, onOpen, todayStr }) {
+export function LockScreenView({ todos, lang, onOpen, todayStr, isPreview }) {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -31,7 +31,9 @@ export function LockScreenView({ todos, lang, onOpen, todayStr }) {
   const wday = (weekdays[lang] || weekdays.en)[now.getDay()]
   const dateStr = months[lang] || months.en
 
-  const openLabel = lang === 'ko' ? '앱 열기' : lang === 'ja' ? 'アプリを開く' : lang === 'zh' ? '打开应用' : 'Open App'
+  const openLabel = isPreview
+    ? (lang === 'ko' ? '닫기' : lang === 'ja' ? '閉じる' : lang === 'zh' ? '关闭' : 'Close Preview')
+    : (lang === 'ko' ? '앱 열기' : lang === 'ja' ? 'アプリを開く' : lang === 'zh' ? '打开应用' : 'Open App')
   const todayLabel = lang === 'ko' ? '오늘 할 일' : lang === 'ja' ? '今日のタスク' : lang === 'zh' ? '今日任务' : 'Today\'s Tasks'
   const doneAllLabel = lang === 'ko' ? '오늘 할 일을 모두 완료했어요! 🎉' : lang === 'ja' ? '今日のタスクはすべて完了！🎉' : lang === 'zh' ? '今天的任务全部完成！🎉' : 'All done for today! 🎉'
 

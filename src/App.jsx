@@ -150,8 +150,27 @@ function App() {
 
   // 잠금화면 모드
   const [isLockScreen, setIsLockScreen] = useState(false)
+  const [showLockPreview, setShowLockPreview] = useState(false)
+  const [lockScreenEnabled, setLockScreenEnabled] = useState(
+    () => localStorage.getItem('lockScreenEnabled') !== 'false'
+  )
+  const setLockScreenEnabledPersisted = (val) => {
+    setLockScreenEnabled(val)
+    localStorage.setItem('lockScreenEnabled', String(val))
+    if (!val) setIsLockScreen(false)
+  }
+
+  // 캘린더 동기화 ON/OFF
+  const [calendarSyncEnabled, setCalendarSyncEnabled] = useState(
+    () => localStorage.getItem('calendarSyncEnabled') !== 'false'
+  )
+  const setCalendarSyncEnabledPersisted = (val) => {
+    setCalendarSyncEnabled(val)
+    localStorage.setItem('calendarSyncEnabled', String(val))
+  }
+
   const checkLockScreen = async () => {
-    if (!LockScreenNative) return
+    if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
     try {
       const { locked } = await LockScreenNative.isLocked()
       setIsLockScreen(locked)
@@ -518,13 +537,14 @@ function App() {
     )
   }
 
-  if (isLockScreen) {
+  if (isLockScreen || showLockPreview) {
     return (
       <LockScreenView
         todos={todos}
         lang={lang}
         todayStr={todayStr}
-        onOpen={() => setIsLockScreen(false)}
+        onOpen={() => { setIsLockScreen(false); setShowLockPreview(false) }}
+        isPreview={showLockPreview}
       />
     )
   }
@@ -693,6 +713,9 @@ function App() {
           defaultReminderOffset={defaultReminderOffset} setDefaultReminderOffset={setDefaultReminderOffsetPersisted}
           allDayReminderTime={allDayReminderTime} setAllDayReminderTime={setAllDayReminderTimePersisted}
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
+          lockScreenEnabled={lockScreenEnabled} setLockScreenEnabled={setLockScreenEnabledPersisted}
+          calendarSyncEnabled={calendarSyncEnabled} setCalendarSyncEnabled={setCalendarSyncEnabledPersisted}
+          onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           setShowSettings={setShowSettings}
         />
       )}

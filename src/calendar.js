@@ -7,6 +7,9 @@ export const getCalendarAccessToken = () => {
   return localStorage.getItem('googleAccessToken')
 }
 
+export const isCalendarSyncEnabled = () =>
+  localStorage.getItem('calendarSyncEnabled') !== 'false'
+
 // 토큰 자동 갱신 (50분 경과 시 GoogleAuth.refresh() 호출)
 // 반환: { success: boolean, expired: boolean }
 export const refreshAccessTokenIfNeeded = async () => {
@@ -223,6 +226,7 @@ const buildEventPayload = (todo) => {
 }
 
 export const syncEventToGoogle = async (todo) => {
+  if (!isCalendarSyncEnabled()) return null
   const token = getCalendarAccessToken()
   if (!token) {
     console.warn('syncEventToGoogle: no access token — calendar sync skipped')
@@ -298,6 +302,7 @@ export const syncEventToGoogle = async (todo) => {
 }
 
 export const deleteEventFromGoogle = async (googleEventId) => {
+  if (!isCalendarSyncEnabled()) return
   const token = getCalendarAccessToken()
   if (!token || !googleEventId) return
 
@@ -322,6 +327,7 @@ export const deleteEventFromGoogle = async (googleEventId) => {
 
 // 캘린더에서 역으로 불러오는 로직 (양방향용)
 export const fetchEventsFromGoogle = async () => {
+  if (!isCalendarSyncEnabled()) return []
   const token = getCalendarAccessToken()
   if (!token) return []
 
