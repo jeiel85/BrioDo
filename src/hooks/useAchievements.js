@@ -75,6 +75,70 @@ export const ACHIEVEMENT_DEFS = [
   { id: 'E5', icon: '⭐', difficulty: 3, category: 'engagement', name: n('컬렉션 탐험가','Collection Explorer','コレクション探検家','收藏探险家'), desc: n('컬렉션 뷰 처음 방문','Visit the collections view','コレクションビューを初めて訪問','首次访问收藏视图'), check: s => s.flags?.collectionVisited },
   { id: 'E6', icon: '🏅', difficulty: 7, category: 'engagement', name: n('업적 수집가','Achievement Collector','実績コレクター','成就收集家'), desc: n('10개 이상 업적 달성','Unlock 10 or more achievements','10個以上の実績を解除','解锁10个以上成就'), check: s => s.unlockedCount >= 10 },
   { id: 'E7', icon: '🌟', difficulty: 9, category: 'engagement', name: n('업적 마스터','Achievement Master','実績マスター','成就大师'), desc: n('30개 이상 업적 달성','Unlock 30 or more achievements','30個以上の実績を解除','解锁30个以上成就'), check: s => s.unlockedCount >= 30 },
+  // ── 추가 업적 50개 ──
+  // Streak+
+  { id: 'S6', icon: '⚡', difficulty: 7, category: 'streak', name: n('3주 돌파','3-Week Run','3週間突破','三周突破'), desc: n('21일 연속 최소 1개 완료','21-day streak','21日連続完了','连续21天完成'), check: s => s.streak >= 21 },
+  { id: 'S7', icon: '🌠', difficulty: 9, category: 'streak', name: n('50일의 여정','50-Day Journey','50日の旅','五十日旅程'), desc: n('50일 연속 최소 1개 완료','50-day streak','50日連続完了','连续50天完成'), check: s => s.streak >= 50 },
+  { id: 'S8', icon: '🏔️', difficulty: 10, category: 'streak', name: n('200일 전설','200-Day Legend','200日の伝説','200日传奇'), desc: n('200일 연속 최소 1개 완료','200-day streak','200日連続完了','连续200天完成'), check: s => s.streak >= 200 },
+  { id: 'S9', icon: '🌏', difficulty: 10, category: 'streak', name: n('1년의 기록','365-Day Record','365日の記録','全年记录'), desc: n('365일 연속 최소 1개 완료','365-day streak','365日連続完了','连续365天完成'), check: s => s.streak >= 365 },
+  // Completion+
+  { id: 'C7', icon: '🎗️', difficulty: 8, category: 'completion', name: n('200개 달성','200 Club','200達成','200件成就'), desc: n('누적 200개 완료','200 total completions','累計200件完了','累计完成200件'), check: s => s.totalCompleted >= 200 },
+  { id: 'C8', icon: '🌅', difficulty: 7, category: 'completion', name: n('새벽의 챔피언','Dawn Champion','夜明けのチャンプ','黎明冠军'), desc: n('새벽에 20번 이상 완료','Complete 20+ tasks in early morning','早朝に20回以上完了','在清晨完成20次以上'), check: s => s.earlyBird >= 20 },
+  { id: 'C9', icon: '🌙', difficulty: 7, category: 'completion', name: n('야행성 달인','Night Master','夜型達人','夜行达人'), desc: n('밤 11시 이후 10번 이상 완료','Complete 10+ tasks after 11pm','夜11時以降10回以上完了','晚上11点后完成10次以上'), check: s => s.nightOwl >= 10 },
+  { id: 'C10', icon: '🎖️', difficulty: 8, category: 'completion', name: n('오늘의 영웅','Daily Hero','今日の英雄','今日英雄'), desc: n('하루에 15개 이상 완료','Complete 15+ tasks in one day','1日に15件以上完了','一天完成15件以上'), check: s => s.todayCompleted >= 15 },
+  { id: 'C11', icon: '🦁', difficulty: 9, category: 'completion', name: n('하루의 왕','Day King','その日の王','当日之王'), desc: n('하루에 20개 이상 완료','Complete 20+ tasks in one day','1日に20件以上完了','一天完成20件以上'), check: s => s.todayCompleted >= 20 },
+  // Daily+
+  { id: 'D7', icon: '🌈', difficulty: 7, category: 'daily', name: n('다양성의 달인','Variety Master','多様性の達人','多样性大师'), desc: n('하루에 5가지 이상 다른 태그 완료','Complete tasks with 5+ different tags in a day','1日に5種類以上タグ完了','一天完成5种以上不同标签'), check: s => s.todayTagVariety >= 5 },
+  { id: 'D8', icon: '⚡', difficulty: 6, category: 'daily', name: n('스피드런 전문가','Speed Runner','スピードランの達人','速通专家'), desc: n('당일 등록 후 1시간 내 완료 5회','5 tasks completed within 1 hour of adding','追加後1時間以内を5回達成','添加后1小时内完成5次'), check: s => s.speedRun >= 5 },
+  { id: 'D9', icon: '🌃', difficulty: 6, category: 'daily', name: n('심야 전사','Late Night Warrior','深夜ウォリアー','深夜战士'), desc: n('밤 11시 이후 5번 완료','Complete 5 tasks after 11pm','夜11時以降5回完了','晚上11点后完成5次'), check: s => s.nightOwl >= 5 },
+  { id: 'D10', icon: '📅', difficulty: 7, category: 'daily', name: n('월요일 열정가','Monday Enthusiast','月曜日の情熱家','周一热情者'), desc: n('월요일에 누적 20개 완료','Complete 20 tasks total on Mondays','月曜日に累計20件完了','周一累计完成20件'), check: s => s.mondayCompletions >= 20 },
+  // Weekly+
+  { id: 'W6', icon: '🔥', difficulty: 8, category: 'weekly', name: n('주간 50개','Weekly 50','週間50件','周50件'), desc: n('한 주에 50개 이상 완료','50+ completions in a week','1週間に50件以上完了','一周内完成50件以上'), check: s => s.weekCompleted >= 50 },
+  { id: 'W7', icon: '✨', difficulty: 9, category: 'weekly', name: n('완벽한 일주일','Perfect Week','完璧な一週間','完美一周'), desc: n('7일 모두 최소 1개 이상 완료','Complete at least 1 task every day for a week','7日全て1件以上完了','一周7天每天至少完成1件'), check: s => s.perfectWeek },
+  { id: 'W8', icon: '🏆', difficulty: 9, category: 'weekly', name: n('이번 달 200개','Month 200','今月200件','本月200件'), desc: n('이번 달 200개 이상 완료','200+ completions this month','今月200件以上完了','本月完成200件以上'), check: s => s.monthCompleted >= 200 },
+  // Recurrence+
+  { id: 'R5', icon: '🔄', difficulty: 7, category: 'recurrence', name: n('반복 50회','50 Reps','50回繰り返し','50次重复'), desc: n('반복 일정 누적 50회 완료','50 total recurring completions','繰り返し累計50回完了','累计完成50次重复任务'), check: s => s.completedRecurringCount >= 50 },
+  { id: 'R6', icon: '💫', difficulty: 9, category: 'recurrence', name: n('반복 200회','200 Reps','200回繰り返し','200次重复'), desc: n('반복 일정 누적 200회 완료','200 total recurring completions','繰り返し累計200回完了','累计完成200次重复任务'), check: s => s.completedRecurringCount >= 200 },
+  { id: 'R7', icon: '🧲', difficulty: 8, category: 'recurrence', name: n('30연속 반복','30-Streak Routine','30連続ルーティン','连续30次例行'), desc: n('반복 일정을 30회 연속 완료','Complete a recurring task 30 times in a row','繰り返しタスクを30回連続完了','连续30次完成重复任务'), check: s => s.recurringStreak >= 30 },
+  { id: 'R8', icon: '🎡', difficulty: 8, category: 'recurrence', name: n('5종 반복 유지','5-Type Routine','5種ルーティン維持','维持5种例行任务'), desc: n('서로 다른 반복 일정 5개 동시 활성화','5 different recurring tasks active at once','5つの繰り返しタスクを同時に','同时激活5种不同的重复任务'), check: s => s.activeRecurrences >= 5 },
+  // Tags+
+  { id: 'T5', icon: '🗂️', difficulty: 7, category: 'tag', name: n('태그 달인','Tag Expert','タグの達人','标签专家'), desc: n('서로 다른 태그 15가지 사용','Use 15 different tags','15種類のタグを使用','使用15种不同标签'), check: s => s.uniqueTagCount >= 15 },
+  { id: 'T6', icon: '🎨', difficulty: 8, category: 'tag', name: n('태그 마스터','Tag Master','タグマスター','标签大师'), desc: n('서로 다른 태그 20가지 사용','Use 20 different tags','20種類のタグを使用','使用20种不同标签'), check: s => s.uniqueTagCount >= 20 },
+  { id: 'T7', icon: '🌐', difficulty: 9, category: 'tag', name: n('30 태그 컬렉터','Tag Collector 30','30タグコレクター','30标签收藏家'), desc: n('서로 다른 태그 30가지 사용','Use 30 different tags','30種類のタグを使用','使用30种不同标签'), check: s => s.uniqueTagCount >= 30 },
+  { id: 'T8', icon: '🔮', difficulty: 10, category: 'tag', name: n('태그 그랜드마스터','Tag Grandmaster','タググランドマスター','标签特级大师'), desc: n('서로 다른 태그 50가지 사용','Use 50 different tags','50種類のタグを使用','使用50种不同标签'), check: s => s.uniqueTagCount >= 50 },
+  // Subtasks+
+  { id: 'ST5', icon: '🔬', difficulty: 8, category: 'subtask', name: n('하위 100개','100 Subtasks','サブタスク100件','100个子任务'), desc: n('하위 태스크 누적 100개 완료','100 total subtask completions','サブタスク累計100件完了','累计完成100个子任务'), check: s => s.totalSubtasksCompleted >= 100 },
+  { id: 'ST6', icon: '🧬', difficulty: 9, category: 'subtask', name: n('하위 200개','200 Subtasks','サブタスク200件','200个子任务'), desc: n('하위 태스크 누적 200개 완료','200 total subtask completions','サブタスク累計200件完了','累计完成200个子任务'), check: s => s.totalSubtasksCompleted >= 200 },
+  { id: 'ST7', icon: '🏗️', difficulty: 8, category: 'subtask', name: n('하위 150개','150 Subtasks','サブタスク150件','150个子任务'), desc: n('하위 태스크 누적 150개 완료','150 total subtask completions','サブタスク累計150件完了','累计完成150个子任务'), check: s => s.totalSubtasksCompleted >= 150 },
+  // Priority+
+  { id: 'P5', icon: '🚒', difficulty: 7, category: 'priority', name: n('긴급 달인','Urgent Expert','緊急の達人','紧急达人'), desc: n('긴급 우선순위 20개 완료','Complete 20 urgent tasks','緊急優先度タスクを20件完了','完成20件紧急任务'), check: s => s.completedByPriority.urgent >= 20 },
+  { id: 'P6', icon: '🎯', difficulty: 7, category: 'priority', name: n('높음 50개','High 50','高優先度50件','高优先50件'), desc: n('높음 우선순위 50개 완료','Complete 50 high-priority tasks','高優先度タスクを50件完了','完成50件高优先级任务'), check: s => s.completedByPriority.high >= 50 },
+  { id: 'P7', icon: '⚖️', difficulty: 8, category: 'priority', name: n('완벽한 균형','Perfect Balance','完璧なバランス','完美平衡'), desc: n('각 우선순위 10개씩 완료','Complete 10 tasks at each priority level','各優先度10件完了','每种优先级完成10件'), check: s => s.completedByPriority.low >= 10 && s.completedByPriority.medium >= 10 && s.completedByPriority.high >= 10 && s.completedByPriority.urgent >= 10 },
+  { id: 'P8', icon: '🧘', difficulty: 8, category: 'priority', name: n('여유의 고수','Low-Key Master','のんびりの高手','悠然高手'), desc: n('낮음 우선순위 50개 완료','Complete 50 low-priority tasks','低優先度タスクを50件完了','完成50件低优先级任务'), check: s => s.completedByPriority.low >= 50 },
+  // AI+
+  { id: 'AI5', icon: '🤖', difficulty: 8, category: 'ai', name: n('AI 파워유저','AI Power User','AIパワーユーザー','AI超级用户'), desc: n('AI 입력으로 50개 할 일 생성','Create 50 tasks using AI input','AI入力で50件タスク作成','用AI输入创建50件任务'), check: s => (s.flags?.aiTasks || 0) >= 50 },
+  { id: 'AI6', icon: '🧠', difficulty: 9, category: 'ai', name: n('AI 의존자','AI Devotee','AI依存者','AI信徒'), desc: n('AI 입력으로 100개 할 일 생성','Create 100 tasks using AI input','AI入力で100件タスク作成','用AI输入创建100件任务'), check: s => (s.flags?.aiTasks || 0) >= 100 },
+  { id: 'AI7', icon: '🎤', difficulty: 8, category: 'ai', name: n('음성 파워유저','Voice Power User','音声パワーユーザー','语音超级用户'), desc: n('음성 입력으로 50개 할 일 생성','Create 50 tasks using voice','音声入力で50件タスク作成','用语音输入创建50件任务'), check: s => (s.flags?.voiceTasks || 0) >= 50 },
+  { id: 'AI8', icon: '🗣️', difficulty: 9, category: 'ai', name: n('음성의 달인','Voice Devotee','音声の達人','语音达人'), desc: n('음성 입력으로 100개 할 일 생성','Create 100 tasks using voice','音声入力で100件タスク作成','用语音输入创建100件任务'), check: s => (s.flags?.voiceTasks || 0) >= 100 },
+  // Calendar+
+  { id: 'CAL3', icon: '📅', difficulty: 8, category: 'calendar', name: n('캘린더 파워유저','Calendar Power User','カレンダーパワーユーザー','日历超级用户'), desc: n('캘린더 연동 할 일 50개 이상','50+ tasks synced with calendar','カレンダー連携50件以上','日历同步50件以上'), check: s => s.calSyncCount >= 50 },
+  { id: 'CAL4', icon: '🗓️', difficulty: 9, category: 'calendar', name: n('캘린더 마스터','Calendar Master','カレンダーマスター','日历大师'), desc: n('캘린더 연동 할 일 100개 이상','100+ tasks synced with calendar','カレンダー連携100件以上','日历同步100件以上'), check: s => s.calSyncCount >= 100 },
+  // Notes+
+  { id: 'N3', icon: '📓', difficulty: 6, category: 'notes', name: n('상세 기록자','Detail Recorder','詳細記録者','详细记录者'), desc: n('설명이 있는 할 일 25개 완료','Complete 25 tasks with descriptions','説明付きタスクを25件完了','完成25件带描述的任务'), check: s => s.completedWithDescription >= 25 },
+  { id: 'N4', icon: '📜', difficulty: 8, category: 'notes', name: n('노트 전문가','Note Expert','ノートの専門家','笔记专家'), desc: n('설명이 있는 할 일 75개 완료','Complete 75 tasks with descriptions','説明付きタスクを75件完了','完成75件带描述的任务'), check: s => s.completedWithDescription >= 75 },
+  { id: 'N5', icon: '📚', difficulty: 9, category: 'notes', name: n('노트 마스터','Note Master','ノートマスター','笔记大师'), desc: n('설명이 있는 할 일 100개 완료','Complete 100 tasks with descriptions','説明付きタスクを100件完了','完成100件带描述的任务'), check: s => s.completedWithDescription >= 100 },
+  // Special+
+  { id: 'SP4', icon: '🃏', difficulty: 4, category: 'special', name: n('만우절의 농담','April Fools','エイプリルフール','愚人节'), desc: n('4월 1일에 할 일 완료','Complete a task on April 1st','4月1日にタスクを完了','在4月1日完成任务'), check: s => s.special?.aprilFools },
+  { id: 'SP5', icon: '🌸', difficulty: 4, category: 'special', name: n('광복절','Liberation Day','光復節','光复节'), desc: n('8월 15일에 할 일 완료','Complete a task on August 15th','8月15日にタスクを完了','在8月15日完成任务'), check: s => s.special?.liberationDay },
+  { id: 'SP6', icon: '📖', difficulty: 4, category: 'special', name: n('한글날','Hangeul Day','ハングルの日','韩文日'), desc: n('10월 9일에 할 일 완료','Complete a task on October 9th','10月9日にタスクを完了','在10月9日完成任务'), check: s => s.special?.hangeulDay },
+  { id: 'SP7', icon: '💝', difficulty: 4, category: 'special', name: n('발렌타인','Valentine','バレンタイン','情人节'), desc: n('2월 14일에 할 일 완료','Complete a task on February 14th','2月14日にタスクを完了','在2月14日完成任务'), check: s => s.special?.valentine },
+  { id: 'SP8', icon: '🎠', difficulty: 4, category: 'special', name: n('어린이날','Children\'s Day','こどもの日','儿童节'), desc: n('5월 5일에 할 일 완료','Complete a task on May 5th','5月5日にタスクを完了','在5月5日完成任务'), check: s => s.special?.childrensDay },
+  // Engagement+
+  { id: 'E8', icon: '🥈', difficulty: 8, category: 'engagement', name: n('업적 수집 전문가','Achievement Expert','実績収集の専門家','成就收集专家'), desc: n('20개 이상 업적 달성','Unlock 20 or more achievements','20個以上の実績を解除','解锁20个以上成就'), check: s => s.unlockedCount >= 20 },
+  { id: 'E9', icon: '🥇', difficulty: 9, category: 'engagement', name: n('업적 그랜드마스터','Achievement Grandmaster','実績グランドマスター','成就特级大师'), desc: n('40개 이상 업적 달성','Unlock 40 or more achievements','40個以上の実績を解除','解锁40个以上成就'), check: s => s.unlockedCount >= 40 },
+  { id: 'E10', icon: '📅', difficulty: 8, category: 'engagement', name: n('한달 개근','Month Perfect','月皆勤','月度全勤'), desc: n('30일 연속 앱 실행','Open the app for 30 days in a row','アプリを30日連続起動','连续30天打开应用'), check: s => (s.flags?.appStreak || 0) >= 30 },
+  { id: 'E11', icon: '💎', difficulty: 9, category: 'engagement', name: n('앱 100일','100 Days','アプリ100日','应用100天'), desc: n('앱을 100일 이상 사용','Use the app for 100+ days total','アプリを100日以上使用','累计使用应用100天'), check: s => (s.flags?.totalOpens || 0) >= 100 },
+  { id: 'E12', icon: '👑', difficulty: 10, category: 'engagement', name: n('앱 200일','200 Days','アプリ200日','应用200天'), desc: n('앱을 200일 이상 사용','Use the app for 200+ days total','アプリを200日以上使用','累计使用应用200天'), check: s => (s.flags?.totalOpens || 0) >= 200 },
 ]
 
 export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
@@ -103,7 +167,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
     
     let earlyBird = 0, nightOwl = 0, speedRun = 0, mondayCompletions = 0, monthCompleted = 0
     let satComplete = 0, sunComplete = 0, calSyncCount = 0
-    let special = { newYear: false, christmas: false, spring: false }
+    let special = { newYear: false, christmas: false, spring: false, aprilFools: false, liberationDay: false, hangeulDay: false, valentine: false, childrensDay: false }
     let completedRecurringCount = 0, recurringStreak = 0
     const nowMonth = new Date().getMonth()
     
@@ -113,6 +177,11 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
         if (t.date.endsWith('-01-01')) special.newYear = true
         if (t.date.endsWith('-12-25')) special.christmas = true
         if (t.date.endsWith('-03-01')) special.spring = true
+        if (t.date.endsWith('-04-01')) special.aprilFools = true
+        if (t.date.endsWith('-08-15')) special.liberationDay = true
+        if (t.date.endsWith('-10-09')) special.hangeulDay = true
+        if (t.date.endsWith('-02-14')) special.valentine = true
+        if (t.date.endsWith('-05-05')) special.childrensDay = true
         if (t.completedAt) {
           const d = new Date(t.completedAt)
           const hr = d.getHours()
@@ -139,6 +208,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
     const weekendFocus = satComplete >= 3 && sunComplete >= 3
     const calendarUsed = calSyncCount > 0
     const calendarMaintained = calSyncCount >= 10
+    const perfectWeek = weeklyPulse?.length >= 7 && weeklyPulse.every(d => d.completed > 0)
     
     let weekdayWarrior = false
     if (weeklyPulse && weeklyPulse.length >= 7) {
@@ -159,6 +229,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
       hasRecurrence, activeRecurrences, todayTagVariety, weekCompleted,
       earlyBird, nightOwl, speedRun, mondayCompletions, monthCompleted,
       weekendFocus, weekdayWarrior, calendarUsed, calendarMaintained,
+      perfectWeek, calSyncCount,
       special, completedRecurringCount, recurringStreak, flags,
       unlockedCount: 0,
     }
@@ -203,7 +274,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
 
   const computedUnlocked = useMemo(() => {
     const firstPass = ACHIEVEMENT_DEFS.filter(a => {
-      if (a.id === 'E1' || a.id === 'E6' || a.id === 'E7') return false
+      if (['E1','E6','E7','E8','E9'].includes(a.id)) return false
       try { return a.check(stats) } catch { return false }
     })
     const count = firstPass.length
