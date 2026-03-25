@@ -35,7 +35,17 @@
   - **FAB**: 로그인 여부에 따라 스마트(✨) / 수동(+) 입력 분기.
   - **인앱 브라우저 이벤트 차단**: `user-select: none; -webkit-touch-callout: none` 전체 적용.
 
-### 2. 스마트 기능 (AI)
+### 2. 업적 시스템
+- **50개 업적 정의** (`ACHIEVEMENTS.md` 별도 관리): 스트릭, 완료 횟수, 태그, 우선순위, AI 사용, 캘린더 연동 등 13개 카테고리. 난이도 1~10 등급.
+- **`useAchievements.js` 훅**: 전체 업적 달성 체크 로직, localStorage 기반 달성 내역 관리, 큐 기반 언락 모달 시스템(여러 업적 동시 달성 시 순차 표시), 첫 마운트 조용한 초기화(앱 첫 실행 시 모달 미표시).
+- **업적 언락 모달** (`AchievementUnlockModal.jsx`): 파티클 버스트 + 아이콘 바운스 + 골드 글로우 애니메이션. 4초 후 자동 닫힘.
+- **업적 전체보기 모달** (`AchievementsModal.jsx`): 바텀시트, 전체/달성/미달성 필터 탭, 카테고리 그룹, 잠긴 업적은 `??? (잠김)` 표시 → 탭 시 상세 공개(서프라이즈 디스커버리).
+- **통계 화면 업적 배지**: 달성 업적 중 난이도 높은 순 상위 3개 표시 + 업적 더보기 버튼.
+- **알림 센터 (전구 아이콘)**: 헤더 상단에 전구 아이콘 추가. 새 업적 달성 시 빨간 뱃지 표시. `NotificationsModal` 경유 후 업적 목록으로 이동.
+- **Engagement 트래커**: 앱 접속 횟수/연속일, AI 사용, 음성 입력, 검색, 컬렉션 방문 자동 집계 → 관련 업적 달성 조건으로 활용.
+- **Firestore 클라우드 동기화**: 로그인 시 `userSettings/{uid}`에서 달성 내역 복원. 신규 달성 시 클라우드 백업.
+
+### 3. 스마트 기능 (AI)
 - **Gemini AI 연동**: 자연어 입력을 분석하여 제목 정제, 날짜/시간 추출, 태그 자동 추천 기능 구현.
 - **태그 필터링**: 사용 중인 태그를 자동으로 추출하여 필터링 인터페이스 제공.
 
@@ -135,10 +145,22 @@
 - [ ] **iOS 지원**: Capacitor iOS 빌드 및 Apple 로그인 연동
 - [ ] **공유 기능**: 특정 할 일을 다른 사람과 공유
 - [x] **patch-package 도입**: node_modules 패치 영구 적용
+- [x] **업적 시스템**: 50개 업적 정의, 언락 모달, 알림 센터, 통계 배지 — 세션 12~13 완료
 
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-25** (세션 13 — 업적 시스템 연동 고도화 및 브랜치 정리):
+  - **앱 포그라운드 복귀 시 오늘 탭 자동 리셋**: `CapApp.addListener('appStateChange')` 리스너 추가. 앱이 백그라운드에서 포그라운드로 복귀할 때(`isActive === true`) 항상 `viewMode='date'`로 복귀하고 날짜를 오늘로 리셋.
+  - **알림 센터 NotificationsModal 신규**: 전구 아이콘 탭 시 즉시 업적 목록으로 이동하는 대신 `NotificationsModal` 중간 화면 추가. 미읽은 알림 목록 확인 후 업적 더보기로 이동 가능.
+  - **Engagement 추적 강화**: `trackEngagement`를 App.jsx 전역에 연결.
+    - 앱 실행 횟수(`totalOpens`), 접속 연속일(`appStreak`) — 앱 시작 시 자동 계산.
+    - 검색 기능 사용(`searchUsed`) — `setSearchQuery` 호출 시.
+    - AI 입력 사용(`aiUsed`, `aiTasks`) — `handleSmartSave` 호출 시.
+    - 컬렉션 화면 방문(`collectionVisited`) — `viewMode === 'lists'` 전환 시.
+  - **AndroidManifest 확인**: `MAIN` / `LAUNCHER` intent-filter 정상 설정 확인. 별도 수정 불필요.
+  - **feature/curator-ui-renewal → main 머지 완료**: 브랜치 작업 모두 main에 반영. 이후 작업은 main 기준으로 진행.
 
 - **2026-03-24** (세션 12 — 업적 시스템 구현):
   - **업적 추적 로직(js)**: `useAchievements.js` 내에 정의된 50개 업적(`D1..D6`, `W1..W5`, `R1..R4`, `T1..T4`, `ST1..ST4`, `P1..P4`, `AI1..AI4`, `CAL1..CAL2`, `N1..N2`, `E1..E7`, `SP1..SP3`)의 트리거 조건(`check()`)을 모두 채워 넣음.
