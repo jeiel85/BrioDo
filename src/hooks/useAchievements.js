@@ -77,7 +77,7 @@ export const ACHIEVEMENT_DEFS = [
   { id: 'E7', icon: '🌟', difficulty: 9, category: 'engagement', name: n('업적 마스터','Achievement Master','実績マスター','成就大师'), desc: n('30개 이상 업적 달성','Unlock 30 or more achievements','30個以上の実績を解除','解锁30个以上成就'), check: s => s.unlockedCount >= 30 },
 ]
 
-export function useAchievements({ todos, todayStr, weeklyPulse }) {
+export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
   const [notifications, setNotifications] = useState([])
   const [unlockQueue, setUnlockQueue] = useState([])
   const [currentUnlock, setCurrentUnlock] = useState(null)
