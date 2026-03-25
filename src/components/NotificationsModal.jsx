@@ -1,49 +1,46 @@
 import React from 'react'
 
 export function NotificationsModal({ onClose, notifications, onShowAllAchievements, lang }) {
-  const title = lang === 'ko' ? '알림 센터' : 'Notifications'
-  const emptyText = lang === 'ko' ? '새로운 알림이 없습니다.' : 'No new notifications.'
-  
+  const title = lang === 'ko' ? '알림 센터' : lang === 'ja' ? '通知センター' : lang === 'zh' ? '通知中心' : 'Notifications'
+  const emptyText = lang === 'ko' ? '새로운 알림이 없습니다.' : lang === 'ja' ? '新しい通知はありません。' : lang === 'zh' ? '没有新通知。' : 'No new notifications.'
+  const achLabel = lang === 'ko' ? '업적 달성!' : lang === 'ja' ? '実績解除！' : lang === 'zh' ? '成就解锁！' : 'Achievement Unlocked!'
+  const allAchBtn = lang === 'ko' ? '모든 업적 보기' : lang === 'ja' ? '全実績を見る' : lang === 'zh' ? '查看所有成就' : 'View All Achievements'
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="settings-modal flex-col" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+    <div className="input-overlay" onClick={onClose}>
+      <div className="settings-modal notif-modal" onClick={e => e.stopPropagation()}>
+        {/* Drag handle */}
+        <div className="notif-drag-handle" />
+
         <div className="settings-header">
-          <div className="settings-title">💡 {title}</div>
-          <button className="modal-close-btn" onClick={onClose}>✕</button>
+          <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span>💡</span> {title}
+          </h2>
+          <button className="settings-close" onClick={onClose}>✕</button>
         </div>
-        
-        <div className="notifications-body" style={{ padding: '20px', minHeight: '150px' }}>
+
+        <div className="notif-body">
           {notifications && notifications.length > 0 ? (
-            <div className="notifications-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div className="notif-list">
               {notifications.map((ach, i) => (
-                <div key={i} className="notification-item" style={{
-                  display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--color-surface-container)', padding: '12px', borderRadius: '12px'
-                }}>
-                  <div style={{ fontSize: '24px' }}>{ach.icon}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', color: 'var(--color-primary)', fontWeight: 'bold' }}>
-                      {lang === 'ko' ? '업적 달성!' : 'Achievement Unlocked!'}
-                    </div>
-                    <div style={{ fontSize: '15px', fontWeight: 'bold', color: 'var(--color-text)' }}>
-                      {ach.name?.[lang] || ach.name?.ko}
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--color-text-dim)' }}>
-                      {ach.desc?.[lang] || ach.desc?.ko}
-                    </div>
+                <div key={i} className="notif-item">
+                  <div className="notif-item-icon">{ach.icon}</div>
+                  <div className="notif-item-content">
+                    <div className="notif-item-label">{achLabel}</div>
+                    <div className="notif-item-name">{ach.name?.[lang] || ach.name?.ko}</div>
+                    <div className="notif-item-desc">{ach.desc?.[lang] || ach.desc?.ko}</div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{ textAlign: 'center', color: 'var(--color-text-dim)', marginTop: '40px' }}>
-              {emptyText}
-            </div>
+            <div className="notif-empty">{emptyText}</div>
           )}
         </div>
-        
-        <div className="settings-footer" style={{ borderTop: '1px solid var(--color-surface-container)', padding: '20px' }}>
-          <button className="settings-logout-btn" style={{ width: '100%' }} onClick={() => { onClose(); onShowAllAchievements() }}>
-            {lang === 'ko' ? '모든 업적 보기' : 'View All Achievements'}
+
+        <div className="notif-footer">
+          <button className="notif-all-btn" onClick={() => { onClose(); onShowAllAchievements() }}>
+            {allAchBtn}
           </button>
         </div>
       </div>

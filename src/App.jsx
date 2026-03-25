@@ -19,7 +19,6 @@ import { Header } from './components/Header'
 import { TodoList } from './components/TodoList'
 import { BottomNav } from './components/BottomNav'
 import { CollectionsScreen } from './components/CollectionsScreen'
-import { StatsScreen } from './components/StatsScreen'
 import { InputModal } from './components/InputModal'
 import { SmartInputModal } from './components/SmartInputModal'
 import { SettingsModal } from './components/SettingsModal'
@@ -552,13 +551,7 @@ function App() {
             t={t} lang={lang}
             openEditModal={openEditModal}
             toggleComplete={toggleComplete}
-          />
-        )}
-        {viewMode === 'progress' && (
-          <StatsScreen
-            todos={todos}
             todayStr={todayStr}
-            t={t} lang={lang}
             weeklyPulse={weeklyPulse}
             unlockedIds={unlockedIds}
             onShowAllAchievements={() => setShowAchievementsModal(true)}
@@ -587,6 +580,7 @@ function App() {
         lang={lang} t={t}
         viewMode={viewMode} setViewMode={setViewMode}
         todayStr={todayStr} setSelectedDate={setSelectedDate}
+        showSettings={showSettings} setShowSettings={setShowSettings}
       />
 
       {showSmartModal && (

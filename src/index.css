@@ -2573,3 +2573,206 @@ body.modal-open { overflow: hidden; }
   transition: opacity 0.2s;
 }
 .achievements-more-btn:active { opacity: 0.7; }
+
+/* ─── Notifications Modal ─── */
+.notif-modal {
+  max-height: 70vh;
+}
+.notif-drag-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--color-outline-variant);
+  border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+.notif-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  min-height: 120px;
+}
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--color-surface-container);
+  padding: 14px;
+  border-radius: 14px;
+}
+.notif-item-icon {
+  font-size: 26px;
+  flex-shrink: 0;
+}
+.notif-item-content {
+  flex: 1;
+  min-width: 0;
+}
+.notif-item-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.notif-item-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin-bottom: 2px;
+}
+.notif-item-desc {
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+}
+.notif-empty {
+  text-align: center;
+  color: var(--color-on-surface-variant);
+  margin-top: 40px;
+  font-size: 14px;
+}
+.notif-footer {
+  border-top: 1px solid var(--color-outline-variant);
+  padding: 16px 20px 20px;
+  flex-shrink: 0;
+}
+.notif-all-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: calc(14px * var(--font-scale));
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.notif-all-btn:active { opacity: 0.8; }
+
+/* ─── Insight Screen (Collections + Stats 통합) ─── */
+.insight-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.insight-stats-section {
+  padding: 16px 16px 0;
+}
+.insight-stats-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.insight-stat-card {
+  background: var(--color-surface-container);
+  border-radius: 14px;
+  padding: 14px 10px;
+  text-align: center;
+}
+.insight-stat-number {
+  font-size: calc(22px * var(--font-scale));
+  font-weight: 800;
+  color: var(--color-primary);
+  font-family: 'Manrope', sans-serif;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.insight-stat-label {
+  font-size: calc(10px * var(--font-scale));
+  color: var(--color-on-surface-variant);
+  font-weight: 600;
+}
+.insight-divider {
+  height: 1px;
+  background: var(--color-outline-variant);
+  margin: 16px 16px 0;
+  opacity: 0.5;
+}
+
+/* ─── Incomplete Todos Section (in Collections) ─── */
+.incomplete-todos-section {
+  padding: 0 16px 16px;
+}
+.incomplete-todos-header {
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  opacity: 0.85;
+  margin-bottom: 10px;
+  padding-top: 4px;
+}
+.incomplete-todos-card {
+  background: var(--color-surface-container);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.incomplete-todos-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.incomplete-todos-summary-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.incomplete-todos-emoji { font-size: 20px; }
+.incomplete-todos-title {
+  font-size: calc(14px * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+.incomplete-todos-count {
+  font-size: calc(12px * var(--font-scale));
+  color: var(--color-on-surface-variant);
+}
+.incomplete-todos-expand {
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+}
+.incomplete-todos-list {
+  border-top: 1px solid var(--color-outline-variant);
+  padding: 8px 0;
+}
+.incomplete-todo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+}
+.incomplete-todo-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.incomplete-todo-text {
+  flex: 1;
+  font-size: calc(13px * var(--font-scale));
+  color: var(--color-on-surface);
+}
+.incomplete-todo-date {
+  font-size: calc(11px * var(--font-scale));
+  color: var(--color-on-surface-variant);
+}
+.incomplete-todos-empty {
+  padding: 20px 16px;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+  font-size: 13px;
+}
