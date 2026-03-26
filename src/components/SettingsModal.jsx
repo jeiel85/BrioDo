@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { getLocalDateString } from '../utils/helpers'
 
 const LOCK_BUTTON_DEFS = [
@@ -9,6 +10,19 @@ const LOCK_BUTTON_DEFS = [
   { id: 'playPause',  emoji: '▶',  label_ko: '재생',       label_en: 'Play/Pause' },
   { id: 'alarm',      emoji: '⏰', label_ko: '알람',       label_en: 'Alarm' },
   { id: 'stopwatch',  emoji: '⏲',  label_ko: '스톱워치',   label_en: 'Stopwatch' },
+]
+
+const OPEN_SOURCE_LICENSES = [
+  { name: 'React', version: '19', license: 'MIT', author: 'Meta Platforms, Inc.' },
+  { name: 'Vite', version: '8', license: 'MIT', author: 'Evan You & Vite contributors' },
+  { name: 'Capacitor', version: '8', license: 'MIT', author: 'Ionic, Inc.' },
+  { name: 'Firebase JS SDK', version: '12', license: 'Apache 2.0', author: 'Google LLC' },
+  { name: '@google/genai', version: '1', license: 'Apache 2.0', author: 'Google LLC' },
+  { name: 'idb', version: '8', license: 'ISC', author: 'Jake Archibald' },
+  { name: 'canvas-confetti', version: '1', license: 'ISC', author: 'Kiril Vatev' },
+  { name: 'patch-package', version: '8', license: 'MIT', author: 'David Sheldrick' },
+  { name: '@capacitor-community/speech-recognition', version: '7', license: 'MIT', author: 'Capacitor Community' },
+  { name: '@codetrix-studio/capacitor-google-auth', version: '3', license: 'MIT', author: 'CodetrixStudio' },
 ]
 
 export function SettingsModal({
@@ -29,8 +43,10 @@ export function SettingsModal({
   lockScreenButtons, setLockScreenButtons,
   calendarSyncEnabled, setCalendarSyncEnabled,
   onPreviewLockScreen,
-  setShowSettings
+  setShowSettings,
+  appVersion,
 }) {
+  const [licensesExpanded, setLicensesExpanded] = useState(false)
   const hasCalendarToken = !!localStorage.getItem('googleAccessToken')
   return (
     <div className="input-overlay" onClick={() => setShowSettings(false)}>
@@ -429,6 +445,62 @@ export function SettingsModal({
             </div>
           )}
         </div>
+        {/* 앱 정보 섹션 */}
+        <div className="settings-section" style={{ paddingBottom: '8px' }}>
+          <h3>{lang === 'ko' ? '앱 정보' : 'About'}</h3>
+
+          {/* 오픈소스 라이센스 */}
+          <button
+            onClick={() => setLicensesExpanded(v => !v)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              background: 'var(--color-surface-container-low)', border: '1px solid var(--color-outline-variant)',
+              borderRadius: '10px', padding: '10px 14px', cursor: 'pointer', marginBottom: licensesExpanded ? '0' : '12px',
+              color: 'var(--color-on-surface)', fontSize: '13px',
+              borderBottomLeftRadius: licensesExpanded ? '0' : '10px',
+              borderBottomRightRadius: licensesExpanded ? '0' : '10px',
+            }}
+          >
+            <span>📄 {lang === 'ko' ? '오픈소스 라이센스' : 'Open Source Licenses'}</span>
+            <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', transform: licensesExpanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▼</span>
+          </button>
+          {licensesExpanded && (
+            <div style={{
+              background: 'var(--color-surface-container-low)', border: '1px solid var(--color-outline-variant)',
+              borderTop: 'none', borderRadius: '0 0 10px 10px', marginBottom: '12px', overflow: 'hidden',
+            }}>
+              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', padding: '10px 14px 6px', lineHeight: '1.5' }}>
+                {lang === 'ko'
+                  ? 'BlendDo는 아래 오픈소스 라이브러리를 사용합니다. 모든 라이센스를 준수합니다.'
+                  : 'BlendDo uses the following open source libraries, in compliance with their licenses.'}
+              </p>
+              {OPEN_SOURCE_LICENSES.map(({ name, version, license, author }) => (
+                <div key={name} style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '6px 14px', borderTop: '1px solid var(--color-outline-variant)',
+                }}>
+                  <div>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--color-on-surface)' }}>{name}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginLeft: '4px' }}>v{version}</span>
+                    <div style={{ fontSize: '10px', color: 'var(--color-on-surface-variant)', marginTop: '1px' }}>{author}</div>
+                  </div>
+                  <span style={{
+                    fontSize: '10px', fontWeight: 600, padding: '2px 7px', borderRadius: '6px',
+                    background: 'var(--color-secondary-container)', color: 'var(--color-secondary)',
+                  }}>{license}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 앱 버전 */}
+          <div style={{ textAlign: 'center', padding: '8px 0 4px', color: 'var(--color-on-surface-variant)', fontSize: '12px' }}>
+            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-on-surface)', marginBottom: '3px' }}>BlendDo</div>
+            <div>v{appVersion ?? '1.0.0'}</div>
+            <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Blend your life, Do it smoothly.</div>
+          </div>
+        </div>
+
         </div>
       </div>
     </div>

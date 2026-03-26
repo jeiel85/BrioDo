@@ -32,6 +32,7 @@ import './index.css'
 
 const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScreen') : null
 
+const APP_VERSION = '1.0.0'
 const AI_DAILY_LIMIT = 10
 
 const getAiUsageData = () => {
@@ -907,6 +908,7 @@ function App() {
           calendarSyncEnabled={calendarSyncEnabled} setCalendarSyncEnabled={setCalendarSyncEnabledPersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           setShowSettings={setShowSettings}
+          appVersion={APP_VERSION}
         />
       )}
 
