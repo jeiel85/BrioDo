@@ -77,7 +77,7 @@ const BUTTON_ICONS = {
 
 export function LockScreenView({
   todos, lang, onOpen, todayStr, isPreview,
-  onAddTodo,
+  onAddTodo, onToggleTodo, onUpdateTodo,
   buttons = ['torch', 'camera', 'qr', 'timer'],
   todoMode = 'today', showCompleted = false,
   lockFontScale = 4,
@@ -90,7 +90,10 @@ export function LockScreenView({
   const [showInput, setShowInput] = useState(false)
   const [addedAnim, setAddedAnim] = useState(false)
   const [completedExpanded, setCompletedExpanded] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [editText, setEditText] = useState('')
   const inputRef = useRef(null)
+  const editInputRef = useRef(null)
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000)
@@ -100,6 +103,10 @@ export function LockScreenView({
   useEffect(() => {
     if (showInput) inputRef.current?.focus()
   }, [showInput])
+
+  useEffect(() => {
+    if (editingId) editInputRef.current?.focus()
+  }, [editingId])
 
   // 할일 필터링
   let filteredTodos = todos
@@ -157,6 +164,24 @@ export function LockScreenView({
     playPause:  () => onToggleMediaPlayPause?.(),
     alarm:      () => onOpenAlarm?.(),
     stopwatch:  () => onOpenStopwatch?.(),
+  }
+
+  const startEdit = (todo) => {
+    setEditingId(todo.id)
+    setEditText(todo.text)
+  }
+
+  const commitEdit = async () => {
+    if (editText.trim() && editText.trim() !== todos.find(t => t.id === editingId)?.text) {
+      await onUpdateTodo?.(editingId, editText.trim())
+    }
+    setEditingId(null)
+    setEditText('')
+  }
+
+  const handleEditKeyDown = (e) => {
+    if (e.key === 'Enter') commitEdit()
+    if (e.key === 'Escape') { setEditingId(null); setEditText('') }
   }
 
   const handleAddTodo = async () => {
@@ -258,10 +283,31 @@ export function LockScreenView({
                   <ul className="lock-tasks-list">
                     {incompleteTodos.map(todo => (
                       <li key={todo.id} className="lock-task-item">
-                        <span className="lock-task-dot" />
-                        <span className="lock-task-text">{todo.text}</span>
-                        {todo.time && <span className="lock-task-time">{todo.time}</span>}
-                        {todoMode === 'all' && <span className="lock-task-date">{todo.date}</span>}
+                        <button
+                          className="lock-task-dot-btn"
+                          onClick={() => onToggleTodo?.(todo.id)}
+                          aria-label="완료 처리"
+                        />
+                        {editingId === todo.id ? (
+                          <div className="lock-task-edit-row">
+                            <input
+                              ref={editInputRef}
+                              className="lock-task-edit-input"
+                              value={editText}
+                              onChange={e => setEditText(e.target.value)}
+                              onKeyDown={handleEditKeyDown}
+                              onBlur={commitEdit}
+                              maxLength={100}
+                            />
+                          </div>
+                        ) : (
+                          <span
+                            className="lock-task-text"
+                            onClick={() => startEdit(todo)}
+                          >{todo.text}</span>
+                        )}
+                        {editingId !== todo.id && todo.time && <span className="lock-task-time">{todo.time}</span>}
+                        {editingId !== todo.id && todoMode === 'all' && <span className="lock-task-date">{todo.date}</span>}
                       </li>
                     ))}
                   </ul>
@@ -279,7 +325,11 @@ export function LockScreenView({
                       <ul className="lock-tasks-list">
                         {completedTodos.map(todo => (
                           <li key={todo.id} className="lock-task-item lock-task-done">
-                            <span className="lock-task-dot done" />
+                            <button
+                              className="lock-task-dot-btn done"
+                              onClick={() => onToggleTodo?.(todo.id)}
+                              aria-label="완료 취소"
+                            />
                             <span className="lock-task-text">{todo.text}</span>
                             {todo.time && <span className="lock-task-time">{todo.time}</span>}
                             {todoMode === 'all' && <span className="lock-task-date">{todo.date}</span>}

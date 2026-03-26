@@ -3274,6 +3274,37 @@ body.modal-open { overflow: hidden; }
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.6);
 }
+/* 탭 가능한 dot 버튼 */
+.lock-task-dot-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.lock-task-dot-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+.lock-task-dot-btn.done {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+}
+.lock-task-dot-btn.done::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1;
+}
 .lock-task-text {
   flex: 1;
   font-size: calc(14px * var(--lock-font-scale, 1));
@@ -3282,13 +3313,33 @@ body.modal-open { overflow: hidden; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 .lock-task-item.lock-task-done .lock-task-text {
   opacity: 0.45;
   text-decoration: line-through;
+  cursor: default;
 }
 .lock-task-dot.done {
   background: rgba(255, 255, 255, 0.3);
+}
+/* 인라인 편집 */
+.lock-task-edit-row {
+  flex: 1;
+  display: flex;
+}
+.lock-task-edit-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: calc(14px * var(--lock-font-scale, 1));
+  font-weight: 500;
+  padding: 2px 8px;
+  outline: none;
+  caret-color: white;
 }
 .lock-task-time {
   flex-shrink: 0;

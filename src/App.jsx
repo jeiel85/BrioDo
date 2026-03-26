@@ -259,6 +259,27 @@ function App() {
     try { await LockScreenNative?.openStopwatch() } catch(e) {}
   }
 
+  const handleLockToggleTodo = (id) => {
+    const target = todos.find(t => t.id === id)
+    if (!target) return
+    toggleComplete({ stopPropagation: () => {} }, id, target.completed)
+  }
+
+  const handleLockUpdateTodo = async (id, newText) => {
+    if (!newText.trim()) return
+    const target = todos.find(t => t.id === id)
+    if (!target) return
+    const updated = { ...target, text: newText.trim(), updatedAt: Date.now() }
+    setTodos(prev => prev.map(t => t.id === id ? updated : t))
+    await saveLocalTodo(updated)
+    if (user && isOnline) {
+      try { await setDoc(doc(db, "todos", id), { text: newText.trim(), updatedAt: serverTimestamp() }, { merge: true }) }
+      catch(e) { console.error('Lock update todo error:', e) }
+    } else if (user) {
+      await addSyncQueue('set', id, { text: newText.trim() })
+    }
+  }
+
   const handleLockAddTodo = async (text) => {
     if (!text.trim()) return
     if (!user) {
@@ -647,6 +668,8 @@ function App() {
         onOpen={() => { setIsLockScreen(false); setShowLockPreview(false) }}
         isPreview={showLockPreview}
         onAddTodo={handleLockAddTodo}
+        onToggleTodo={handleLockToggleTodo}
+        onUpdateTodo={handleLockUpdateTodo}
         buttons={lockScreenButtons}
         todoMode={lockScreenTodoMode}
         showCompleted={lockScreenShowCompleted}
