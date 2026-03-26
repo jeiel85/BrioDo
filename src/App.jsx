@@ -46,7 +46,7 @@ const getAiUsageData = () => {
 }
 
 function App() {
-  const { lang, setLang, t } = useLanguage()
+  const { lang, langPref, setLangPref, t } = useLanguage()
   const { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired } = useAuth()
   const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar } = useTheme()
 
@@ -923,7 +923,7 @@ function App() {
 
       {showSettings && (
         <SettingsModal
-          lang={lang} t={t}
+          lang={lang} langPref={langPref} setLangPref={setLangPref} t={t}
           fontScale={fontScale} setFontScale={setFontScale}
           theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme}
           viewMode={viewMode} setViewMode={setViewMode}

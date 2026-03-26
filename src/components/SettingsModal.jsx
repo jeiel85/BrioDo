@@ -27,7 +27,7 @@ const OPEN_SOURCE_LICENSES = [
 ]
 
 export function SettingsModal({
-  lang,
+  lang, langPref, setLangPref,
   fontScale, setFontScale,
   theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate,
@@ -70,6 +70,29 @@ export function SettingsModal({
         </div>
 
         <div className="settings-scroll-body">
+
+        {/* ─── 언어 설정 ─── */}
+        <div className="settings-section">
+          <h3>{lang === 'ko' ? '언어' : lang === 'ja' ? '言語' : lang === 'zh' ? '语言' : 'Language'}</h3>
+          <div className="lang-selector">
+            {[
+              { val: 'auto', label: lang === 'ko' ? '시스템 따름' : lang === 'ja' ? 'システムに従う' : lang === 'zh' ? '跟随系统' : 'Follow System' },
+              { val: 'ko', label: '한국어' },
+              { val: 'en', label: 'English' },
+              { val: 'ja', label: '日本語' },
+              { val: 'zh', label: '中文' },
+            ].map(({ val, label }) => (
+              <button
+                key={val}
+                className={`lang-btn ${langPref === val ? 'active' : ''}`}
+                onClick={() => setLangPref(val)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="settings-section">
           <h3>{lang === 'ko' ? '글자 크기' : 'Font Size'}</h3>
           <div className="font-size-selector" style={{ marginBottom: '14px' }}>

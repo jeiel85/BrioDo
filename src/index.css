@@ -334,6 +334,30 @@ body {
 .lock-weather-temp { font-weight: 700; }
 .lock-weather-range { opacity: 0.75; font-size: 0.9em; }
 
+/* ─── Language Selector ─── */
+.lang-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.lang-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--color-outline-variant);
+  background: var(--color-surface-container);
+  color: var(--color-on-surface-variant);
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.lang-btn.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  font-weight: 700;
+}
+
 /* ─── Settings Text Input ─── */
 .settings-text-input {
   background: var(--color-surface-container-high);
