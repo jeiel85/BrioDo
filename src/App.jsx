@@ -271,11 +271,11 @@ function App() {
     if (!weatherEnabled) return
     let cancelled = false
     setWeatherLoading(true)
-    fetchWeather(weatherLocation).then(data => {
+    fetchWeather(weatherLocation, lang).then(data => {
       if (!cancelled) { setWeatherData(data); setWeatherLoading(false) }
     })
     return () => { cancelled = true }
-  }, [weatherEnabled, weatherLocation])
+  }, [weatherEnabled, weatherLocation, lang])
 
   const checkLockScreen = async () => {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return

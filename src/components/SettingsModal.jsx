@@ -57,7 +57,8 @@ export function SettingsModal({
   return (
     <div className="input-overlay" ref={overlayRef} onClick={close}>
       <div className="settings-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
-        <div className="modal-drag-handle-zone" ref={headerRef}>
+        <div ref={headerRef}>
+        <div className="modal-drag-handle-zone">
           <div className="modal-drag-handle" />
         </div>
         <div className="settings-header">
@@ -65,6 +66,7 @@ export function SettingsModal({
             <span style={{ marginRight: '8px' }}>⚙️</span>{lang === 'ko' ? '설정' : lang === 'ja' ? '設定' : lang === 'zh' ? '设置' : 'Settings'}
           </h2>
           <button className="settings-close" onClick={close}>✕</button>
+        </div>
         </div>
 
         <div className="settings-scroll-body">

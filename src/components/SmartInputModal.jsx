@@ -155,12 +155,14 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   return (
     <div className="input-overlay" ref={overlayRef} onClick={handleClose}>
       <div className="smart-input-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
-        <div className="modal-drag-handle-zone" ref={headerRef}>
+        <div ref={headerRef}>
+        <div className="modal-drag-handle-zone">
           <div className="modal-drag-handle" />
         </div>
         <div className="modal-header">
           <span className="smart-input-badge">✨ {lang === 'ko' ? '스마트 입력' : 'Smart Input'}</span>
           <button className="smart-input-close" onClick={handleClose}>✕</button>
+        </div>
         </div>
 
         <div className="smart-input-body">

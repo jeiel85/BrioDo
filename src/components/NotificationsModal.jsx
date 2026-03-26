@@ -13,7 +13,8 @@ export function NotificationsModal({ onClose, notifications, onShowAllAchievemen
   return (
     <div className="input-overlay" ref={overlayRef} onClick={onClose}>
       <div className="settings-modal notif-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
-        <div className="modal-drag-handle-zone" ref={headerRef}>
+        <div ref={headerRef}>
+        <div className="modal-drag-handle-zone">
           <div className="modal-drag-handle" />
         </div>
         <div className="settings-header">
@@ -21,6 +22,7 @@ export function NotificationsModal({ onClose, notifications, onShowAllAchievemen
             <span>💡</span> {title}
           </h2>
           <button className="settings-close" onClick={onClose}>✕</button>
+        </div>
         </div>
 
         <div className="notif-body">

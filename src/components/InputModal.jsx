@@ -23,12 +23,14 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
   return (
     <div className="input-overlay" ref={overlayRef} onClick={resetForm}>
       <div className="input-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
-        <div className="modal-drag-handle-zone" ref={headerRef}>
+        <div ref={headerRef}>
+        <div className="modal-drag-handle-zone">
           <div className="modal-drag-handle" />
         </div>
         <div className="modal-header">
           <span className="modal-title">{modalTitle}</span>
           <button className="modal-close-btn" onClick={resetForm}>✕</button>
+        </div>
         </div>
 
         <div className="input-modal-body" ref={scrollRef}>

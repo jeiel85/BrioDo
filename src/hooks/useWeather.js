@@ -80,13 +80,15 @@ function saveCache(data, location) {
   } catch {}
 }
 
-export async function fetchWeather(locationKey = '') {
+export async function fetchWeather(locationKey = '', lang = 'en') {
+  const cacheId = `${locationKey}|${lang}`
   // 캐시 확인
   const cached = loadCache()
-  if (cached && cached.location === locationKey) return cached.data
+  if (cached && cached.location === cacheId) return cached.data
 
   const loc = locationKey.trim() || ''
-  const url = `https://wttr.in/${encodeURIComponent(loc)}?format=j1&lang=en`
+  const wttrLang = lang === 'zh' ? 'zh-tw' : lang
+  const url = `https://wttr.in/${encodeURIComponent(loc)}?format=j1&lang=${wttrLang}`
 
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) })
@@ -107,7 +109,7 @@ export async function fetchWeather(locationKey = '') {
       region: json.nearest_area?.[0]?.region?.[0]?.value || '',
       country: json.nearest_area?.[0]?.country?.[0]?.value || '',
     }
-    saveCache(data, locationKey)
+    saveCache(data, cacheId)
     return data
   } catch (e) {
     // 네트워크 오류 시 캐시 (만료된 것도) 재사용
