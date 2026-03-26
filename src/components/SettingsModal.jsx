@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getLocalDateString } from '../utils/helpers'
+import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
 const LOCK_BUTTON_DEFS = [
   { id: 'torch',      emoji: '🔦', label_ko: '손전등',     label_en: 'Flashlight' },
@@ -48,12 +49,16 @@ export function SettingsModal({
 }) {
   const [licensesExpanded, setLicensesExpanded] = useState(false)
   const hasCalendarToken = !!localStorage.getItem('googleAccessToken')
+  const close = () => setShowSettings(false)
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(close)
   return (
-    <div className="input-overlay" onClick={() => setShowSettings(false)}>
-      <div className="settings-modal" onClick={e => e.stopPropagation()}>
+    <div className="input-overlay" ref={overlayRef} onClick={close}>
+      <div className="settings-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
         <div className="settings-header">
-          <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800 }}>{lang === 'ko' ? '설정' : 'Settings'}</h2>
-          <button className="settings-close" onClick={() => setShowSettings(false)}>✕</button>
+          <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800 }}>
+            <span style={{ marginRight: '8px' }}>⚙️</span>{lang === 'ko' ? '설정' : lang === 'ja' ? '設定' : lang === 'zh' ? '设置' : 'Settings'}
+          </h2>
+          <button className="settings-close" onClick={close}>✕</button>
         </div>
 
         <div className="settings-scroll-body">

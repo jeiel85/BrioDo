@@ -3,11 +3,13 @@ import { Capacitor } from '@capacitor/core'
 import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 import { trackEngagement } from '../hooks/useAchievements'
 import { getLangLocale } from '../utils/helpers'
+import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
 export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice }) {
   const textareaRef = useRef(null)
   const webRecognitionRef = useRef(null)
   const retryingRef = useRef(false)
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose)
   const [isListening, setIsListening] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
   const [micError, setMicError] = useState('')
@@ -135,8 +137,8 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   }
 
   return (
-    <div className="input-overlay" onClick={onClose}>
-      <div className="smart-input-modal" onClick={e => e.stopPropagation()}>
+    <div className="input-overlay" ref={overlayRef} onClick={onClose}>
+      <div className="smart-input-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
         <div className="modal-header">
           <span className="smart-input-badge">✨ {lang === 'ko' ? '스마트 입력' : 'Smart Input'}</span>
           <button className="smart-input-close" onClick={onClose}>✕</button>

@@ -1,3 +1,6 @@
+import { useRef } from 'react'
+import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
+
 const PRIORITY_LABELS = {
   ko: { low: '낮음', medium: '보통', high: '높음', urgent: '긴급' },
   ja: { low: '低', medium: '中', high: '高', urgent: '緊急' },
@@ -9,20 +12,22 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
   const pLabels = PRIORITY_LABELS[lang] || PRIORITY_LABELS.en
   const priority = newTodo.priority ?? 'medium'
   const isEditing = !!editingTodoId
+  const scrollRef = useRef(null)
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(resetForm, { scrollRef })
 
   const modalTitle = isEditing
     ? (lang === 'ko' ? '할 일 수정' : lang === 'ja' ? 'タスクを編集' : lang === 'zh' ? '编辑任务' : 'Edit Task')
     : (lang === 'ko' ? '새 할 일' : lang === 'ja' ? '新しいタスク' : lang === 'zh' ? '新任务' : 'New Task')
 
   return (
-    <div className="input-overlay" onClick={resetForm}>
-      <div className="input-modal" onClick={e => e.stopPropagation()}>
+    <div className="input-overlay" ref={overlayRef} onClick={resetForm}>
+      <div className="input-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
         <div className="modal-header">
           <span className="modal-title">{modalTitle}</span>
           <button className="modal-close-btn" onClick={resetForm}>✕</button>
         </div>
 
-        <div className="input-modal-body">
+        <div className="input-modal-body" ref={scrollRef}>
         {/* 텍스트 입력 + 완료 체크박스(편집 모드) + 상세 토글 */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
           {isEditing && (
