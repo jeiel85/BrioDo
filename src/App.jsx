@@ -32,6 +32,17 @@ import './index.css'
 
 const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScreen') : null
 
+const AI_DAILY_LIMIT = 10
+
+const getAiUsageData = () => {
+  const today = new Date().toISOString().slice(0, 10)
+  try {
+    const saved = JSON.parse(localStorage.getItem('ai-daily-usage') || '{}')
+    if (saved.date !== today) return { date: today, count: 0 }
+    return saved
+  } catch { return { date: today, count: 0 } }
+}
+
 function App() {
   const { lang, setLang, t } = useLanguage()
   const { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired } = useAuth()
@@ -83,14 +94,39 @@ function App() {
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'smart')
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
 
+  // AI 일일 사용량
+  const [aiUsageCount, setAiUsageCount] = useState(() => getAiUsageData().count)
+  const toastTimerRef = useRef(null)
+  const [toastMsg, setToastMsg] = useState('')
+
+  const showToastMsg = (msg, duration = 3000) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToastMsg(msg)
+    toastTimerRef.current = setTimeout(() => setToastMsg(''), duration)
+  }
+
+  const incrementAiUsage = () => {
+    const today = new Date().toISOString().slice(0, 10)
+    const newCount = aiUsageCount + 1
+    setAiUsageCount(newCount)
+    localStorage.setItem('ai-daily-usage', JSON.stringify({ date: today, count: newCount }))
+  }
+
   // 스마트 입력 모달 상태
   const [showSmartModal, setShowSmartModal] = useState(false)
   const [smartText, setSmartText] = useState('')
   const [smartReminderOffset, setSmartReminderOffset] = useState(null)
 
+  // 앱 시작 시 AI 사용량 한도 초과 → 자동 수동 전환
+  useEffect(() => {
+    if (getAiUsageData().count >= AI_DAILY_LIMIT && (localStorage.getItem('inputMode') || 'smart') === 'smart') {
+      setInputModePersisted('manual')
+    }
+  }, [])
+
   // 알림 채널 초기화 및 앱 사용 빈도 트래킹 (앱 시작 시 1회)
-  useEffect(() => { 
-    initNotificationChannels() 
+  useEffect(() => {
+    initNotificationChannels()
     
     // 일일 접속 및 연속 접속 트래킹
     trackEngagement('totalOpens', true)
@@ -537,6 +573,7 @@ function App() {
             setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
             await saveLocalTodo({ ...localPayload, ...finalData })
             await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
+            incrementAiUsage()
           }
           // AI 분석 완료 후 알림 스케줄 (날짜가 확정된 시점)
           scheduleNotification({ ...localPayload, ...finalData, id: newId })
@@ -795,8 +832,18 @@ function App() {
           className="fab"
           onClick={() => {
             const mode = user ? inputMode : 'manual'
-            if (mode === 'smart') setShowSmartModal(true)
-            else handleOpenAddModal()
+            if (mode === 'smart') {
+              if (aiUsageCount >= AI_DAILY_LIMIT) {
+                showToastMsg(lang === 'ko'
+                  ? `하루 사용량(${aiUsageCount}/${AI_DAILY_LIMIT})을 소진해서 수동 입력으로 전환됩니다`
+                  : `Daily AI limit reached (${aiUsageCount}/${AI_DAILY_LIMIT}). Switching to manual.`)
+                handleOpenAddModal()
+              } else {
+                setShowSmartModal(true)
+              }
+            } else {
+              handleOpenAddModal()
+            }
           }}
         >
           {(user ? inputMode : 'manual') === 'smart'
@@ -846,6 +893,8 @@ function App() {
           viewMode={viewMode} setViewMode={setViewMode}
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
+          aiUsageCount={aiUsageCount} aiDailyLimit={AI_DAILY_LIMIT}
+          onAiLimitToast={(msg) => showToastMsg(msg)}
           completionCalendarMode={completionCalendarMode} setCompletionCalendarMode={setCompletionCalendarModePersisted}
           defaultReminderOffset={defaultReminderOffset} setDefaultReminderOffset={setDefaultReminderOffsetPersisted}
           allDayReminderTime={allDayReminderTime} setAllDayReminderTime={setAllDayReminderTimePersisted}
@@ -872,6 +921,11 @@ function App() {
       {showExitToast && (
         <div className="exit-toast">
           {lang === 'ko' ? '한 번 더 누르면 종료됩니다' : lang === 'ja' ? 'もう一度押すと終了します' : lang === 'zh' ? '再按一次退出' : 'Press again to exit'}
+        </div>
+      )}
+      {toastMsg && (
+        <div className="exit-toast" style={{ bottom: '90px', maxWidth: '300px', textAlign: 'center', whiteSpace: 'normal', lineHeight: '1.5' }}>
+          {toastMsg}
         </div>
       )}
       <AchievementUnlockModal

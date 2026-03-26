@@ -92,7 +92,7 @@ export function useTheme() {
 
   useEffect(() => {
     const root = document.documentElement
-    root.classList.remove('theme-light', 'theme-dark', 'theme-system')
+    root.classList.remove('theme-light', 'theme-dark', 'theme-system', 'theme-materialyou')
     RANDOM_THEME_PROPS.forEach(p => root.style.removeProperty(p))
 
     if (theme === 'random' && randomColors) {

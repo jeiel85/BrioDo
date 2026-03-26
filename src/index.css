@@ -6,12 +6,12 @@
   --color-surface-container-low: #f4f3fa;
   --color-surface-container-lowest: #ffffff;
   --color-surface-container: #eeedf6;
-  --color-surface-container-high: #e8e7f1;
-  --color-primary: #0053dc;
+  --color-surface-container-high: #DCDFF0;
+  --color-primary: #3951C8;
   --color-primary-container: #3e76fe;
   --color-on-primary: #ffffff;
-  --color-on-surface: #30323b;
-  --color-on-surface-variant: #5d5f68;
+  --color-on-surface: #1A1C22;
+  --color-on-surface-variant: #44464E;
   --color-outline-variant: rgba(176, 177, 188, 0.15);
   --color-outline: #797a84;
   --color-secondary: #006d4b;
@@ -20,8 +20,8 @@
   --color-tertiary: #742fe5;
   --color-tertiary-container: #8342f4;
   --color-error: #ba1a1a;
-  --priority-low: #5d5f68;
-  --priority-medium: #0053dc;
+  --priority-low: #44464E;
+  --priority-medium: #3951C8;
   --priority-high: #742fe5;
   --priority-urgent: #ba1a1a;
   --checkbox-border: rgba(0, 0, 0, 0.2);
@@ -38,7 +38,7 @@
   --color-surface-container-low: #10151f;
   --color-surface-container-lowest: #161d2e;
   --color-surface-container: #1e2840;
-  --color-surface-container-high: #283352;
+  --color-surface-container-high: #2C3254;
 
   /* 주 색상: 선명한 electric blue */
   --color-primary: #5c9aff;
@@ -47,7 +47,7 @@
 
   /* 텍스트: 강한 대비 */
   --color-on-surface: #eef0ff;
-  --color-on-surface-variant: #8892b0;
+  --color-on-surface-variant: #9EA3B8;
 
   --color-outline-variant: rgba(88, 100, 150, 0.25);
   --color-outline: #4a5280;
@@ -83,12 +83,12 @@
     --color-surface-container-low: #10151f;
     --color-surface-container-lowest: #161d2e;
     --color-surface-container: #1e2840;
-    --color-surface-container-high: #283352;
+    --color-surface-container-high: #2C3254;
     --color-primary: #5c9aff;
     --color-primary-container: #3e76fe;
     --color-on-primary: #ffffff;
     --color-on-surface: #eef0ff;
-    --color-on-surface-variant: #8892b0;
+    --color-on-surface-variant: #9EA3B8;
     --color-outline-variant: rgba(88, 100, 150, 0.25);
     --color-outline: #4a5280;
     --color-secondary: #43e0a0;
@@ -105,6 +105,35 @@
     --header-glass-bg: rgba(13, 17, 23, 0.92);
     --card-shadow: 0 8px 28px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(92, 154, 255, 0.06);
   }
+}
+
+/* ─── Material You Theme (M3 Baseline Purple) ─── */
+:root.theme-materialyou {
+  --color-surface: #FFFBFE;
+  --color-surface-container-low: #F7F2FA;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container: #F3EDF7;
+  --color-surface-container-high: #ECE6F0;
+  --color-primary: #6750A4;
+  --color-primary-container: #EADDFF;
+  --color-on-primary: #FFFFFF;
+  --color-on-surface: #1C1B1F;
+  --color-on-surface-variant: #49454F;
+  --color-outline-variant: rgba(73, 69, 79, 0.15);
+  --color-outline: #79747E;
+  --color-secondary: #625B71;
+  --color-secondary-container: #E8DEF8;
+  --color-on-secondary-container: #1D192B;
+  --color-tertiary: #7D5260;
+  --color-tertiary-container: #FFD8E4;
+  --color-error: #B3261E;
+  --priority-low: #49454F;
+  --priority-medium: #6750A4;
+  --priority-high: #7D5260;
+  --priority-urgent: #B3261E;
+  --checkbox-border: rgba(0, 0, 0, 0.18);
+  --header-glass-bg: rgba(255, 251, 254, 0.88);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(103, 80, 164, 0.08);
 }
 
 /* ─── Reset ─── */

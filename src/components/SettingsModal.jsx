@@ -17,6 +17,7 @@ export function SettingsModal({
   theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate,
   inputMode, setInputMode,
+  aiUsageCount, aiDailyLimit, onAiLimitToast,
   completionCalendarMode, setCompletionCalendarMode,
   defaultReminderOffset, setDefaultReminderOffset,
   allDayReminderTime, setAllDayReminderTime,
@@ -85,13 +86,32 @@ export function SettingsModal({
               <span style={{ fontSize: '18px' }}>🎲</span>
               <span>{lang === 'ko' ? '랜덤' : 'Random'}</span>
             </button>
+            <button
+              className={theme === 'materialyou' ? 'active' : ''}
+              onClick={() => setTheme('materialyou')}
+              style={{ gridColumn: '1 / -1' }}
+            >
+              <span style={{ fontSize: '18px' }}>💜</span>
+              <span>Material You</span>
+            </button>
           </div>
         </div>
 
         <div className="settings-section">
           <h3>{lang === 'ko' ? '할 일 입력 방식' : 'Input Mode'}</h3>
           <div className="font-size-selector">
-            <button className={inputMode === 'smart' ? 'active' : ''} onClick={() => setInputMode('smart')}>
+            <button
+              className={inputMode === 'smart' ? 'active' : ''}
+              onClick={() => {
+                if (aiUsageCount >= aiDailyLimit) {
+                  onAiLimitToast?.(lang === 'ko'
+                    ? `오늘 AI 사용량을 모두 소진했습니다 (${aiUsageCount}/${aiDailyLimit}, 자정에 초기화)`
+                    : `Daily AI limit reached (${aiUsageCount}/${aiDailyLimit}, resets at midnight)`)
+                } else {
+                  setInputMode('smart')
+                }
+              }}
+            >
               <span>✨</span>
               <span>{lang === 'ko' ? '스마트 입력' : 'Smart'}</span>
             </button>
@@ -105,6 +125,11 @@ export function SettingsModal({
               ? (lang === 'ko' ? '자유롭게 입력하면 날짜·태그를 AI가 자동 분석합니다' : 'AI detects date & tags from natural text')
               : (lang === 'ko' ? '날짜·태그를 직접 지정해 저장합니다' : 'Manually set date, tags and priority')}
           </p>
+          <div style={{ fontSize: '11px', marginTop: '6px', color: (aiUsageCount ?? 0) >= (aiDailyLimit ?? 10) ? 'var(--color-error)' : 'var(--color-on-surface-variant)' }}>
+            {lang === 'ko'
+              ? `AI 사용량: ${aiUsageCount ?? 0}/${aiDailyLimit ?? 10}회 (자정 초기화)`
+              : `AI usage: ${aiUsageCount ?? 0}/${aiDailyLimit ?? 10} (resets at midnight)`}
+          </div>
         </div>
 
         <div className="settings-section">
@@ -296,7 +321,7 @@ export function SettingsModal({
 
             {calendarSyncEnabled ? (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: hasCalendarToken ? '4px' : '10px' }}>
                   <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: hasCalendarToken ? '#34c759' : '#ff9500', flexShrink: 0 }} />
                   <span style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)' }}>
                     {hasCalendarToken
@@ -304,6 +329,11 @@ export function SettingsModal({
                       : (lang === 'ko' ? '연결 안 됨 — 아래 버튼으로 연결하세요' : 'Not connected — tap below to connect')}
                   </span>
                 </div>
+                {hasCalendarToken && (
+                  <div style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', paddingLeft: '14px' }}>
+                    {lang === 'ko' ? '📅 BlendDo 캘린더에 동기화됩니다' : '📅 Syncing to BlendDo calendar'}
+                  </div>
+                )}
                 <button
                   className="calendar-permission-btn"
                   onClick={() => { setShowSettings(false); handleLogin() }}
