@@ -55,3 +55,6 @@ android/keystore/release.keystore
 
 # Release signing credentials (절대 git에 포함 금지)
 keystore.properties
+
+# Test artifacts
+test-results/
