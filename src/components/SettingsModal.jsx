@@ -22,7 +22,6 @@ export function SettingsModal({
   allDayReminderTime, setAllDayReminderTime,
   user, handleLogin, handleLogout,
   lockScreenEnabled, setLockScreenEnabled,
-  lockScreenButtonLayout, setLockScreenButtonLayout,
   lockScreenTodoMode, setLockScreenTodoMode,
   lockScreenShowCompleted, setLockScreenShowCompleted,
   lockScreenFontScale, setLockScreenFontScale,
@@ -183,25 +182,6 @@ export function SettingsModal({
           </p>
           {lockScreenEnabled && (
             <>
-              {/* 버튼 위치 */}
-              <h3 style={{ marginBottom: '8px' }}>{lang === 'ko' ? '버튼 위치' : 'Button Position'}</h3>
-              <div className="font-size-selector" style={{ marginBottom: '16px' }}>
-                <button
-                  className={lockScreenButtonLayout === 'corners' ? 'active' : ''}
-                  onClick={() => setLockScreenButtonLayout('corners')}
-                >
-                  <span style={{ fontSize: '16px' }}>⬛</span>
-                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '1안: 하단 모서리' : '1: Corners'}</span>
-                </button>
-                <button
-                  className={lockScreenButtonLayout === 'clock' ? 'active' : ''}
-                  onClick={() => setLockScreenButtonLayout('clock')}
-                >
-                  <span style={{ fontSize: '16px' }}>🕐</span>
-                  <span style={{ fontSize: '11px' }}>{lang === 'ko' ? '2안: 시계 하단' : '2: Below Clock'}</span>
-                </button>
-              </div>
-
               {/* 퀵버튼 선택 (최대 6개) */}
               <h3 style={{ marginBottom: '4px' }}>
                 {lang === 'ko' ? '빠른 버튼 선택' : 'Quick Buttons'}
