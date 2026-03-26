@@ -27,16 +27,16 @@ const RANDOM_THEME_PROPS = [
 ]
 
 export function useTheme() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('blenddo-theme') || 'dark')
+  const [theme, setTheme] = useState(() => localStorage.getItem('briodo-theme') || 'dark')
   const [fontScale, setFontScale] = useState(() => {
-    const saved = localStorage.getItem('blenddo-font-scale')
+    const saved = localStorage.getItem('briodo-font-scale')
     if (saved === 'small') return 2
     if (saved === 'large') return 6
     const num = parseInt(saved)
     return (num >= 1 && num <= 7) ? num : 4
   })
   const [randomColors, setRandomColors] = useState(() => {
-    const saved = localStorage.getItem('blenddo-random-colors')
+    const saved = localStorage.getItem('briodo-random-colors')
     return saved ? JSON.parse(saved) : null
   })
 
@@ -86,7 +86,7 @@ export function useTheme() {
       '--header-glass-bg':                `hsla(${hue}, 30%, 98%, 0.85)`,
     }
     setRandomColors(colors)
-    localStorage.setItem('blenddo-random-colors', JSON.stringify(colors))
+    localStorage.setItem('briodo-random-colors', JSON.stringify(colors))
     setTheme('random')
   }
 
@@ -102,7 +102,7 @@ export function useTheme() {
     } else {
       root.classList.add(`theme-${theme}`)
     }
-    localStorage.setItem('blenddo-theme', theme)
+    localStorage.setItem('briodo-theme', theme)
 
     if (Capacitor.isNativePlatform()) {
       setTimeout(async () => {
@@ -128,7 +128,7 @@ export function useTheme() {
     const root = document.documentElement
     root.classList.remove('font-small', 'font-medium', 'font-large')
     root.style.setProperty('--font-scale', fontScaleMap[fontScale] ?? 1)
-    localStorage.setItem('blenddo-font-scale', fontScale)
+    localStorage.setItem('briodo-font-scale', fontScale)
   }, [fontScale])
 
   const syncStatusBar = async () => {

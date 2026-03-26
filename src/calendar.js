@@ -75,7 +75,7 @@ const fetchAllCalendars = async (token) => {
 const FIRESTORE_CAL_COLLECTION = 'userSettings'
 const saveCalendarIdToFirestore = async (userId, calId) => {
   try {
-    await setDoc(doc(db, FIRESTORE_CAL_COLLECTION, userId), { blendoCalendarId: calId }, { merge: true })
+    await setDoc(doc(db, FIRESTORE_CAL_COLLECTION, userId), { briodoCalendarId: calId }, { merge: true })
   } catch (e) {
     console.warn('saveCalendarIdToFirestore failed:', e)
   }
@@ -83,7 +83,7 @@ const saveCalendarIdToFirestore = async (userId, calId) => {
 const loadCalendarIdFromFirestore = async (userId) => {
   try {
     const snap = await getDoc(doc(db, FIRESTORE_CAL_COLLECTION, userId))
-    return snap.exists() ? (snap.data().blendoCalendarId || null) : null
+    return snap.exists() ? (snap.data().briodoCalendarId || snap.data().blendoCalendarId || null) : null
   } catch (e) {
     console.warn('loadCalendarIdFromFirestore failed:', e)
     return null
@@ -130,10 +130,10 @@ export const ensureBrioDoCalendar = async () => {
       const userId = auth.currentUser?.uid
 
       // 1. localStorage → Firestore 순으로 저장된 ID 확인 (다중 기기 지원)
-      let savedId = localStorage.getItem('blenddo-calendar-id')
+      let savedId = localStorage.getItem('briodo-calendar-id')
       if (!savedId && userId) {
         savedId = await loadCalendarIdFromFirestore(userId)
-        if (savedId) localStorage.setItem('blenddo-calendar-id', savedId)
+        if (savedId) localStorage.setItem('briodo-calendar-id', savedId)
       }
 
       // 2. 전체 캘린더 목록 조회 (페이지네이션 포함, 증식 방지)
@@ -149,7 +149,7 @@ export const ensureBrioDoCalendar = async () => {
       // 4. 기존 BrioDo 캘린더가 있으면 첫 번째 선택 (가장 오래된 것)
       if (matchingCals.length >= 1) {
         const calId = matchingCals[0].id
-        localStorage.setItem('blenddo-calendar-id', calId)
+        localStorage.setItem('briodo-calendar-id', calId)
         if (userId) await saveCalendarIdToFirestore(userId, calId)
         _sessionCalendarId = calId
         return calId
@@ -157,7 +157,7 @@ export const ensureBrioDoCalendar = async () => {
 
       // 5. 없으면 새로 생성 후 Firestore에도 저장
       const newCal = await createBrioDoCalendar(token)
-      localStorage.setItem('blenddo-calendar-id', newCal.id)
+      localStorage.setItem('briodo-calendar-id', newCal.id)
       if (userId) await saveCalendarIdToFirestore(userId, newCal.id)
       _sessionCalendarId = newCal.id
       return newCal.id
@@ -264,7 +264,7 @@ export const syncEventToGoogle = async (todo) => {
       if (res.status === 401) localStorage.removeItem('googleAccessToken')
       if (res.status === 404 && method === 'POST') {
         console.warn('syncEventToGoogle: calendar not found, resetting cache and retrying...')
-        localStorage.removeItem('blenddo-calendar-id')
+        localStorage.removeItem('briodo-calendar-id')
         _sessionCalendarId = null
         const newCalendarId = await ensureBrioDoCalendar()
         if (newCalendarId) {

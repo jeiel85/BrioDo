@@ -1,10 +1,11 @@
-# BlendDo 프로젝트 이력 관리 (Project History)
+# BrioDo 프로젝트 이력 관리 (Project History)
 
-본 문서는 BlendDo 프로젝트의 개발 과정, 주요 결정 사항, 실패 및 개선 사례를 기록하여 프로젝트의 방향성을 유지하기 위해 작성되었습니다.
+본 문서는 BrioDo 프로젝트의 개발 과정, 주요 결정 사항, 실패 및 개선 사례를 기록하여 프로젝트의 방향성을 유지하기 위해 작성되었습니다.
 
 ## 📌 프로젝트 개요
-- **이름**: BlendDo (블렌두) - *이전 명칭: Todoest*
-- **목표**: 일상과 기술을 부드럽게 섞어주는 스마트 할 일 관리 앱
+- **이름**: BrioDo (브리오두) - *이전 명칭: BlendDo → Todoest*
+- **슬로건**: "Do it with brio." / "활기차게, 해내다."
+- **목표**: AI와 함께하는 스마트 할 일 관리 앱
 - **주요 기술 스택**:
   - **Frontend**: React (Vite)
   - **Backend/DB**: Firebase (Authentication, Firestore)
@@ -100,8 +101,9 @@
 
 ## 🔄 선회 기록 (Pivots & Direction Changes)
 
-### 1. 프로젝트 리브랜딩 (Todoest → BlendDo)
-- 단순 할 일 목록 앱에서 '일상의 조화'를 강조하는 브랜드 가치를 반영하여 명칭 변경.
+### 1. 프로젝트 리브랜딩 (Todoest → BlendDo → BrioDo)
+- Todoest → BlendDo: 단순 할 일 목록에서 '일상의 조화'를 강조하는 브랜드로 변경.
+- BlendDo → BrioDo: `blend.do` 도메인이 경쟁 앱에 선점, Blendo.co(ETL 툴)와 충돌. "brio"(이탈리아어·음악 용어 — 활기, 생동감) + "Do"(해내다) 조합으로 최종 확정. 패키지 ID `app.briodo`, 슬로건 "Do it with brio." (2026-03-25)
 
 ### 2. 인증 전략 전환 (Pure Native → Hybrid → Native with Calendar Scope)
 - 초기 Web Redirect 방식 시도 → Android WebView 미동작으로 실패.
@@ -152,6 +154,27 @@
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-26** (세션 17 — blend 흔적 전면 제거 + 잠금화면 버그 수정):
+  - **localStorage/DB 키 전면 통일**: `blenddo-*` → `briodo-*` 일괄 변경.
+    - `useTheme.js`: `blenddo-theme`, `blenddo-font-scale`, `blenddo-random-colors` → `briodo-*`
+    - `db.js`: IndexedDB 이름 `blenddo-db` → `briodo-db`
+    - `calendar.js`: localStorage `blenddo-calendar-id` → `briodo-calendar-id`
+    - `useAuth.js`: 로그아웃 시 삭제 키 업데이트
+    - `App.jsx` / `useAchievements.js`: `blenddo_engagement_flags`, `blenddo_unlocked_ids` → `briodo_*`
+  - **Firestore 필드**: `blendoCalendarId` → `briodoCalendarId` (기존 데이터 폴백 유지: 신규 필드 없을 시 구 필드에서 읽음)
+  - **SettingsModal 슬로건**: "Blend your life, Do it smoothly." → "Do it with brio."
+  - **잠금화면 미리보기 닫기 버그 수정**: 설정 → 잠금화면 미리보기 → 닫기 시 할일 탭으로 이동하는 문제 수정. `onOpen` 콜백에서 `showLockPreview` 여부로 분기 — 미리보기 종료 시 `setShowSettings(true)` 호출, 실제 잠금화면 해제 시에만 `setIsLockScreen(false)` 호출.
+
+- **2026-03-25~26** (세션 16 — BrioDo 리브랜딩 전면 적용):
+  - **패키지 ID 변경**: `biz.blendo.app` → `app.briodo`
+  - **Java 패키지 이동**: `android/app/src/main/java/biz/blendo/app/` → `app/briodo/`. `MainActivity.java`, `LockScreenPlugin.java` 패키지 선언 업데이트.
+  - **Android 앱 이름 로컬라이즈**: `res/values/strings.xml` 영문 "BrioDo", `res/values-ko/strings.xml` 신규 생성 — 한국어 기기에서 "브리오Do" 표시.
+  - **Firebase 새 앱 등록**: `app.briodo` 패키지 ID로 Firebase Console에 Android 앱 추가. SHA-1 3개 등록 (이 PC 디버그 `1d097c...`, 다른 PC 디버그 `c4cf5d...`, 릴리즈 키스토어 `2ac6fc...`). 새 `google-services.json` 교체.
+  - **Playwright 테스트 셋업**: `playwright.config.js` + `tests/todo.spec.js` 신규 생성. 12개 테스트 전부 통과 (22.0s). `npm test` 스크립트 추가.
+  - **README.md 슬로건** 및 앱 설명 전면 최신화.
+  - **Git remote**: `BlendDo.git` → `BrioDo.git` (GitHub 리포 이름 변경 후 자동 리다이렉트).
+  - **APK 빌드 & Galaxy S24 설치**: `assembleDebug` BUILD SUCCESSFUL, ADB 무선 설치 완료.
 
 - **2026-03-25** (세션 15 — 업적 50개 추가 + 잠금화면 위젯 구현):
   - **업적 106개**: 기존 56개에 50개 추가. S6-S9(스트릭), C7-C11(완료), D7-D10(일간), W6-W8(주간), R5-R8(반복), T5-T8(태그), ST5-ST7(하위태스크), P5-P8(우선순위), AI5-AI8(AI/음성), CAL3-CAL4(캘린더), N3-N5(설명), SP4-SP8(특별날짜), E8-E12(참여). `perfectWeek`, `calSyncCount` 신규 stats 추가.
@@ -326,23 +349,19 @@
 1. ✅ 자연어 처리 (Gemini AI)
 2. ✅ 캘린더 연동 (Google Calendar 동기화)
 3. ✅ 업적 시스템 (Firestore 클라우드 동기화)
-4. ⬜ 잠금화면 바로 보기 (Android Activity FLAG_SHOW_WHEN_LOCKED)
+4. ✅ 잠금화면 위젯 (LockScreenPlugin + LockScreenView)
 
 ### 단기 작업 (우선순위 순)
-1. **잠금화면 지원**: `android/app/src/.../MainActivity` `FLAG_SHOW_WHEN_LOCKED` 추가 → 빠른 구현
-2. **로컬 푸시 알림**: `@capacitor/local-notifications` — 업적 달성 알림, 할일 리마인더
-3. **반복 일정**: 이미 plan 수립됨 (`plan` 파일 참조) — `recurrence` 필드 + 뷰 레벨 인스턴스 생성 전략
-4. **검색 기능**: 이미 plan 수립됨 — 전체 todos 텍스트/태그/설명 검색
-5. **하위 태스크**: 이미 plan 수립됨 — `subtasks` 배열 필드
+1. **Play Store 출시 준비**: AAB 빌드, 스토어 등록, 개인정보처리방침 페이지 (GitHub Pages)
+2. **홈 화면 위젯**: Android App Widget API
+3. **iOS 지원**: Capacitor iOS 빌드
 
 ### 중기 작업
-- OAuth 토큰 자동 갱신 (5분 주기 체크, 만료 배너)
-- 업적 시스템 확장 (새 업적 추가: `useAchievements.js`의 `ACHIEVEMENT_DEFS` 배열에 직접 추가)
-- patch-package로 node_modules 패치 자동화
+- 업적 시스템 확장 (`useAchievements.js`의 `ACHIEVEMENT_DEFS` 배열에 직접 추가)
 
 ### 업적 시스템 관리 방침
 - 현 단계: `useAchievements.js`의 `ACHIEVEMENT_DEFS` 배열에 직접 추가 후 재배포
 - Firebase 이관 고려 시점: 사용자 수 증가 or 업적 추가 빈도 높아질 때
 
 ---
-*최종 업데이트: 2026-03-25 (세션 11 — 음성 인식 안정화, 재시도 로직, TOP3 너비, 업적 X 버튼)*
+*최종 업데이트: 2026-03-26 (세션 17 — blend 흔적 제거, localStorage briodo-* 통일, 잠금화면 미리보기 버그 수정)*

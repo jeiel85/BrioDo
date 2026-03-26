@@ -497,7 +497,7 @@ export function SettingsModal({
           <div style={{ textAlign: 'center', padding: '8px 0 4px', color: 'var(--color-on-surface-variant)', fontSize: '12px' }}>
             <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-on-surface)', marginBottom: '3px' }}>BrioDo</div>
             <div>v{appVersion ?? '1.0.0'}</div>
-            <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Blend your life, Do it smoothly.</div>
+            <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Do it with brio.</div>
           </div>
         </div>
 

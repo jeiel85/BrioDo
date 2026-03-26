@@ -133,7 +133,7 @@ function App() {
     trackEngagement('totalOpens', true)
     try {
       const today = new Date().toISOString().slice(0, 10)
-      const flags = JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}')
+      const flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}')
       if (flags.lastOpenDate !== today) {
         if (flags.lastOpenDate) {
           const lastDate = new Date(flags.lastOpenDate)
@@ -143,14 +143,14 @@ function App() {
             trackEngagement('appStreak', true)
           } else if (diffDays > 1) {
             flags.appStreak = 1
-            localStorage.setItem('blenddo_engagement_flags', JSON.stringify(flags))
+            localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
           }
         } else {
           flags.appStreak = 1
-          localStorage.setItem('blenddo_engagement_flags', JSON.stringify(flags))
+          localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
         }
         flags.lastOpenDate = today
-        localStorage.setItem('blenddo_engagement_flags', JSON.stringify(flags))
+        localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
       }
     } catch(e) {}
   }, [])
@@ -703,7 +703,7 @@ function App() {
         todos={todos}
         lang={lang}
         todayStr={todayStr}
-        onOpen={() => { setIsLockScreen(false); setShowLockPreview(false) }}
+        onOpen={() => { if (showLockPreview) { setShowLockPreview(false); setShowSettings(true) } else { setIsLockScreen(false) } }}
         isPreview={showLockPreview}
         onAddTodo={handleLockAddTodo}
         onToggleTodo={handleLockToggleTodo}

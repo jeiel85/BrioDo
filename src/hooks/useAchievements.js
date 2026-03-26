@@ -220,7 +220,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
     }
 
     let flags = {}
-    try { flags = JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}') } catch(e){}
+    try { flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}') } catch(e){}
 
     return {
       streak, totalCompleted, todayCompleted, todayActive, todayTotal,
@@ -236,7 +236,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
   }, [todos, todayStr, weeklyPulse])
 
   const [persistedUnlocked, setPersistedUnlocked] = useState(() => {
-    return new Set(JSON.parse(localStorage.getItem('blenddo_unlocked_ids') || '[]'))
+    return new Set(JSON.parse(localStorage.getItem('briodo_unlocked_ids') || '[]'))
   })
 
   // Load from Firestore on login
@@ -251,19 +251,19 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
           const remoteUnlocks = data.unlockedIds || []
           const remoteFlags = data.engagementFlags || {}
           
-          const localFlags = JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}')
+          const localFlags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}')
           const mergedFlags = { ...remoteFlags, ...localFlags }
           for (const k in remoteFlags) {
             if (typeof remoteFlags[k] === 'number') {
               mergedFlags[k] = Math.max(remoteFlags[k], localFlags[k] || 0)
             }
           }
-          localStorage.setItem('blenddo_engagement_flags', JSON.stringify(mergedFlags))
+          localStorage.setItem('briodo_engagement_flags', JSON.stringify(mergedFlags))
           
           setPersistedUnlocked(prev => {
             const next = new Set(prev)
             remoteUnlocks.forEach(id => next.add(id))
-            localStorage.setItem('blenddo_unlocked_ids', JSON.stringify([...next]))
+            localStorage.setItem('briodo_unlocked_ids', JSON.stringify([...next]))
             return next
           })
         }
@@ -294,7 +294,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
     if (newOnes.length > 0) {
       const nextPersisted = new Set([...persistedUnlocked, ...newOnes])
       setPersistedUnlocked(nextPersisted)
-      localStorage.setItem('blenddo_unlocked_ids', JSON.stringify([...nextPersisted]))
+      localStorage.setItem('briodo_unlocked_ids', JSON.stringify([...nextPersisted]))
       
       const newAchs = newOnes.map(id => ACHIEVEMENT_DEFS.find(a => a.id === id)).filter(Boolean)
       setNotifications(prev => [...prev, ...newAchs])
@@ -303,7 +303,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
       if (user?.uid) {
         setDoc(doc(db, 'userSettings', user.uid), {
           unlockedIds: [...nextPersisted],
-          engagementFlags: JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}')
+          engagementFlags: JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}')
         }, { merge: true }).catch(console.error)
       }
     }
@@ -333,13 +333,13 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
 
 export function trackEngagement(flagName, increment = false) {
   try {
-    const flags = JSON.parse(localStorage.getItem('blenddo_engagement_flags') || '{}')
+    const flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}')
     if (increment) {
       flags[flagName] = (flags[flagName] || 0) + 1
     } else {
       flags[flagName] = true
     }
-    localStorage.setItem('blenddo_engagement_flags', JSON.stringify(flags))
+    localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
   } catch (e) {
     console.error('Failed to track engagement:', e)
   }

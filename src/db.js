@@ -1,6 +1,6 @@
 import { openDB } from 'idb';
 
-const DB_NAME = 'blenddo-db';
+const DB_NAME = 'briodo-db';
 const DB_VERSION = 1;
 const STORE_TODOS = 'todos';
 const STORE_HISTORY = 'history'; // 나중에 쓸 히스토리 저장소
