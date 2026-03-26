@@ -3381,6 +3381,9 @@ body.modal-open { overflow: hidden; }
 .lock-completed-arrow.expanded {
   transform: rotate(-90deg);
 }
+.lock-completed-toggle + ul.lock-tasks-list {
+  margin-top: 8px;
+}
 
 /* 앱 열기 버튼 */
 .lock-open-btn {
