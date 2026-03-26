@@ -9,9 +9,6 @@ export function NotificationsModal({ onClose, notifications, onShowAllAchievemen
   return (
     <div className="input-overlay" onClick={onClose}>
       <div className="settings-modal notif-modal" onClick={e => e.stopPropagation()}>
-        {/* Drag handle */}
-        <div className="notif-drag-handle" />
-
         <div className="settings-header">
           <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>💡</span> {title}
