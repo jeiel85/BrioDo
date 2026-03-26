@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { ACHIEVEMENT_DEFS } from '../hooks/useAchievements'
+import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
 const CATEGORY_LABELS = {
   streak: { ko: '연속 달성', en: 'Streak', ja: '連続達成', zh: '连续达成' },
@@ -20,6 +21,8 @@ const CATEGORY_LABELS = {
 export function AchievementsModal({ onClose, unlockedIds, lang }) {
   const [expandedId, setExpandedId] = useState(null)
   const [filter, setFilter] = useState('all') // 'all' | 'unlocked' | 'locked'
+  const headerRef = useRef(null)
+  const swipeHandlers = useSwipeToDismiss(onClose, { handleRef: headerRef })
 
   const categories = [...new Set(ACHIEVEMENT_DEFS.map(a => a.category))]
   const unlockedCount = unlockedIds.size
@@ -39,8 +42,9 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="achievements-modal" onClick={e => e.stopPropagation()}>
-        <div className="achievements-modal-header">
+      <div className="achievements-modal" onClick={e => e.stopPropagation()} {...swipeHandlers}>
+        <div className="achievements-modal-header" ref={headerRef}>
+          <div className="modal-drag-handle-zone"><div className="modal-drag-handle" /></div>
           <div className="achievements-modal-title">
             <span>{lang === 'ko' ? '모든 업적' : lang === 'ja' ? '全実績' : lang === 'zh' ? '全部成就' : 'All Achievements'}</span>
             <span className="achievements-count-badge">{unlockedCount} / {ACHIEVEMENT_DEFS.length}</span>

@@ -318,6 +318,7 @@ body {
 .weather-icon { font-size: calc(16px * var(--font-scale)); line-height: 1; }
 .weather-temp { font-weight: 700; color: var(--color-on-surface); }
 .weather-range { opacity: 0.75; }
+.weather-location { opacity: 0.6; font-size: calc(11px * var(--font-scale)); margin-left: 2px; }
 
 /* ─── Lock Screen Weather ─── */
 .lock-weather {

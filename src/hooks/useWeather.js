@@ -104,6 +104,7 @@ export async function fetchWeather(locationKey = '') {
       lowC: Math.round(Number(today.mintempC)),
       desc: cur.weatherDesc?.[0]?.value || '',
       area: json.nearest_area?.[0]?.areaName?.[0]?.value || '',
+      region: json.nearest_area?.[0]?.region?.[0]?.value || '',
       country: json.nearest_area?.[0]?.country?.[0]?.value || '',
     }
     saveCache(data, locationKey)

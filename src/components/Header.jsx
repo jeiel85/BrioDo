@@ -146,6 +146,7 @@ export function Header({
                 <span className="weather-icon">{weatherData.icon}</span>
                 <span className="weather-temp">{weatherData.tempC}°</span>
                 <span className="weather-range">{weatherData.highC}° / {weatherData.lowC}°</span>
+                {weatherData.area && <span className="weather-location">{weatherData.area}</span>}
               </div>
             )}
             {weatherLoading && !weatherData && (
