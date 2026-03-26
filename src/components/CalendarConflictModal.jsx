@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
-// 중복 BlendDo 캘린더 감지 시 사용자 선택 모달
+// 중복 Blendo 캘린더 감지 시 사용자 선택 모달
 export function CalendarConflictModal({ calendars, onResolve, t }) {
   const [mode, setMode] = useState('choose') // 'choose' | 'rename'
-  const [newName, setNewName] = useState('BlendDo 2')
+  const [newName, setNewName] = useState('Blendo 2')
 
   return (
     <div style={{
@@ -21,7 +21,7 @@ export function CalendarConflictModal({ calendars, onResolve, t }) {
           {t?.calendarConflictTitle || '중복 캘린더 감지'}
         </h3>
         <p style={{ margin: '0 0 20px', fontSize: '13px', color: 'var(--text-secondary, #aaa)', lineHeight: 1.5 }}>
-          {t?.calendarConflictDesc || `Google 캘린더에 "BlendDo" 이름의 캘린더가 ${calendars.length}개 존재합니다. 어떻게 처리할까요?`}
+          {t?.calendarConflictDesc || `Google 캘린더에 "Blendo" 이름의 캘린더가 ${calendars.length}개 존재합니다. 어떻게 처리할까요?`}
         </p>
 
         {mode === 'choose' ? (
@@ -41,7 +41,7 @@ export function CalendarConflictModal({ calendars, onResolve, t }) {
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                   }}
                 >
-                  <span>📅 BlendDo {i > 0 ? `(${i + 1})` : ''}</span>
+                  <span>📅 Blendo {i > 0 ? `(${i + 1})` : ''}</span>
                   <span style={{ fontSize: '11px', color: 'var(--text-secondary, #aaa)' }}>연결하기</span>
                 </button>
               ))}

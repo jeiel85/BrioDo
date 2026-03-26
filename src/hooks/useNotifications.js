@@ -21,10 +21,10 @@ function toNotifId(todoId) {
 }
 
 function getChannelIdByPriority(priority) {
-  if (priority === 'urgent') return 'blenddo_urgent'
-  if (priority === 'high') return 'blenddo_high'
-  if (priority === 'low') return 'blenddo_low'
-  return 'blenddo_medium'
+  if (priority === 'urgent') return 'blendo_urgent'
+  if (priority === 'high') return 'blendo_high'
+  if (priority === 'low') return 'blendo_low'
+  return 'blendo_medium'
 }
 
 /**
@@ -66,7 +66,7 @@ export async function scheduleNotification(todo) {
     await LocalNotifications.schedule({
       notifications: [{
         id: notifId,
-        title: 'BlendDo 리마인더',
+        title: 'Blendo 리마인더',
         body,
         schedule: { at, allowWhileIdle: true },
         sound: 'default',
@@ -92,10 +92,10 @@ export async function cancelNotification(todoId) {
 
 // 우선순위별 채널 4개 생성
 const CHANNELS = [
-  { id: 'blenddo_low',    name: 'BlendDo 알림 (낮음)',  importance: 2, vibration: false, lights: false },
-  { id: 'blenddo_medium', name: 'BlendDo 알림',          importance: 3, vibration: true,  lights: false },
-  { id: 'blenddo_high',   name: 'BlendDo 알림 (중요)',   importance: 4, vibration: true,  lights: true  },
-  { id: 'blenddo_urgent', name: 'BlendDo 긴급 알림',     importance: 5, vibration: true,  lights: true  },
+  { id: 'blendo_low',    name: 'Blendo 알림 (낮음)',  importance: 2, vibration: false, lights: false },
+  { id: 'blendo_medium', name: 'Blendo 알림',          importance: 3, vibration: true,  lights: false },
+  { id: 'blendo_high',   name: 'Blendo 알림 (중요)',   importance: 4, vibration: true,  lights: true  },
+  { id: 'blendo_urgent', name: 'Blendo 긴급 알림',     importance: 5, vibration: true,  lights: true  },
 ]
 
 export async function initNotificationChannels() {
@@ -104,7 +104,7 @@ export async function initNotificationChannels() {
       await LocalNotifications.createChannel({
         id: ch.id,
         name: ch.name,
-        description: 'BlendDo 할 일 리마인더',
+        description: 'Blendo 할 일 리마인더',
         importance: ch.importance,
         visibility: 1,
         sound: 'default',

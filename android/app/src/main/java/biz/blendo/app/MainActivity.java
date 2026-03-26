@@ -1,4 +1,4 @@
-package biz.todoest.app;
+package biz.blendo.app;
 
 import android.os.Build;
 import android.os.Bundle;

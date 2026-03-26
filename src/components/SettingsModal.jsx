@@ -347,7 +347,7 @@ export function SettingsModal({
                 </div>
                 {hasCalendarToken && (
                   <div style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', paddingLeft: '14px' }}>
-                    {lang === 'ko' ? '📅 BlendDo 캘린더에 동기화됩니다' : '📅 Syncing to BlendDo calendar'}
+                    {lang === 'ko' ? '📅 Blendo 캘린더에 동기화됩니다' : '📅 Syncing to Blendo calendar'}
                   </div>
                 )}
                 <button
@@ -471,8 +471,8 @@ export function SettingsModal({
             }}>
               <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', padding: '10px 14px 6px', lineHeight: '1.5' }}>
                 {lang === 'ko'
-                  ? 'BlendDo는 아래 오픈소스 라이브러리를 사용합니다. 모든 라이센스를 준수합니다.'
-                  : 'BlendDo uses the following open source libraries, in compliance with their licenses.'}
+                  ? 'Blendo는 아래 오픈소스 라이브러리를 사용합니다. 모든 라이센스를 준수합니다.'
+                  : 'Blendo uses the following open source libraries, in compliance with their licenses.'}
               </p>
               {OPEN_SOURCE_LICENSES.map(({ name, version, license, author }) => (
                 <div key={name} style={{
@@ -495,7 +495,7 @@ export function SettingsModal({
 
           {/* 앱 버전 */}
           <div style={{ textAlign: 'center', padding: '8px 0 4px', color: 'var(--color-on-surface-variant)', fontSize: '12px' }}>
-            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-on-surface)', marginBottom: '3px' }}>BlendDo</div>
+            <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-on-surface)', marginBottom: '3px' }}>Blendo</div>
             <div>v{appVersion ?? '1.0.0'}</div>
             <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Blend your life, Do it smoothly.</div>
           </div>
