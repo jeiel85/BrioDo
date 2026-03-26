@@ -2,8 +2,8 @@
 
 ## 프로젝트 개요
 
-**BrioDo (브리오두)** — "Blend your life, Do it smoothly"
-일상과 AI를 자연스럽게 섞어주는 스마트 할 일 관리 앱.
+**BrioDo (브리오두)** — "Do it with brio."
+활기차게, 해내다. — AI와 함께하는 스마트 할 일 관리 앱.
 
 - **패키지 ID:** `app.briodo`
 - **플랫폼:** Android (Capacitor 8 + React 19 + Vite 8)
