@@ -91,8 +91,8 @@ function App() {
     if (viewMode === 'lists') trackEngagement('collectionVisited')
   }, [viewMode])
 
-  // 입력 모드: 'smart' | 'manual' (기본값: smart)
-  const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'smart')
+  // 입력 모드: 'smart' | 'manual' (기본값: manual — 로그인 전에는 항상 manual)
+  const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'manual')
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
 
   // AI 일일 사용량
