@@ -52,3 +52,6 @@ ios/App/build/
 # Android Keystore (debug keystore는 git에 포함 - release는 제외)
 android/keystore/*.jks
 android/keystore/release.keystore
+
+# Release signing credentials (절대 git에 포함 금지)
+keystore.properties
