@@ -137,13 +137,12 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   return (
     <div className="input-overlay" onClick={onClose}>
       <div className="smart-input-modal" onClick={e => e.stopPropagation()}>
-        <div className="modal-handle" />
-
-        <div className="smart-input-header">
+        <div className="modal-header">
           <span className="smart-input-badge">✨ {lang === 'ko' ? '스마트 입력' : 'Smart Input'}</span>
           <button className="smart-input-close" onClick={onClose}>✕</button>
         </div>
 
+        <div className="smart-input-body">
         {isListening ? (
           <div className="voice-listening-area">
             {isRetrying ? (
@@ -218,6 +217,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         >
           {lang === 'ko' ? '저장' : 'Save'}
         </button>
+        </div>{/* /smart-input-body */}
       </div>
     </div>
   )
