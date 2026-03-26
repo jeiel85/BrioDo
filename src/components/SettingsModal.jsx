@@ -124,7 +124,13 @@ export function SettingsModal({
             <button
               className={inputMode === 'smart' ? 'active' : ''}
               onClick={() => {
-                if (aiUsageCount >= aiDailyLimit) {
+                if (!user) {
+                  onAiLimitToast?.(lang === 'ko'
+                    ? '스마트 입력은 로그인 후 이용할 수 있어요'
+                    : lang === 'ja' ? 'スマート入力はログイン後にご利用いただけます'
+                    : lang === 'zh' ? '智能输入需要登录后才能使用'
+                    : 'Sign in to use Smart Input')
+                } else if (aiUsageCount >= aiDailyLimit) {
                   onAiLimitToast?.(lang === 'ko'
                     ? `오늘 AI 사용량을 모두 소진했습니다 (${aiUsageCount}/${aiDailyLimit}, 자정에 초기화)`
                     : `Daily AI limit reached (${aiUsageCount}/${aiDailyLimit}, resets at midnight)`)
@@ -146,11 +152,36 @@ export function SettingsModal({
               ? (lang === 'ko' ? '자유롭게 입력하면 날짜·태그를 AI가 자동 분석합니다' : 'AI detects date & tags from natural text')
               : (lang === 'ko' ? '날짜·태그를 직접 지정해 저장합니다' : 'Manually set date, tags and priority')}
           </p>
-          <div style={{ fontSize: '11px', marginTop: '6px', color: (aiUsageCount ?? 0) >= (aiDailyLimit ?? 10) ? 'var(--color-error)' : 'var(--color-on-surface-variant)' }}>
-            {lang === 'ko'
-              ? `AI 사용량: ${aiUsageCount ?? 0}/${aiDailyLimit ?? 10}회 (자정 초기화)`
-              : `AI usage: ${aiUsageCount ?? 0}/${aiDailyLimit ?? 10} (resets at midnight)`}
-          </div>
+          {/* AI 사용량 progress bar */}
+          {user && (() => {
+            const count = aiUsageCount ?? 0
+            const limit = aiDailyLimit ?? 10
+            const pct = Math.min((count / limit) * 100, 100)
+            const barColor = pct <= 50 ? 'var(--color-primary)'
+              : pct <= 80 ? '#f59e0b'
+              : 'var(--color-error)'
+            return (
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)' }}>
+                    {lang === 'ko' ? 'AI 사용량 (자정 초기화)' : 'AI usage (resets midnight)'}
+                  </span>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: barColor }}>
+                    {count}/{limit}
+                  </span>
+                </div>
+                <div style={{ height: '6px', borderRadius: '9999px', background: 'var(--color-surface-container)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${pct}%`,
+                    borderRadius: '9999px',
+                    background: barColor,
+                    transition: 'width 0.4s ease, background 0.4s ease',
+                  }} />
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         <div className="settings-section">
