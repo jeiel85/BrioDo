@@ -1,4 +1,4 @@
-package biz.blendo.app;
+package app.briodo;
 
 import android.app.KeyguardManager;
 import android.content.Context;

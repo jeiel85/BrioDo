@@ -1,11 +1,11 @@
-# Blendo — Claude 개발 가이드
+# BrioDo — Claude 개발 가이드
 
 ## 프로젝트 개요
 
-**Blendo (블렌도)** — "Blend your life, Do it smoothly"
+**BrioDo (브리오두)** — "Blend your life, Do it smoothly"
 일상과 AI를 자연스럽게 섞어주는 스마트 할 일 관리 앱.
 
-- **패키지 ID:** `biz.blendo.app`
+- **패키지 ID:** `app.briodo`
 - **플랫폼:** Android (Capacitor 8 + React 19 + Vite 8)
 - **현재 단계:** Play Store 출시 준비 중 (v1.0.0)
 
@@ -45,7 +45,7 @@
 - AI 실패 시 수동 데이터 그대로 유지 (폴백 모델 시도)
 
 ### 4. 캘린더 싱글톤 패턴
-- `ensureBlendoCalendar()` — Promise 싱글톤으로 레이스 컨디션 방지
+- `ensureBrioDoCalendar()` — Promise 싱글톤으로 레이스 컨디션 방지
 - 캘린더 ID: localStorage 캐시 + Firestore `userSettings/{userId}` 이중 저장
 - 404 발생 시 캐시 클리어 → 자동 재생성
 
@@ -140,7 +140,7 @@ npm run build
 npx cap sync android
 cd android && ./gradlew assembleDebug
 "C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 install -r app/build/outputs/apk/debug/app-debug.apk
-"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 shell am start -n biz.blendo.app/.MainActivity
+"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 shell am start -n app.briodo/.MainActivity
 ```
 
 ### 빌드 순서 — 릴리즈 AAB (Play Store용)
@@ -187,7 +187,7 @@ sed -i "s/jcenter()/mavenCentral()/g" \
       "Bash(npm install:*)",
       "Bash(npx cap:*)",
       "Bash(./gradlew:*)",
-      "Bash(cd \"d:/Project/Blendo/android\" && ./gradlew:*)",
+      "Bash(cd \"d:/Project/BrioDo/android\" && ./gradlew:*)",
       "Bash(git:*)",
       "Bash(\"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe\":*)",
       "Bash(sed -i:*)",

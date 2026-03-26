@@ -1,6 +1,6 @@
 export const translations = {
   ko: {
-    reminders: 'Blendo',
+    reminders: 'BrioDo',
     incomplete: '개의 미완료 항목',
     doneAll: '일정을 모두 마쳤습니다!',
     completed: '완료됨',
@@ -53,7 +53,7 @@ export const translations = {
     viewTasks: '할 일 보기',
   },
   en: {
-    reminders: 'Blendo',
+    reminders: 'BrioDo',
     incomplete: ' incomplete',
     doneAll: 'Everything done!',
     completed: 'Completed',
@@ -106,7 +106,7 @@ export const translations = {
     viewTasks: 'View Tasks',
   },
   ja: {
-    reminders: 'Blendo',
+    reminders: 'BrioDo',
     incomplete: ' 개의 미완료',
     doneAll: '予定はすべて完了しました!',
     completed: '完了済み',
@@ -159,7 +159,7 @@ export const translations = {
     viewTasks: 'タスクを見る',
   },
   zh: {
-    reminders: 'Blendo',
+    reminders: 'BrioDo',
     incomplete: ' 个待办事项',
     doneAll: '完成！',
     completed: '已完成',

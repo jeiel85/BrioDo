@@ -1,6 +1,6 @@
 {
-  "appId": "biz.blendo.app",
-  "appName": "Blendo",
+  "appId": "app.briodo",
+  "appName": "BrioDo",
   "webDir": "dist",
   "plugins": {
     "FirebaseAuthentication": {

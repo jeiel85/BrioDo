@@ -1,4 +1,4 @@
-package biz.blendo.app;
+package app.briodo;
 
 import android.os.Build;
 import android.os.Bundle;

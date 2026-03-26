@@ -106,7 +106,7 @@ export function Header({
                 </svg>
               </div>
             )}
-            <span className="curator-app-name">Blendo</span>
+            <span className="curator-app-name">BrioDo</span>
           </div>
           <div className="curator-top-actions">
             <button

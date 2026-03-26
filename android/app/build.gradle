@@ -8,10 +8,10 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "biz.blendo.app"
+    namespace = "app.briodo"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "biz.blendo.app"
+        applicationId "app.briodo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
