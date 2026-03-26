@@ -7,7 +7,7 @@
 
 - **패키지 ID:** `biz.todoest.app`
 - **플랫폼:** Android (Capacitor 8 + React 19 + Vite 8)
-- **현재 단계:** MVP 완성, 기능 확장 중
+- **현재 단계:** Play Store 출시 준비 중 (v1.0.0)
 
 ---
 
@@ -121,15 +121,34 @@ src/
 .env                        # VITE_GEMINI_API_KEY, VITE_FIREBASE_*
 android/app/google-services.json
 android/local.properties    # sdk.dir=C\:\\Users\\<username>\\AppData\\Local\\Android\\Sdk
+keystore.properties         # 릴리즈 서명 자격증명 (아래 내용으로 생성)
 ```
 
-### 빌드 순서
+### keystore.properties 생성 (릴리즈 빌드 필수)
+루트에 `keystore.properties` 파일을 생성 (절대 git 커밋 금지):
+```properties
+storeFile=blenddo-release.jks
+storePassword=blenddo2024
+keyAlias=blenddo
+keyPassword=blenddo2024
+```
+> 키스토어 파일: `android/app/blenddo-release.jks` (git 제외, 별도 백업 필수)
+
+### 빌드 순서 — 디버그 APK (개발용)
 ```bash
 npm run build
 npx cap sync android
 cd android && ./gradlew assembleDebug
 "C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 install -r app/build/outputs/apk/debug/app-debug.apk
 "C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 shell am start -n biz.todoest.app/.MainActivity
+```
+
+### 빌드 순서 — 릴리즈 AAB (Play Store용)
+```bash
+npm run build
+npx cap sync android
+cd android && ./gradlew bundleRelease
+# 출력: android/app/build/outputs/bundle/release/app-release.aab
 ```
 
 ### node_modules 패치 필요 (npm install 후 매번)
@@ -156,7 +175,8 @@ sed -i "s/jcenter()/mavenCentral()/g" \
 4. `.env` 생성 (Firebase + Gemini 키)
 5. `android/app/google-services.json` 복사
 6. `android/local.properties` 생성 (Android SDK 경로)
-7. Claude Code 자동 승인 권한 설정 — `~/.claude/settings.json`을 아래 내용으로 생성:
+7. `keystore.properties` 생성 (위 내용 참조) + `android/app/blenddo-release.jks` 복사
+8. Claude Code 자동 승인 권한 설정 — `~/.claude/settings.json`을 아래 내용으로 생성:
    (`<username>`은 각 PC의 Windows 사용자명으로 교체)
 
 ```json
@@ -228,21 +248,16 @@ C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE  ← 다른 PC keyst
 
 ## 알려진 문제 / 한계
 
-- OAuth 토큰 자동 갱신 미구현 (401 발생 가능)
-- node_modules 패치 수동 적용 필요 (patch-package 미설정)
+- node_modules 패치 수동 적용 필요 (patch-package 설정됨, npm install 후 자동 실행)
 - 오프라인 큐 — 앱 강제 종료 시 미처리 항목 손실 가능성
 
 ---
 
 ## 다음 작업 후보
 
-- [ ] 로컬 푸시 알림 (Capacitor LocalNotifications)
-- [ ] 반복 할 일 (매일/매주/매월)
-- [ ] OAuth 토큰 자동 갱신
-- [ ] `patch-package`로 node_modules 패치 자동화
-- [ ] 검색 기능 (제목/태그/날짜 범위)
-- [ ] 하위 할 일 / 체크리스트
 - [ ] Android 홈 화면 위젯
+- [ ] iOS 지원
+- [ ] F-Droid 배포
 
 ---
 
