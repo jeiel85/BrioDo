@@ -170,15 +170,6 @@ function App() {
     localStorage.setItem('calendarSyncEnabled', String(val))
   }
 
-  // 잠금화면 버튼 레이아웃: 'corners' | 'clock'
-  const [lockScreenButtonLayout, setLockScreenButtonLayout] = useState(
-    () => localStorage.getItem('lockScreenButtonLayout') || 'corners'
-  )
-  const setLockScreenButtonLayoutPersisted = (val) => {
-    setLockScreenButtonLayout(val)
-    localStorage.setItem('lockScreenButtonLayout', val)
-  }
-
   // 잠금화면 할일 표시 모드: 'today' | 'all'
   const [lockScreenTodoMode, setLockScreenTodoMode] = useState(
     () => localStorage.getItem('lockScreenTodoMode') || 'today'
@@ -656,7 +647,6 @@ function App() {
         onOpen={() => { setIsLockScreen(false); setShowLockPreview(false) }}
         isPreview={showLockPreview}
         onAddTodo={handleLockAddTodo}
-        buttonLayout={lockScreenButtonLayout}
         buttons={lockScreenButtons}
         todoMode={lockScreenTodoMode}
         showCompleted={lockScreenShowCompleted}
@@ -838,7 +828,6 @@ function App() {
           allDayReminderTime={allDayReminderTime} setAllDayReminderTime={setAllDayReminderTimePersisted}
           user={user} handleLogin={handleLogin} handleLogout={handleLogout}
           lockScreenEnabled={lockScreenEnabled} setLockScreenEnabled={setLockScreenEnabledPersisted}
-          lockScreenButtonLayout={lockScreenButtonLayout} setLockScreenButtonLayout={setLockScreenButtonLayoutPersisted}
           lockScreenTodoMode={lockScreenTodoMode} setLockScreenTodoMode={setLockScreenTodoModePersisted}
           lockScreenShowCompleted={lockScreenShowCompleted} setLockScreenShowCompleted={setLockScreenShowCompletedPersisted}
           lockScreenFontScale={lockScreenFontScale} setLockScreenFontScale={setLockScreenFontScalePersisted}

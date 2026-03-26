@@ -77,7 +77,7 @@ const BUTTON_ICONS = {
 
 export function LockScreenView({
   todos, lang, onOpen, todayStr, isPreview,
-  onAddTodo, buttonLayout = 'corners',
+  onAddTodo,
   buttons = ['torch', 'camera', 'qr', 'timer'],
   todoMode = 'today', showCompleted = false,
   lockFontScale = 4,
@@ -89,6 +89,7 @@ export function LockScreenView({
   const [todoInput, setTodoInput] = useState('')
   const [showInput, setShowInput] = useState(false)
   const [addedAnim, setAddedAnim] = useState(false)
+  const [completedExpanded, setCompletedExpanded] = useState(false)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -101,18 +102,17 @@ export function LockScreenView({
   }, [showInput])
 
   // 할일 필터링
-  let displayTodos = todos
+  let filteredTodos = todos
   if (todoMode === 'today') {
-    displayTodos = displayTodos.filter(t => t.date === todayStr)
+    filteredTodos = filteredTodos.filter(t => t.date === todayStr)
   }
-  if (!showCompleted) {
-    displayTodos = displayTodos.filter(t => !t.completed)
-  }
-  displayTodos = [...displayTodos].sort((a, b) => {
+  const sortFn = (a, b) => {
     const da = `${a.date} ${a.time || '00:00'}`
     const db = `${b.date} ${b.time || '00:00'}`
     return da < db ? -1 : da > db ? 1 : 0
-  })
+  }
+  const incompleteTodos = [...filteredTodos.filter(t => !t.completed)].sort(sortFn)
+  const completedTodos = showCompleted ? [...filteredTodos.filter(t => t.completed)].sort(sortFn) : []
 
   const hours = pad(now.getHours())
   const minutes = pad(now.getMinutes())
@@ -140,6 +140,7 @@ export function LockScreenView({
     : (lang === 'ko' ? '오늘 할 일' : lang === 'ja' ? '今日のタスク' : lang === 'zh' ? '今日任务' : "Today's Tasks")
 
   const doneAllLabel = lang === 'ko' ? '할 일이 없어요 🎉' : lang === 'ja' ? 'タスクはありません🎉' : lang === 'zh' ? '没有任务🎉' : 'Nothing here! 🎉'
+  const completedLabel = lang === 'ko' ? '완료된 할 일' : lang === 'ja' ? '完了したタスク' : lang === 'zh' ? '已完成任务' : 'Completed'
   const addPlaceholder = lang === 'ko' ? '할 일 빠르게 추가...' : lang === 'ja' ? 'タスクを素早く追加...' : lang === 'zh' ? '快速添加任务...' : 'Quick add task...'
 
   // ─── 버튼 핸들러 맵 ─────────────────────────────────────────
@@ -175,10 +176,6 @@ export function LockScreenView({
 
   const scale = lockFontScaleMap[lockFontScale] ?? 1
 
-  // 1안(corners)은 처음 2개 버튼만, 2안(side)은 전체
-  const cornersIds = buttons.slice(0, 2)
-  const sideIds = buttons
-
   const renderButtons = (ids) => ids.map(id => {
     const BtnIcon = BUTTON_ICONS[id]
     if (!BtnIcon) return null
@@ -208,12 +205,10 @@ export function LockScreenView({
           <div className="lock-date">{dateStr} {wday}</div>
         </div>
 
-        {/* 2안: 시계 하단 우측 버튼 패널 */}
-        {buttonLayout === 'clock' && (
-          <div className="lock-quick-btns-side">
-            {renderButtons(sideIds)}
-          </div>
-        )}
+        {/* 버튼 패널 (시계 하단) */}
+        <div className="lock-quick-btns-side">
+          {renderButtons(buttons)}
+        </div>
 
         {/* 할일 패널 */}
         <div className="lock-tasks-panel">
@@ -253,19 +248,48 @@ export function LockScreenView({
 
           {/* 스크롤 가능한 할일 목록 */}
           <div className="lock-tasks-scroll">
-            {displayTodos.length === 0 ? (
+            {incompleteTodos.length === 0 && completedTodos.length === 0 ? (
               <div className="lock-tasks-empty">{doneAllLabel}</div>
             ) : (
-              <ul className="lock-tasks-list">
-                {displayTodos.map(todo => (
-                  <li key={todo.id} className={`lock-task-item${todo.completed ? ' lock-task-done' : ''}`}>
-                    <span className={`lock-task-dot${todo.completed ? ' done' : ''}`} />
-                    <span className="lock-task-text">{todo.text}</span>
-                    {todo.time && <span className="lock-task-time">{todo.time}</span>}
-                    {todoMode === 'all' && <span className="lock-task-date">{todo.date}</span>}
-                  </li>
-                ))}
-              </ul>
+              <>
+                {incompleteTodos.length === 0 && completedTodos.length > 0 ? (
+                  <div className="lock-tasks-empty">{doneAllLabel}</div>
+                ) : (
+                  <ul className="lock-tasks-list">
+                    {incompleteTodos.map(todo => (
+                      <li key={todo.id} className="lock-task-item">
+                        <span className="lock-task-dot" />
+                        <span className="lock-task-text">{todo.text}</span>
+                        {todo.time && <span className="lock-task-time">{todo.time}</span>}
+                        {todoMode === 'all' && <span className="lock-task-date">{todo.date}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {showCompleted && completedTodos.length > 0 && (
+                  <>
+                    <button
+                      className="lock-completed-toggle"
+                      onClick={() => setCompletedExpanded(v => !v)}
+                    >
+                      <span>{completedLabel} ({completedTodos.length})</span>
+                      <span className={`lock-completed-arrow${completedExpanded ? ' expanded' : ''}`}>›</span>
+                    </button>
+                    {completedExpanded && (
+                      <ul className="lock-tasks-list">
+                        {completedTodos.map(todo => (
+                          <li key={todo.id} className="lock-task-item lock-task-done">
+                            <span className="lock-task-dot done" />
+                            <span className="lock-task-text">{todo.text}</span>
+                            {todo.time && <span className="lock-task-time">{todo.time}</span>}
+                            {todoMode === 'all' && <span className="lock-task-date">{todo.date}</span>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -276,12 +300,6 @@ export function LockScreenView({
         </button>
       </div>
 
-      {/* 1안: 모서리 버튼 */}
-      {buttonLayout === 'corners' && (
-        <div className="lock-quick-btns-corners">
-          {renderButtons(cornersIds)}
-        </div>
-      )}
     </div>
   )
 }

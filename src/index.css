@@ -3303,6 +3303,34 @@ body.modal-open { overflow: hidden; }
   font-weight: 500;
 }
 
+/* 완료 할일 접기/펼치기 토글 */
+.lock-completed-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 4px;
+  margin-top: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: calc(11px * var(--lock-font-scale, 1));
+  cursor: pointer;
+  text-align: left;
+}
+.lock-completed-arrow {
+  display: inline-block;
+  font-size: calc(16px * var(--lock-font-scale, 1));
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+  color: rgba(255, 255, 255, 0.4);
+}
+.lock-completed-arrow.expanded {
+  transform: rotate(-90deg);
+}
+
 /* 앱 열기 버튼 */
 .lock-open-btn {
   width: 100%;
