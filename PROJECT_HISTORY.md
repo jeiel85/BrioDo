@@ -133,7 +133,7 @@
 - [x] **반복 일정**: 매일/매주/매월 반복 옵션 — 세션 8 완료
 - [x] **검색 기능**: 제목/태그/날짜 범위 검색 — 세션 8 완료
 - [x] **하위 태스크(체크리스트)**: 큰 할 일 하위 항목 분해 — 세션 8 완료
-- [ ] **Google OAuth 토큰 자동 갱신**: accessToken 만료(1시간) 시 재로그인 없이 자동 갱신
+- [x] **Google OAuth 토큰 자동 갱신**: 5분 주기 인터벌 + 만료 시 재연결 배너 — 세션 11 완료
 
 ### 중간 우선순위
 - [x] **바텀 내비게이션**: 오늘/할일/컬렉션/통계 4탭 (설정은 헤더 아이콘) — 세션 9~10 완료
@@ -154,6 +154,24 @@
 ---
 
 ## 📝 최근 활동 로그 (Recent Activity)
+
+- **2026-03-26** (세션 19 — 구글 로그인 분석, 태블릿 로드맵, 문서 정비):
+  - **구글 로그인 코드 검토**: `useAuth.js` 분기 로직 정상 확인. 사용자가 경험하는 "웹뷰 같은 화면"은 `grantOfflineAccess: true` 설정으로 인해 Google이 Calendar 스코프 refresh token 발급 시 Chrome Custom Tab으로 띄우는 OAuth 동의 화면이며, 최초 로그인 1회에만 표시되는 정상 동작. 코드 수정 불필요.
+  - **미래 개선 메모**: `@codetrix-studio/capacitor-google-auth`는 deprecated된 구글 Sign-In SDK v4 사용 중. 장기적으로 `@capawesome-team/capacitor-google-sign-in`(Android Credential Manager API)로 교체 고려.
+  - **태블릿 지원 로드맵 추가**: CLAUDE.md 다음 작업 후보에 Android 태블릿 최적화 항목 추가.
+  - **STORE_DEPLOY.md 신규 생성**: Google Play, Samsung Galaxy Store, Amazon Appstore, APKPure/APKMirror, F-Droid 각 스토어별 배포 절차 문서화.
+  - **CLAUDE.md 로드맵 전면 갱신**: 앱스토어 배포 체크리스트 + Google Sign-In 플러그인 업그레이드 항목 추가.
+
+- **2026-03-26** (세션 18 — 모달 UX 통합 + 마이크 버그 수정):
+  - **모달 디자인 통합**: `InputModal`에 `.modal-header` / `.modal-title` / `.modal-close-btn` 구조 적용. 이전에는 헤더 없는 구조로 다른 모달과 경험 불일치.
+  - **X 버튼 32px 원형 통일**: `.modal-close-btn { width:32px; height:32px; border-radius:50% }` — 모든 모달(InputModal / SmartInputModal / SettingsModal / NotificationsModal) 동일 스타일.
+  - **알림 센터 드래그 핸들 제거**: `NotificationsModal`에서 불필요하게 표시되던 `notif-drag-handle` 제거.
+  - **`useSwipeToDismiss.js` 훅 신규 생성**: 아래로 스와이프하여 모달 닫기 — 속도(0.4px/ms) + 거리(120px) 임계값 기반 dismiss 판정. 드래그 중 배경 opacity 페이드 연동. `scrollRef` 옵션으로 내용 스크롤 중 오작동 방지. 모든 바텀시트 모달에 적용.
+  - **기본 입력 모드 = 수동**: `inputMode` 초기값 `'smart'` → `'manual'`. 비로그인 신규 사용자에게 스마트 입력 강제 노출 방지.
+  - **비로그인 스마트 입력 차단 토스트**: SettingsModal에서 비로그인 상태로 스마트 입력 선택 시 토스트 메시지 표시.
+  - **AI 사용량 progress bar**: 기존 "1/10" 텍스트 → 색상 코딩 막대 그래프(0-50% 초록, 51-80% 주황, 81%+ 빨강) + 숫자 병기.
+  - **SmartInputModal 마이크 세션 정리 버그 수정**: 외부 터치로 모달 종료 시 Android `SpeechRecognition.start()` Promise가 pending 상태에서 컴포넌트 언마운트되어 재진입 시 마이크 오작동하는 문제 수정. `isListeningRef`로 동기 상태 추적 + `handleClose`에서 `stopMic()` 선행 호출 후 `onClose`.
+  - **기본 보기 영속화**: `viewMode` 초기값 `'date'` 하드코딩 → `localStorage.getItem('briodo-viewMode') || 'date'`. viewMode 변경 시 자동 저장, 앱 재시작 후에도 마지막 선택 보기 유지.
 
 - **2026-03-26** (세션 17 — blend 흔적 전면 제거 + 잠금화면 버그 수정):
   - **localStorage/DB 키 전면 통일**: `blenddo-*` → `briodo-*` 일괄 변경.

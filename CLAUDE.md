@@ -283,8 +283,15 @@ C4:CF:5D:3D:01:DE:71:6A:63:DA:73:C5:36:34:C2:CD:9E:39:33:AE  ← 다른 PC keyst
 ## 다음 작업 후보
 
 - [ ] Android 홈 화면 위젯
-- [ ] iOS 지원
-- [ ] F-Droid 배포
+- [ ] **태블릿 지원** — 보유 중인 Android 태블릿에 설치 및 최적화 (반응형 레이아웃, split-pane 고려)
+- [ ] **앱스토어 배포** — 절차는 `STORE_DEPLOY.md` 참조
+  - [ ] Google Play Store (릴리즈 AAB, 개인정보처리방침 필요)
+  - [ ] Samsung Galaxy Store
+  - [ ] Amazon Appstore
+  - [ ] APKPure / APKMirror (서명 APK 직접 업로드)
+  - [ ] F-Droid (오픈소스 요건 검토 필요 — Firebase/API 키 이슈)
+- [ ] iOS 지원 (Capacitor iOS 빌드 + Apple 로그인)
+- [ ] Google Sign-In 플러그인 업그레이드 — `@codetrix-studio/capacitor-google-auth`(구 SDK) → `@capawesome-team/capacitor-google-sign-in`(Android Credential Manager API 지원)
 
 ---
 
