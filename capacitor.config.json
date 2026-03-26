@@ -1,6 +1,6 @@
 {
-  "appId": "biz.todoest.app",
-  "appName": "BlendDo",
+  "appId": "biz.blendo.app",
+  "appName": "Blendo",
   "webDir": "dist",
   "plugins": {
     "FirebaseAuthentication": {

@@ -90,14 +90,14 @@ const loadCalendarIdFromFirestore = async (userId) => {
   }
 }
 
-export const createBlendDoCalendar = async (token) => {
+export const createBlendoCalendar = async (token) => {
   const res = await fetch('https://www.googleapis.com/calendar/v3/calendars', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ summary: 'BlendDo', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
+    body: JSON.stringify({ summary: 'Blendo', timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })
   })
   if (!res.ok) throw new Error('Failed to create calendar')
   return res.json()
@@ -115,7 +115,7 @@ export const resetCalendarSession = () => {
 // 동시 다발 호출 시 하나의 요청만 실행되도록 싱글톤 프로미스
 let _ensureCalendarPromise = null
 
-export const ensureBlendDoCalendar = async () => {
+export const ensureBlendoCalendar = async () => {
   const token = getCalendarAccessToken()
   if (!token) return null
 
@@ -138,7 +138,7 @@ export const ensureBlendDoCalendar = async () => {
 
       // 2. 전체 캘린더 목록 조회 (페이지네이션 포함, 증식 방지)
       const allCals = await fetchAllCalendars(token)
-      const matchingCals = allCals.filter(cal => cal.summary === 'BlendDo')
+      const matchingCals = allCals.filter(cal => cal.summary === 'Blendo')
 
       // 3. 저장된 ID가 목록에 있으면 재사용
       if (savedId && matchingCals.some(cal => cal.id === savedId)) {
@@ -146,7 +146,7 @@ export const ensureBlendDoCalendar = async () => {
         return savedId
       }
 
-      // 4. 기존 BlendDo 캘린더가 있으면 첫 번째 선택 (가장 오래된 것)
+      // 4. 기존 Blendo 캘린더가 있으면 첫 번째 선택 (가장 오래된 것)
       if (matchingCals.length >= 1) {
         const calId = matchingCals[0].id
         localStorage.setItem('blenddo-calendar-id', calId)
@@ -156,13 +156,13 @@ export const ensureBlendDoCalendar = async () => {
       }
 
       // 5. 없으면 새로 생성 후 Firestore에도 저장
-      const newCal = await createBlendDoCalendar(token)
+      const newCal = await createBlendoCalendar(token)
       localStorage.setItem('blenddo-calendar-id', newCal.id)
       if (userId) await saveCalendarIdToFirestore(userId, newCal.id)
       _sessionCalendarId = newCal.id
       return newCal.id
     } catch (error) {
-      console.error('ensureBlendDoCalendar error:', error)
+      console.error('ensureBlendoCalendar error:', error)
       if (error.message?.includes('401')) {
         localStorage.removeItem('googleAccessToken')
         _sessionCalendarId = null
@@ -237,7 +237,7 @@ export const syncEventToGoogle = async (todo) => {
   const freshToken = getCalendarAccessToken()
   if (!freshToken) return null
 
-  const calendarId = await ensureBlendDoCalendar()
+  const calendarId = await ensureBlendoCalendar()
   if (!calendarId || typeof calendarId === 'object') return null
 
   const payload = buildEventPayload(todo)
@@ -266,7 +266,7 @@ export const syncEventToGoogle = async (todo) => {
         console.warn('syncEventToGoogle: calendar not found, resetting cache and retrying...')
         localStorage.removeItem('blenddo-calendar-id')
         _sessionCalendarId = null
-        const newCalendarId = await ensureBlendDoCalendar()
+        const newCalendarId = await ensureBlendoCalendar()
         if (newCalendarId) {
           const retryRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(newCalendarId)}/events`, {
             method: 'POST',
@@ -310,7 +310,7 @@ export const deleteEventFromGoogle = async (googleEventId) => {
   const freshToken = getCalendarAccessToken()
   if (!freshToken) return
 
-  const calendarId = await ensureBlendDoCalendar()
+  const calendarId = await ensureBlendoCalendar()
   if (!calendarId || typeof calendarId === 'object') return
 
   try {
@@ -335,7 +335,7 @@ export const fetchEventsFromGoogle = async () => {
   const freshToken = getCalendarAccessToken()
   if (!freshToken) return []
 
-  const calendarId = await ensureBlendDoCalendar()
+  const calendarId = await ensureBlendoCalendar()
   if (!calendarId || typeof calendarId === 'object') return []
 
   try {
