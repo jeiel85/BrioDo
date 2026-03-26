@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { SpeechRecognition } from '@capacitor-community/speech-recognition'
 import { trackEngagement } from '../hooks/useAchievements'
@@ -9,7 +9,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   const textareaRef = useRef(null)
   const webRecognitionRef = useRef(null)
   const retryingRef = useRef(false)
-  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose)
+  const isListeningRef = useRef(false)
   const [isListening, setIsListening] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
   const [micError, setMicError] = useState('')
@@ -20,15 +20,25 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
 
   const canRecord = isNative || !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
-  const stopMic = async () => {
+  const stopMic = useCallback(async () => {
+    isListeningRef.current = false
     if (isNative) {
       await SpeechRecognition.stop().catch(() => {})
     } else {
       webRecognitionRef.current?.stop()
+      webRecognitionRef.current = null
     }
     setIsListening(false)
     setPartialText('')
-  }
+  }, [isNative])
+
+  // mic을 먼저 정지하고 onClose 호출 — Android에서 세션 중첩 방지
+  const handleClose = useCallback(async () => {
+    if (isListeningRef.current) await stopMic()
+    onClose()
+  }, [stopMic, onClose])
+
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(handleClose)
 
   const startMic = async (retryCount = 0) => {
     setMicError('')
@@ -43,6 +53,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           await SpeechRecognition.requestPermissions().catch(() => {})
         }
 
+        isListeningRef.current = true
         setIsListening(true)
         const result = await SpeechRecognition.start({
           language: langCode,
@@ -73,6 +84,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         }
       } finally {
         if (!retryingRef.current) {
+          isListeningRef.current = false
           setIsListening(false)
           setIsRetrying(false)
           setPartialText('')
@@ -95,10 +107,11 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           setPartialText(interim)
         }
       }
-      recognition.onend = () => { setIsListening(false); setPartialText('') }
-      recognition.onerror = (e) => { console.warn('[SpeechRecognition web]', e.error); setIsListening(false) }
+      recognition.onend = () => { isListeningRef.current = false; setIsListening(false); setPartialText('') }
+      recognition.onerror = (e) => { console.warn('[SpeechRecognition web]', e.error); isListeningRef.current = false; setIsListening(false) }
       webRecognitionRef.current = recognition
       recognition.start()
+      isListeningRef.current = true
       setIsListening(true)
     }
   }
@@ -118,12 +131,14 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
     }
   }, [])
 
+  // 언마운트 시 마이크 강제 정지 (안전망)
   useEffect(() => {
     return () => {
       if (isNative) {
         SpeechRecognition.stop().catch(() => {})
       } else {
         webRecognitionRef.current?.abort()
+        webRecognitionRef.current = null
       }
     }
   }, [])
@@ -133,15 +148,15 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
       e.preventDefault()
       onSave(smartText)
     }
-    if (e.key === 'Escape') onClose()
+    if (e.key === 'Escape') handleClose()
   }
 
   return (
-    <div className="input-overlay" ref={overlayRef} onClick={onClose}>
+    <div className="input-overlay" ref={overlayRef} onClick={handleClose}>
       <div className="smart-input-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
         <div className="modal-header">
           <span className="smart-input-badge">✨ {lang === 'ko' ? '스마트 입력' : 'Smart Input'}</span>
-          <button className="smart-input-close" onClick={onClose}>✕</button>
+          <button className="smart-input-close" onClick={handleClose}>✕</button>
         </div>
 
         <div className="smart-input-body">

@@ -78,7 +78,7 @@ function App() {
   const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode })
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
-  const [viewMode, setViewMode] = useState('date')
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -88,6 +88,7 @@ function App() {
   const [showNotificationsModal, setShowNotificationsModal] = useState(false)
 
   useEffect(() => {
+    localStorage.setItem('briodo-viewMode', viewMode)
     if (viewMode === 'lists') trackEngagement('collectionVisited')
   }, [viewMode])
 
