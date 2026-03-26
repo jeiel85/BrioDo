@@ -11,13 +11,15 @@ const DISMISS_DISTANCE = 120  // px  — 충분히 내리면 dismiss
  * @param {boolean} [options.disabled] - 비활성화 여부
  * @param {React.RefObject} [options.scrollRef] - 스크롤 가능한 내부 컨테이너 ref
  *   제공 시 scrollTop > 0이면 스와이프 비활성화 (스크롤 중 오작동 방지)
+ * @param {React.RefObject} [options.handleRef] - 스와이프를 허용할 핸들 영역 ref
+ *   제공 시 해당 영역 안에서 시작한 터치만 스와이프 활성화 (헤더 전용 스와이프)
  *
  * @returns {{ overlayRef, modalRef, swipeHandlers }}
  *   - overlayRef: 배경 어두운 overlay div에 붙일 ref
  *   - modalRef:   모달 컨테이너 div에 붙일 ref
  *   - swipeHandlers: { onTouchStart, onTouchMove, onTouchEnd } — 모달에 spread
  */
-export function useSwipeToDismiss(onClose, { disabled = false, scrollRef = null } = {}) {
+export function useSwipeToDismiss(onClose, { disabled = false, scrollRef = null, handleRef = null } = {}) {
   const overlayRef = useRef(null)
   const modalRef = useRef(null)
 
@@ -28,6 +30,8 @@ export function useSwipeToDismiss(onClose, { disabled = false, scrollRef = null 
 
   const onTouchStart = useCallback((e) => {
     if (disabled) return
+    // 핸들 영역 제한: handleRef가 있으면 그 안에서 시작한 터치만 활성화
+    if (handleRef?.current && !handleRef.current.contains(e.target)) return
     // 스크롤 가능한 영역이 위로 올라가 있으면 스와이프 비활성
     if (scrollRef?.current && scrollRef.current.scrollTop > 0) return
 
@@ -39,7 +43,7 @@ export function useSwipeToDismiss(onClose, { disabled = false, scrollRef = null 
     // 드래그 중 CSS transition 끄기 (레이턴시 제거)
     if (modalRef.current) modalRef.current.style.transition = 'none'
     if (overlayRef.current) overlayRef.current.style.transition = 'none'
-  }, [disabled, scrollRef])
+  }, [disabled, handleRef, scrollRef])
 
   const onTouchMove = useCallback((e) => {
     if (!active.current) return

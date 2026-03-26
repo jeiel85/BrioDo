@@ -21,6 +21,8 @@ export function Header({
   allIncompleteTodosCount,
   notificationCount,
   onNotificationTap,
+  weatherData,
+  weatherLoading,
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
@@ -139,6 +141,18 @@ export function Header({
             <div className="greeting-date" onClick={handleGoToToday}>{formattedHeaderDate}</div>
             <h1 className="greeting-title">{greeting}</h1>
             <p className="greeting-subtitle">{taskSubtitle}</p>
+            {weatherData && (
+              <div className="weather-chip">
+                <span className="weather-icon">{weatherData.icon}</span>
+                <span className="weather-temp">{weatherData.tempC}°</span>
+                <span className="weather-range">{weatherData.highC}° / {weatherData.lowC}°</span>
+              </div>
+            )}
+            {weatherLoading && !weatherData && (
+              <div className="weather-chip weather-loading">
+                <span style={{ fontSize: '12px', opacity: 0.5 }}>{lang === 'ko' ? '날씨 로딩 중...' : 'Loading weather...'}</span>
+              </div>
+            )}
           </div>
           <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
             <svg width="80" height="80" viewBox="0 0 80 80">

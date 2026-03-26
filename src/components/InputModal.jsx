@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useCallback } from 'react'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
 const PRIORITY_LABELS = {
@@ -13,7 +13,8 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
   const priority = newTodo.priority ?? 'medium'
   const isEditing = !!editingTodoId
   const scrollRef = useRef(null)
-  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(resetForm, { scrollRef })
+  const headerRef = useRef(null)
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(resetForm, { scrollRef, handleRef: headerRef })
 
   const modalTitle = isEditing
     ? (lang === 'ko' ? '할 일 수정' : lang === 'ja' ? 'タスクを編集' : lang === 'zh' ? '编辑任务' : 'Edit Task')
@@ -22,6 +23,9 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
   return (
     <div className="input-overlay" ref={overlayRef} onClick={resetForm}>
       <div className="input-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
+        <div className="modal-drag-handle-zone" ref={headerRef}>
+          <div className="modal-drag-handle" />
+        </div>
         <div className="modal-header">
           <span className="modal-title">{modalTitle}</span>
           <button className="modal-close-btn" onClick={resetForm}>✕</button>
