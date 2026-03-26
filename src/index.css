@@ -3360,13 +3360,13 @@ body.modal-open { overflow: hidden; }
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 6px 4px;
+  padding: 10px 12px;
   margin-top: 6px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  border-radius: 14px;
   color: rgba(255, 255, 255, 0.55);
-  font-size: calc(11px * var(--lock-font-scale, 1));
+  font-size: calc(12px * var(--lock-font-scale, 1));
   cursor: pointer;
   text-align: left;
 }
