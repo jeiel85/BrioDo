@@ -15,7 +15,7 @@ const sortTodos = (list) => list.sort((a, b) => {
   return dtA - dtB
 })
 
-export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
+export function useTodosData(user, { completionCalendarMode = 'status', lang = 'ko' } = {}) {
   const [todos, setTodos] = useState([])
   const [isOnline, setIsOnline] = useState(true)
   const [isAiAnalyzing, setIsAiAnalyzing] = useState(false)
@@ -178,7 +178,12 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
     if (!genAI) return null
     try {
       setIsAiAnalyzing(true)
-      const prompt = `Analyze: "${text}". Extract ONLY 1-2 category tags in Korean (e.g., 업무, 개인, 건강, 학습). Return ONLY JSON: {"categories": ["tag1", "tag2"]}`
+      const tagExamples = lang === 'ja' ? '仕事, 個人, 健康, 学習' : lang === 'zh' ? '工作, 个人, 健康, 学习' : lang === 'en' ? 'work, personal, health, study' : '업무, 개인, 건강, 학습'
+      const langInstruction = lang === 'ja' ? `日本語で1~2個のカテゴリタグのみ抽出 (例: ${tagExamples})`
+        : lang === 'zh' ? `仅提取1-2个中文分类标签 (例如: ${tagExamples})`
+        : lang === 'en' ? `Extract ONLY 1-2 category tags in English (e.g., ${tagExamples})`
+        : `한국어 태그 1~2개만 추출 (예: ${tagExamples})`
+      const prompt = `Analyze: "${text}". ${langInstruction}. Return ONLY JSON: {"categories": ["tag1", "tag2"]}`
       const rawText = await generateWithFallback(prompt)
       if (!rawText) return null
       return JSON.parse(rawText.replace(/```json|```/g, '').trim().match(/\{.*\}/s)?.[0] || rawText.trim())
@@ -197,10 +202,22 @@ export function useTodosData(user, { completionCalendarMode = 'status' } = {}) {
       const year = now.getFullYear()
       const month = String(now.getMonth() + 1).padStart(2, '0')
       const day = String(now.getDate()).padStart(2, '0')
-      const dayNames = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
+      const dayNames = lang === 'ja'
+        ? ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日']
+        : lang === 'zh'
+        ? ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+        : lang === 'en'
+        ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+        : ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일']
       const todayInfo = `${year}-${month}-${day} (${dayNames[now.getDay()]})`
 
-      const prompt = `오늘: ${todayInfo}\n입력: "${text}"\n\n반드시 아래 JSON만 응답하세요:\n{"categories":["태그1"],"date":"YYYY-MM-DD","time":"HH:MM 또는 null","refinedText":"핵심 내용"}\n\n규칙:\n- categories: 할일 성격 태그 1~2개 (업무,개인,건강,학습 등)\n- date: 날짜(YYYY-MM-DD). 상대적 표현은 오늘 기준 계산\n- time: 시간 있으면 HH:MM, 없으면 null\n- refinedText: 날짜/시간 제외한 핵심 내용`
+      const prompt = lang === 'ja'
+        ? `今日: ${todayInfo}\n入力: "${text}"\n\n以下のJSONのみで回答:\n{"categories":["タグ1"],"date":"YYYY-MM-DD","time":"HH:MM またはnull","refinedText":"要点"}\n\nルール:\n- categories: タスクのカテゴリタグ1~2個 (仕事,個人,健康,学習 など)\n- date: 日付(YYYY-MM-DD)。相対表現は今日を基準に計算\n- time: 時間があればHH:MM、なければnull\n- refinedText: 日付/時間を除いた要点`
+        : lang === 'zh'
+        ? `今天: ${todayInfo}\n输入: "${text}"\n\n只用以下JSON回复:\n{"categories":["标签1"],"date":"YYYY-MM-DD","time":"HH:MM 或 null","refinedText":"核心内容"}\n\n规则:\n- categories: 1-2个任务分类标签 (工作,个人,健康,学习 等)\n- date: 日期(YYYY-MM-DD)。相对表达从今天计算\n- time: 有时间则HH:MM，没有则null\n- refinedText: 去除日期/时间后的核心内容`
+        : lang === 'en'
+        ? `Today: ${todayInfo}\nInput: "${text}"\n\nRespond with ONLY this JSON:\n{"categories":["tag1"],"date":"YYYY-MM-DD","time":"HH:MM or null","refinedText":"core content"}\n\nRules:\n- categories: 1-2 task category tags (work, personal, health, study, etc.)\n- date: date (YYYY-MM-DD). Relative expressions calculated from today\n- time: HH:MM if specified, null if not\n- refinedText: core content without date/time`
+        : `오늘: ${todayInfo}\n입력: "${text}"\n\n반드시 아래 JSON만 응답하세요:\n{"categories":["태그1"],"date":"YYYY-MM-DD","time":"HH:MM 또는 null","refinedText":"핵심 내용"}\n\n규칙:\n- categories: 할일 성격 태그 1~2개 (업무,개인,건강,학습 등)\n- date: 날짜(YYYY-MM-DD). 상대적 표현은 오늘 기준 계산\n- time: 시간 있으면 HH:MM, 없으면 null\n- refinedText: 날짜/시간 제외한 핵심 내용`
 
       const rawText = await generateWithFallback(prompt)
       if (!rawText) return null

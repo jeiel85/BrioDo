@@ -28,6 +28,7 @@ import { NotificationsModal } from './components/NotificationsModal'
 import { AchievementUnlockModal } from './components/AchievementUnlockModal'
 import { AchievementsModal } from './components/AchievementsModal'
 import { LockScreenView } from './components/LockScreenView'
+import { OnboardingModal, shouldShowOnboarding } from './components/OnboardingModal'
 
 import './index.css'
 
@@ -48,6 +49,7 @@ const getAiUsageData = () => {
 function App() {
   const { lang, langPref, setLangPref, t } = useLanguage()
   const { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired } = useAuth()
+  const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding())
   const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar } = useTheme()
 
   // 완료 시 캘린더 처리 방식: 'status' | 'delete' (기본값: status)
@@ -76,7 +78,7 @@ function App() {
     localStorage.setItem('completionCalendarMode', mode)
   }
 
-  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode })
+  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode, lang })
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
@@ -972,6 +974,15 @@ function App() {
         onDismiss={dismissUnlock}
         lang={lang}
       />
+
+      {showOnboarding && (
+        <OnboardingModal
+          lang={lang}
+          setLangPref={setLangPref}
+          handleLogin={handleLogin}
+          onDone={() => setShowOnboarding(false)}
+        />
+      )}
 
     </div>
   )
