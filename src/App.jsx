@@ -9,6 +9,7 @@ import { syncEventToGoogle } from './calendar'
 import { formatTime, matchesRecurrence } from './utils/helpers'
 import { useAchievements, trackEngagement } from './hooks/useAchievements'
 import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
+import { fetchWeather } from './hooks/useWeather'
 
 import { useLanguage } from './hooks/useLanguage'
 import { useAuth } from './hooks/useAuth'
@@ -245,6 +246,36 @@ function App() {
     setLockScreenButtons(val)
     localStorage.setItem('lockScreenButtons', JSON.stringify(val))
   }
+
+  // 날씨 설정 및 데이터
+  const [weatherEnabled, setWeatherEnabled] = useState(
+    () => localStorage.getItem('briodo-weatherEnabled') !== 'false'
+  )
+  const setWeatherEnabledPersisted = (val) => {
+    setWeatherEnabled(val)
+    localStorage.setItem('briodo-weatherEnabled', String(val))
+  }
+  // 위치: '' = IP 자동감지, 도시명 직접 지정 가능
+  const [weatherLocation, setWeatherLocation] = useState(
+    () => localStorage.getItem('briodo-weatherLocation') || ''
+  )
+  const setWeatherLocationPersisted = (val) => {
+    setWeatherLocation(val)
+    localStorage.setItem('briodo-weatherLocation', val)
+    setWeatherData(null) // 위치 변경 시 캐시 무효화
+  }
+  const [weatherData, setWeatherData] = useState(null)
+  const [weatherLoading, setWeatherLoading] = useState(false)
+
+  useEffect(() => {
+    if (!weatherEnabled) return
+    let cancelled = false
+    setWeatherLoading(true)
+    fetchWeather(weatherLocation).then(data => {
+      if (!cancelled) { setWeatherData(data); setWeatherLoading(false) }
+    })
+    return () => { cancelled = true }
+  }, [weatherEnabled, weatherLocation])
 
   const checkLockScreen = async () => {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
@@ -721,6 +752,7 @@ function App() {
         onToggleMediaPlayPause={handleLockToggleMediaPlayPause}
         onOpenAlarm={handleLockOpenAlarm}
         onOpenStopwatch={handleLockOpenStopwatch}
+        weatherData={weatherEnabled ? weatherData : null}
       />
     )
   }
@@ -752,6 +784,8 @@ function App() {
         allIncompleteTodosCount={allIncompleteTodos.length}
         notificationCount={notifications.length}
         onNotificationTap={() => setShowNotificationsModal(true)}
+        weatherData={weatherEnabled ? weatherData : null}
+        weatherLoading={weatherLoading}
       />
 
       {showNotificationsModal && (
@@ -907,6 +941,8 @@ function App() {
           lockScreenFontScale={lockScreenFontScale} setLockScreenFontScale={setLockScreenFontScalePersisted}
           lockScreenButtons={lockScreenButtons} setLockScreenButtons={setLockScreenButtonsPersisted}
           calendarSyncEnabled={calendarSyncEnabled} setCalendarSyncEnabled={setCalendarSyncEnabledPersisted}
+          weatherEnabled={weatherEnabled} setWeatherEnabled={setWeatherEnabledPersisted}
+          weatherLocation={weatherLocation} setWeatherLocation={setWeatherLocationPersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           setShowSettings={setShowSettings}
           appVersion={APP_VERSION}

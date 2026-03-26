@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
 export function NotificationsModal({ onClose, notifications, onShowAllAchievements, lang }) {
@@ -7,11 +7,15 @@ export function NotificationsModal({ onClose, notifications, onShowAllAchievemen
   const achLabel = lang === 'ko' ? '업적 달성!' : lang === 'ja' ? '実績解除！' : lang === 'zh' ? '成就解锁！' : 'Achievement Unlocked!'
   const allAchBtn = lang === 'ko' ? '모든 업적 보기' : lang === 'ja' ? '全実績を見る' : lang === 'zh' ? '查看所有成就' : 'View All Achievements'
 
-  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose)
+  const headerRef = useRef(null)
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose, { handleRef: headerRef })
 
   return (
     <div className="input-overlay" ref={overlayRef} onClick={onClose}>
       <div className="settings-modal notif-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
+        <div className="modal-drag-handle-zone" ref={headerRef}>
+          <div className="modal-drag-handle" />
+        </div>
         <div className="settings-header">
           <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span>💡</span> {title}

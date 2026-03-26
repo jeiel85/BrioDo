@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { getLocalDateString } from '../utils/helpers'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
@@ -43,6 +43,8 @@ export function SettingsModal({
   lockScreenFontScale, setLockScreenFontScale,
   lockScreenButtons, setLockScreenButtons,
   calendarSyncEnabled, setCalendarSyncEnabled,
+  weatherEnabled, setWeatherEnabled,
+  weatherLocation, setWeatherLocation,
   onPreviewLockScreen,
   setShowSettings,
   appVersion,
@@ -50,10 +52,14 @@ export function SettingsModal({
   const [licensesExpanded, setLicensesExpanded] = useState(false)
   const hasCalendarToken = !!localStorage.getItem('googleAccessToken')
   const close = () => setShowSettings(false)
-  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(close)
+  const headerRef = useRef(null)
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(close, { handleRef: headerRef })
   return (
     <div className="input-overlay" ref={overlayRef} onClick={close}>
       <div className="settings-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
+        <div className="modal-drag-handle-zone" ref={headerRef}>
+          <div className="modal-drag-handle" />
+        </div>
         <div className="settings-header">
           <h2 style={{ fontFamily: 'Manrope, sans-serif', fontWeight: 800 }}>
             <span style={{ marginRight: '8px' }}>⚙️</span>{lang === 'ko' ? '설정' : lang === 'ja' ? '設定' : lang === 'zh' ? '设置' : 'Settings'}
@@ -242,6 +248,38 @@ export function SettingsModal({
               <span>{lang === 'ko' ? '전체' : 'All'}</span>
             </button>
           </div>
+        </div>
+
+        {/* ─── 날씨 설정 ─── */}
+        <div className="settings-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <h3 style={{ margin: 0 }}>{lang === 'ko' ? '🌤 날씨 표시' : lang === 'ja' ? '🌤 天気表示' : lang === 'zh' ? '🌤 天气显示' : '🌤 Weather'}</h3>
+            <label className="settings-toggle">
+              <input type="checkbox" checked={weatherEnabled} onChange={e => setWeatherEnabled(e.target.checked)} />
+              <span className="settings-toggle-track" />
+            </label>
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: weatherEnabled ? '12px' : 0, lineHeight: '1.4' }}>
+            {lang === 'ko' ? '헤더와 잠금화면에 현재 날씨를 표시합니다.' : lang === 'ja' ? 'ヘッダーとロック画面に天気を表示します。' : lang === 'zh' ? '在标题和锁屏上显示当前天气。' : 'Shows current weather in header and lock screen.'}
+          </p>
+          {weatherEnabled && (
+            <div>
+              <h3 style={{ marginBottom: '8px' }}>
+                {lang === 'ko' ? '위치 설정' : lang === 'ja' ? '場所設定' : lang === 'zh' ? '位置设置' : 'Location'}
+              </h3>
+              <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: '8px', lineHeight: '1.4' }}>
+                {lang === 'ko' ? '비워두면 IP 기반으로 자동 감지합니다. 도시명 입력 시 해당 지역 날씨 표시 (예: Seoul, Tokyo).' : 'Leave blank for automatic IP-based location. Enter a city name for a specific location (e.g., Seoul, Tokyo).'}
+              </p>
+              <input
+                type="text"
+                className="settings-text-input"
+                value={weatherLocation}
+                onChange={e => setWeatherLocation(e.target.value)}
+                placeholder={lang === 'ko' ? '도시명 (비우면 자동 감지)' : lang === 'ja' ? '都市名（空欄で自動）' : lang === 'zh' ? '城市名（留空自动）' : 'City name (blank = auto)'}
+                style={{ width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="settings-section">

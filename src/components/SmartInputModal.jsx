@@ -38,7 +38,8 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
     onClose()
   }, [stopMic, onClose])
 
-  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(handleClose)
+  const headerRef = useRef(null)
+  const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(handleClose, { handleRef: headerRef })
 
   const startMic = async (retryCount = 0) => {
     setMicError('')
@@ -154,6 +155,9 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   return (
     <div className="input-overlay" ref={overlayRef} onClick={handleClose}>
       <div className="smart-input-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
+        <div className="modal-drag-handle-zone" ref={headerRef}>
+          <div className="modal-drag-handle" />
+        </div>
         <div className="modal-header">
           <span className="smart-input-badge">✨ {lang === 'ko' ? '스마트 입력' : 'Smart Input'}</span>
           <button className="smart-input-close" onClick={handleClose}>✕</button>

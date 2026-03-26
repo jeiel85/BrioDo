@@ -83,6 +83,7 @@ export function LockScreenView({
   lockFontScale = 4,
   onToggleTorch, onOpenCamera, onOpenQrScanner, onOpenTimer,
   onOpenCalculator, onToggleMediaPlayPause, onOpenAlarm, onOpenStopwatch,
+  weatherData = null,
 }) {
   const [now, setNow] = useState(new Date())
   const [torchOn, setTorchOn] = useState(false)
@@ -228,6 +229,13 @@ export function LockScreenView({
         <div className="lock-clock-panel">
           <div className="lock-time">{hours}<span className="lock-colon">:</span>{minutes}</div>
           <div className="lock-date">{dateStr} {wday}</div>
+          {weatherData && (
+            <div className="lock-weather">
+              <span className="lock-weather-icon">{weatherData.icon}</span>
+              <span className="lock-weather-temp">{weatherData.tempC}°</span>
+              <span className="lock-weather-range">{weatherData.highC}° / {weatherData.lowC}°</span>
+            </div>
+          )}
         </div>
 
         {/* 버튼 패널 (시계 하단) */}
