@@ -11,6 +11,17 @@
 
 ---
 
+## ⚡ Claude 개발 워크플로우 규칙 (매 세션 유지)
+
+> **이 규칙들은 사용자가 매번 요청하지 않아도 자동으로 적용한다.**
+
+1. **빌드 = 전체 파이프라인**: 소스 변경 후 빌드 시 → `build → cap sync → gradlew → adb install → adb start` 전체 자동 실행. Galaxy S24(`R3CWC0KB53Z`)에 설치까지 완료해야 빌드 작업이 끝난 것.
+2. **커밋 + 푸시 자동 세트**: 소스코드 변경 → 즉시 `git commit` + `git push` 함께 처리.
+3. **버전 이력 유지**: 기능 추가/버그 수정 시 `PROJECT_HISTORY.md`에 날짜·세션·내용 기록 후 커밋.
+4. **localStorage 키 네임스페이스**: 모든 키는 `briodo-*` 또는 `briodo_*` 접두사 사용.
+
+---
+
 ## 기술 스택
 
 | 영역 | 기술 |
@@ -134,14 +145,30 @@ keyPassword=blenddo2024
 ```
 > 키스토어 파일: `android/app/blenddo-release.jks` (git 제외, 별도 백업 필수)
 
-### 빌드 순서 — 디버그 APK (개발용)
+### 빌드 순서 — 디버그 APK + Galaxy S24 자동 설치 (개발용 표준 파이프라인)
+
+> **규칙**: `npx cap sync android`까지 완료하면 반드시 ADB 설치 + 앱 실행까지 자동 진행한다.
+> 사용자가 별도 요청 없이도 이 파이프라인 전체를 실행하는 것이 기본 동작.
+
 ```bash
+# 1. 웹 에셋 빌드
 npm run build
+
+# 2. Android 동기화
 npx cap sync android
+
+# 3. APK 빌드
 cd android && ./gradlew assembleDebug
-"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 install -r app/build/outputs/apk/debug/app-debug.apk
-"C:/Users/<username>/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s <device_ip>:5555 shell am start -n app.briodo/.MainActivity
+
+# 4. Galaxy S24 설치 (ADB 경로: D:\Android\Sdk, 한글 경로 인코딩 문제로 이 경로 사용)
+/d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z install -r "D:/Project/BlendDo/android/app/build/outputs/apk/debug/app-debug.apk"
+
+# 5. 앱 실행
+/d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z shell am start -n app.briodo/.MainActivity
 ```
+
+> ADB 경로 주의: `C:/Users/용은/...` 경로는 bash에서 한글 인코딩 오류 → `/d/Android/Sdk/...` 사용
+> 디바이스 ID: Galaxy S24 = `R3CWC0KB53Z` (USB/무선 연결 시 동일)
 
 ### 빌드 순서 — 릴리즈 AAB (Play Store용)
 ```bash
