@@ -5,7 +5,7 @@ import { trackEngagement } from '../hooks/useAchievements'
 import { getLangLocale } from '../utils/helpers'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
-export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice }) {
+export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice, brioBalance, brioDailyLimit }) {
   const textareaRef = useRef(null)
   const webRecognitionRef = useRef(null)
   const retryingRef = useRef(false)
@@ -161,6 +161,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         </div>
         <div className="modal-header">
           <span className="smart-input-badge">✨ {lang === 'ko' ? '스마트 입력' : 'Smart Input'}</span>
+          <span className="smart-input-brio">⚡{brioBalance ?? '–'}</span>
           <button className="smart-input-close" onClick={handleClose}>✕</button>
         </div>
         </div>

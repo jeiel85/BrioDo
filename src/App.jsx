@@ -16,6 +16,7 @@ import { useAuth } from './hooks/useAuth'
 import { useTheme } from './hooks/useTheme'
 import { useTodosData } from './hooks/useTodosData'
 import { useCalendarNav } from './hooks/useCalendarNav'
+import { useBrio, DAILY_BRIO } from './hooks/useBrio'
 
 import { Header } from './components/Header'
 import { TodoList } from './components/TodoList'
@@ -29,22 +30,13 @@ import { AchievementUnlockModal } from './components/AchievementUnlockModal'
 import { AchievementsModal } from './components/AchievementsModal'
 import { LockScreenView } from './components/LockScreenView'
 import { OnboardingModal, shouldShowOnboarding } from './components/OnboardingModal'
+import { BrioChargeModal } from './components/BrioChargeModal'
 
 import './index.css'
 
 const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScreen') : null
 
 const APP_VERSION = '1.0.0'
-const AI_DAILY_LIMIT = 10
-
-const getAiUsageData = () => {
-  const today = new Date().toISOString().slice(0, 10)
-  try {
-    const saved = JSON.parse(localStorage.getItem('ai-daily-usage') || '{}')
-    if (saved.date !== today) return { date: today, count: 0 }
-    return saved
-  } catch { return { date: today, count: 0 } }
-}
 
 function App() {
   const { lang, langPref, setLangPref, t } = useLanguage()
@@ -99,8 +91,9 @@ function App() {
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'manual')
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
 
-  // AI 일일 사용량
-  const [aiUsageCount, setAiUsageCount] = useState(() => getAiUsageData().count)
+  // 브리오 에너지 시스템
+  const { balance: brioBalance, consume: consumeBrio, charge: chargeBrio, hasBrio } = useBrio()
+  const [showBrioChargeModal, setShowBrioChargeModal] = useState(false)
   const toastTimerRef = useRef(null)
   const [toastMsg, setToastMsg] = useState('')
 
@@ -110,21 +103,14 @@ function App() {
     toastTimerRef.current = setTimeout(() => setToastMsg(''), duration)
   }
 
-  const incrementAiUsage = () => {
-    const today = new Date().toISOString().slice(0, 10)
-    const newCount = aiUsageCount + 1
-    setAiUsageCount(newCount)
-    localStorage.setItem('ai-daily-usage', JSON.stringify({ date: today, count: newCount }))
-  }
-
   // 스마트 입력 모달 상태
   const [showSmartModal, setShowSmartModal] = useState(false)
   const [smartText, setSmartText] = useState('')
   const [smartReminderOffset, setSmartReminderOffset] = useState(null)
 
-  // 앱 시작 시 AI 사용량 한도 초과 → 자동 수동 전환
+  // 앱 시작 시 브리오 0 → 자동 수동 전환
   useEffect(() => {
-    if (getAiUsageData().count >= AI_DAILY_LIMIT && (localStorage.getItem('inputMode') || 'smart') === 'smart') {
+    if (!hasBrio() && (localStorage.getItem('inputMode') || 'smart') === 'smart') {
       setInputModePersisted('manual')
     }
   }, [])
@@ -608,7 +594,7 @@ function App() {
             setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
             await saveLocalTodo({ ...localPayload, ...finalData })
             await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
-            incrementAiUsage()
+            consumeBrio(1)
           }
           // AI 분석 완료 후 알림 스케줄 (날짜가 확정된 시점)
           scheduleNotification({ ...localPayload, ...finalData, id: newId })
@@ -871,11 +857,8 @@ function App() {
           onClick={() => {
             const mode = user ? inputMode : 'manual'
             if (mode === 'smart') {
-              if (aiUsageCount >= AI_DAILY_LIMIT) {
-                showToastMsg(lang === 'ko'
-                  ? `오늘 브리오(${aiUsageCount}/${AI_DAILY_LIMIT})를 모두 소진하여 수동 입력으로 전환됩니다`
-                  : `Daily Brio limit reached (${aiUsageCount}/${AI_DAILY_LIMIT}). Switching to manual.`)
-                handleOpenAddModal()
+              if (!hasBrio()) {
+                setShowBrioChargeModal(true)
               } else {
                 setShowSmartModal(true)
               }
@@ -908,6 +891,7 @@ function App() {
           reminderOffset={smartReminderOffset} setReminderOffset={setSmartReminderOffset}
           defaultReminderOffset={defaultReminderOffset}
           autoStartVoice={!smartText}
+          brioBalance={brioBalance} brioDailyLimit={DAILY_BRIO}
         />
       )}
 
@@ -931,7 +915,7 @@ function App() {
           viewMode={viewMode} setViewMode={setViewMode}
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
-          aiUsageCount={aiUsageCount} aiDailyLimit={AI_DAILY_LIMIT}
+          brioBalance={brioBalance} brioDailyLimit={DAILY_BRIO}
           onAiLimitToast={(msg) => showToastMsg(msg)}
           completionCalendarMode={completionCalendarMode} setCompletionCalendarMode={setCompletionCalendarModePersisted}
           defaultReminderOffset={defaultReminderOffset} setDefaultReminderOffset={setDefaultReminderOffsetPersisted}
@@ -981,6 +965,15 @@ function App() {
           setLangPref={setLangPref}
           handleLogin={handleLogin}
           onDone={() => setShowOnboarding(false)}
+        />
+      )}
+
+      {showBrioChargeModal && (
+        <BrioChargeModal
+          lang={lang}
+          balance={brioBalance}
+          onCharge={chargeBrio}
+          onClose={() => setShowBrioChargeModal(false)}
         />
       )}
 
