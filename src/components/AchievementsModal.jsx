@@ -3,19 +3,19 @@ import { ACHIEVEMENT_DEFS } from '../hooks/useAchievements'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
 const CATEGORY_LABELS = {
-  streak: { ko: '연속 달성', en: 'Streak', ja: '連続達成', zh: '连续达成' },
-  completion: { ko: '완료 횟수', en: 'Completions', ja: '完了数', zh: '完成数' },
-  daily: { ko: '일일 목표', en: 'Daily Goals', ja: '日次目標', zh: '每日目标' },
-  weekly: { ko: '주간 리듬', en: 'Weekly', ja: '週次', zh: '每周' },
-  recurrence: { ko: '반복 일정', en: 'Recurrence', ja: '繰り返し', zh: '重复任务' },
-  tag: { ko: '태그', en: 'Tags', ja: 'タグ', zh: '标签' },
-  subtask: { ko: '하위 태스크', en: 'Subtasks', ja: 'サブタスク', zh: '子任务' },
-  priority: { ko: '우선순위', en: 'Priority', ja: '優先度', zh: '优先级' },
-  ai: { ko: 'AI & 음성', en: 'AI & Voice', ja: 'AI & 音声', zh: 'AI & 语音' },
-  calendar: { ko: '캘린더', en: 'Calendar', ja: 'カレンダー', zh: '日历' },
-  notes: { ko: '상세 기록', en: 'Notes', ja: 'メモ', zh: '记录' },
-  special: { ko: '특별 날짜', en: 'Special Days', ja: '特別な日', zh: '特殊日期' },
-  engagement: { ko: '앱 참여', en: 'Engagement', ja: '参加', zh: '参与' },
+  streak:     { icon: '🔥', ko: '연속 달성', en: 'Streak', ja: '連続達成', zh: '连续达成' },
+  completion: { icon: '✅', ko: '완료 횟수', en: 'Completions', ja: '完了数', zh: '完成数' },
+  daily:      { icon: '☀️', ko: '일일 목표', en: 'Daily Goals', ja: '日次目標', zh: '每日目标' },
+  weekly:     { icon: '📅', ko: '주간 리듬', en: 'Weekly', ja: '週次', zh: '每周' },
+  recurrence: { icon: '🔄', ko: '반복 일정', en: 'Recurrence', ja: '繰り返し', zh: '重复任务' },
+  tag:        { icon: '🏷️', ko: '태그', en: 'Tags', ja: 'タグ', zh: '标签' },
+  subtask:    { icon: '📋', ko: '하위 태스크', en: 'Subtasks', ja: 'サブタスク', zh: '子任务' },
+  priority:   { icon: '🎯', ko: '우선순위', en: 'Priority', ja: '優先度', zh: '优先级' },
+  ai:         { icon: '🤖', ko: 'AI & 음성', en: 'AI & Voice', ja: 'AI & 音声', zh: 'AI & 语音' },
+  calendar:   { icon: '📆', ko: '캘린더', en: 'Calendar', ja: 'カレンダー', zh: '日历' },
+  notes:      { icon: '📝', ko: '상세 기록', en: 'Notes', ja: 'メモ', zh: '记录' },
+  special:    { icon: '🎉', ko: '특별 날짜', en: 'Special Days', ja: '特別な日', zh: '特殊日期' },
+  engagement: { icon: '💫', ko: '앱 참여', en: 'Engagement', ja: '参加', zh: '参与' },
 }
 
 export function AchievementsModal({ onClose, unlockedIds, lang }) {
@@ -45,13 +45,13 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
       <div className="achievements-modal" ref={modalRef} onClick={e => e.stopPropagation()} {...swipeHandlers}>
         <div ref={headerRef}>
           <div className="modal-drag-handle-zone"><div className="modal-drag-handle" /></div>
-        </div>
-        <div className="achievements-modal-header">
-          <div className="achievements-modal-title">
-            <span>{lang === 'ko' ? '모든 업적' : lang === 'ja' ? '全実績' : lang === 'zh' ? '全部成就' : 'All Achievements'}</span>
-            <span className="achievements-count-badge">{unlockedCount} / {ACHIEVEMENT_DEFS.length}</span>
+          <div className="achievements-modal-header">
+            <div className="achievements-modal-title">
+              <span>{lang === 'ko' ? '모든 업적' : lang === 'ja' ? '全実績' : lang === 'zh' ? '全部成就' : 'All Achievements'}</span>
+              <span className="achievements-count-badge">{unlockedCount} / {ACHIEVEMENT_DEFS.length}</span>
+            </div>
+            <button className="modal-close-btn" onClick={onClose}>✕</button>
           </div>
-          <button className="modal-close-btn" onClick={onClose}>✕</button>
         </div>
 
         <div className="achievements-filter-tabs">
@@ -75,7 +75,7 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
           {groupedByCategory.map(({ cat, items }) => (
             <div key={cat} className="ach-category-section">
               <div className="ach-category-label">
-                {CATEGORY_LABELS[cat]?.[lang] || CATEGORY_LABELS[cat]?.en || cat}
+                {CATEGORY_LABELS[cat]?.icon} {CATEGORY_LABELS[cat]?.[lang] || CATEGORY_LABELS[cat]?.en || cat}
               </div>
               {items.map(ach => {
                 const unlocked = unlockedIds.has(ach.id)
