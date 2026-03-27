@@ -8,11 +8,6 @@
 ![Version](https://img.shields.io/badge/version-v1.0.0-blue?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Capacitor](https://img.shields.io/badge/Capacitor-8-119EFF?style=flat-square&logo=capacitor&logoColor=white)
-![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black)
-![Google Gemini](https://img.shields.io/badge/Gemini-2.5_Flash-8E75B2?style=flat-square&logo=google&logoColor=white)
 
 <br>
 
@@ -258,7 +253,7 @@ adb shell am start -n app.briodo/.MainActivity
 BrioDo는 다음 오픈소스 라이브러리를 사용하며, 모든 라이센스를 준수합니다.
 
 | 라이브러리 | 라이센스 |
-|-----------|---------|
+|-----------|----------|
 | React | MIT |
 | Vite | MIT |
 | Capacitor | MIT |
