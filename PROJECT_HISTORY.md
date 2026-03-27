@@ -382,4 +382,32 @@
 - Firebase 이관 고려 시점: 사용자 수 증가 or 업적 추가 빈도 높아질 때
 
 ---
-*최종 업데이트: 2026-03-26 (세션 17 — blend 흔적 제거, localStorage briodo-* 통일, 잠금화면 미리보기 버그 수정)*
+---
+
+## 세션 18 — 2026-03-27: 업적 시스템 200개 확장 + 브리오 보상 연동
+
+### 변경 내용
+- **업적 시스템 106개 → 200개 확장**
+  - 공개 업적 44개 추가 → 총 150개 (S/C/D/W/R/T/ST/P/AI/CAL/N/SP/E 전 카테고리 확장)
+  - 비공개(hidden) 업적 50개 추가 (X1~X50): UI에 완전 비공개, 달성 시에만 팝업 노출
+  - `hidden: true` + `brioReward` 필드로 비공개 업적 구분
+- **업적 달성 시 브리오 자동 지급**
+  - 난이도별 보상: ⚡1(난이도1)~⚡30(난이도10), 비공개 업적 ⚡30~50
+  - `chargeBrio` 콜백을 `useAchievements`에 전달하는 방식으로 연동
+  - `brioFromAchievements` 플래그 누적 추적 (비밀 업적 X45 조건)
+- **AchievementUnlockModal 개선**
+  - 브리오 획득량 표시 (`⚡+N` 배지, 팝업 애니메이션)
+  - 비밀 업적 달성 시 "🔮 비밀 업적 해제!" 특별 타이틀
+- **AchievementsModal 개선**
+  - `hidden: true` 업적 완전 필터링 (목록 미표시)
+  - 카운트 배지 `/150` 기준으로 수정
+- **BrioChargeModal**: 광고 시청 시 `adsWatched` 플래그 트래킹 (비밀 업적 X44 연동)
+- **새 특별 날짜 추가**: 할로윈(10/31), 근로자의날(5/1), 제헌절(7/17), 12월31일
+- **stats 계산 확장**: `completedBigPlan8`, `totalRegistered`, `weekdayTotal`, `unlockedPublicCount`, `unlockedSecretCount` 신규 추적
+
+### 비공개 업적 구현 방식
+- 조건이 간단한 것(X1~X2 스트릭, X4~X6 완료수, X7~X10 특별날짜 등): 기존 stats로 즉시 동작
+- 새로운 flag 기반 조건(X11~X46): `flags?.flagName >= N` 패턴으로 구현 — 플래그 미추적 시 자동 `false`, 향후 트래킹 코드 추가 시 자동 활성화
+- 메타 업적 (X47~X50, E13, E14): `unlockedPublicCount/unlockedSecretCount` 기반 2패스 계산
+
+*최종 업데이트: 2026-03-27 (세션 18 — 업적 시스템 200개 확장, 브리오 보상 연동)*
