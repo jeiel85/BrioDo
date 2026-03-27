@@ -161,10 +161,10 @@ export function SettingsModal({
                   onAiLimitToast?.(L('스마트 입력은 로그인 후 이용할 수 있어요', 'Sign in to use Smart Input', 'スマート入力はログイン後にご利用いただけます', '智能输入需要登录后才能使用'))
                 } else if (aiUsageCount >= aiDailyLimit) {
                   onAiLimitToast?.(lang === 'ko'
-                    ? `오늘 AI 사용량을 모두 소진했습니다 (${aiUsageCount}/${aiDailyLimit}, 자정에 초기화)`
-                    : lang === 'ja' ? `本日のAI使用上限に達しました (${aiUsageCount}/${aiDailyLimit}, 深夜リセット)`
-                    : lang === 'zh' ? `今日AI使用次数已达上限 (${aiUsageCount}/${aiDailyLimit}, 午夜重置)`
-                    : `Daily AI limit reached (${aiUsageCount}/${aiDailyLimit}, resets at midnight)`)
+                    ? `오늘 브리오를 모두 소진했습니다 (${aiUsageCount}/${aiDailyLimit}, 자정에 초기화)`
+                    : lang === 'ja' ? `本日のBrio使用上限に達しました (${aiUsageCount}/${aiDailyLimit}, 深夜リセット)`
+                    : lang === 'zh' ? `今日Brio使用次数已达上限 (${aiUsageCount}/${aiDailyLimit}, 午夜重置)`
+                    : `Daily Brio limit reached (${aiUsageCount}/${aiDailyLimit}, resets at midnight)`)
                 } else {
                   setInputMode('smart')
                 }
@@ -195,7 +195,7 @@ export function SettingsModal({
               <div style={{ marginTop: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)' }}>
-                    {L('AI 사용량 (자정 초기화)', 'AI usage (resets midnight)', 'AI使用量 (深夜リセット)', 'AI使用量 (午夜重置)')}
+                    {L('⚡ 브리오 (자정 초기화)', '⚡ Brio (resets midnight)', '⚡ Brio (深夜リセット)', '⚡ Brio (午夜重置)')}
                   </span>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: barColor }}>
                     {count}/{limit}
