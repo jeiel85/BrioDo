@@ -701,7 +701,7 @@ function App() {
     return result
   }, [todos])
 
-  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse, user })
+  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio })
 
   const formattedHeaderDate = useMemo(() => {
     const d = new Date(selectedDate)
