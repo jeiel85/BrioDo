@@ -89,7 +89,60 @@ const SCREENS = [
     }
   },
   {
-    // Screen 2: Account / cloud sync
+    // Screen 2: Achievements system intro
+    render: ({ lang, onNext, onSkip }) => {
+      const title = lang === 'ko' ? '업적을 달성하며 성장을 느껴보세요' : lang === 'ja' ? '実績を達成して成長を感じよう' : lang === 'zh' ? '达成成就，感受成长' : 'Grow by unlocking achievements'
+      const subtitle = lang === 'ko' ? '할 일을 완료하고 습관을 만들어 나가면\n다양한 업적을 잠금 해제할 수 있어요!' : lang === 'ja' ? 'タスクを完了して習慣を作ると\nさまざまな実績を解除できます！' : lang === 'zh' ? '完成任务、养成习惯，\n解锁各种成就！' : 'Complete tasks and build habits\nto unlock all kinds of achievements!'
+      const examples = lang === 'ko'
+        ? [
+            { icon: '🔥', name: '불꽃 습관', desc: '7일 연속 완료' },
+            { icon: '⚡', name: '스피드 러너', desc: '하루 10개 완료' },
+            { icon: '🏆', name: '마스터 플래너', desc: '총 100개 완료' },
+          ]
+        : lang === 'ja'
+        ? [
+            { icon: '🔥', name: '炎の習慣', desc: '7日連続完了' },
+            { icon: '⚡', name: 'スピードランナー', desc: '1日10個完了' },
+            { icon: '🏆', name: 'マスタープランナー', desc: '合計100個完了' },
+          ]
+        : lang === 'zh'
+        ? [
+            { icon: '🔥', name: '火焰习惯', desc: '连续7天完成' },
+            { icon: '⚡', name: '速度跑者', desc: '一天完成10个' },
+            { icon: '🏆', name: '规划大师', desc: '共完成100个' },
+          ]
+        : [
+            { icon: '🔥', name: 'Blazing Habit', desc: '7-day streak' },
+            { icon: '⚡', name: 'Speed Runner', desc: '10 tasks in a day' },
+            { icon: '🏆', name: 'Master Planner', desc: '100 total completions' },
+          ]
+      const countLabel = lang === 'ko' ? '100개 이상의 업적이 기다리고 있어요' : lang === 'ja' ? '100以上の実績があなたを待っています' : lang === 'zh' ? '100多个成就等待你来解锁' : 'Over 100 achievements waiting to be unlocked'
+      const nextLabel = lang === 'ko' ? '다음' : lang === 'ja' ? '次へ' : lang === 'zh' ? '下一步' : 'Next'
+      const skipLabel = lang === 'ko' ? '건너뛰기' : lang === 'ja' ? 'スキップ' : lang === 'zh' ? '跳过' : 'Skip'
+      return (
+        <div className="onboarding-screen">
+          <div className="onboarding-icon" style={{ fontSize: '56px' }}>🏆</div>
+          <h2 className="onboarding-title">{title}</h2>
+          <p className="onboarding-subtitle" style={{ whiteSpace: 'pre-line' }}>{subtitle}</p>
+          <div className="onboarding-feature-list">
+            {examples.map(({ icon, name, desc }, i) => (
+              <div key={i} className="onboarding-feature-row">
+                <span style={{ fontSize: '20px', marginRight: '8px' }}>{icon}</span>
+                <span><strong>{name}</strong> — {desc}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '12px 0 0', textAlign: 'center' }}>{countLabel}</p>
+          <div className="onboarding-actions">
+            <button className="onboarding-next-btn" onClick={onNext}>{nextLabel}</button>
+            <button className="onboarding-skip-btn" onClick={onSkip}>{skipLabel}</button>
+          </div>
+        </div>
+      )
+    }
+  },
+  {
+    // Screen 3: Account / cloud sync
     render: ({ lang, onLogin, onSkip }) => {
       const title = lang === 'ko' ? '어디서든 내 할 일을' : lang === 'ja' ? 'どこでも自分のタスクを' : lang === 'zh' ? '随时随地访问您的任务' : 'Your tasks, everywhere'
       const subtitle = lang === 'ko' ? 'Google 로그인으로 클라우드 백업과\nGoogle 캘린더 연동을 즉시 사용해보세요.' : lang === 'ja' ? 'Googleログインでクラウドバックアップと\nGoogleカレンダー連携をすぐにお使いいただけます。' : lang === 'zh' ? '使用Google登录，立即体验\n云端备份和Google日历同步。' : 'Sign in with Google to enable cloud backup and Google Calendar sync.'
