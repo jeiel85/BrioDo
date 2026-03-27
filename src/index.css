@@ -4076,3 +4076,81 @@ body.modal-open { overflow: hidden; }
   cursor: pointer;
   flex-shrink: 0;
 }
+
+/* ═══════════════════════════════════════════════
+   Tablet Layout — split-pane (min-width: 600px)
+   ═══════════════════════════════════════════════ */
+@media (min-width: 600px) {
+  /* Center the app shell */
+  #root {
+    display: flex;
+    justify-content: center;
+    background: var(--color-surface-container-low);
+    min-height: 100vh;
+  }
+
+  /* Card becomes horizontal split-pane */
+  .card {
+    flex-direction: row;
+    align-items: stretch;
+    max-width: 960px;
+    width: 100%;
+    height: 100vh;
+    border-radius: 0;
+  }
+
+  /* Left sidebar: header nav panel */
+  .header-wrapper {
+    width: 300px;
+    flex-shrink: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-outline-variant);
+    padding: 0 16px;
+    padding-top: max(20px, env(safe-area-inset-top));
+    /* Sidebar stays in place while content scrolls */
+    position: sticky;
+    top: 0;
+  }
+
+  /* Right pane: scrollable todo list */
+  .todo-list-section {
+    flex: 1;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 28px;
+    padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  }
+
+  /* Bottom nav: constrained to card width, centered */
+  .bottom-nav {
+    max-width: 960px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 0 24px 0 0;
+    right: auto;
+    width: 960px;
+  }
+
+  /* FAB: pin to right side of content pane */
+  .fab {
+    right: calc(50% - 960px / 2 + 28px);
+  }
+
+  /* Modal overlays: cover full viewport */
+  .modal-overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+  }
+
+  /* Sidebar header reduces its bottom padding (no bottom-nav clearance needed) */
+  .header {
+    padding-bottom: 20px;
+  }
+
+  /* Larger todo cards on tablet */
+  .todo-card {
+    padding: 18px 20px;
+  }
+}
