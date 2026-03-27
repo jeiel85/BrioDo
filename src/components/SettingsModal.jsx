@@ -33,7 +33,7 @@ export function SettingsModal({
   theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate,
   inputMode, setInputMode,
-  aiUsageCount, aiDailyLimit, onAiLimitToast,
+  brioBalance, brioDailyLimit, onAiLimitToast,
   completionCalendarMode, setCompletionCalendarMode,
   defaultReminderOffset, setDefaultReminderOffset,
   allDayReminderTime, setAllDayReminderTime,
@@ -159,12 +159,12 @@ export function SettingsModal({
               onClick={() => {
                 if (!user) {
                   onAiLimitToast?.(L('스마트 입력은 로그인 후 이용할 수 있어요', 'Sign in to use Smart Input', 'スマート入力はログイン後にご利用いただけます', '智能输入需要登录后才能使用'))
-                } else if (aiUsageCount >= aiDailyLimit) {
+                } else if (brioBalance <= 0) {
                   onAiLimitToast?.(lang === 'ko'
-                    ? `오늘 브리오를 모두 소진했습니다 (${aiUsageCount}/${aiDailyLimit}, 자정에 초기화)`
-                    : lang === 'ja' ? `本日のBrio使用上限に達しました (${aiUsageCount}/${aiDailyLimit}, 深夜リセット)`
-                    : lang === 'zh' ? `今日Brio使用次数已达上限 (${aiUsageCount}/${aiDailyLimit}, 午夜重置)`
-                    : `Daily Brio limit reached (${aiUsageCount}/${aiDailyLimit}, resets at midnight)`)
+                    ? `브리오가 부족합니다 (잔량: ⚡${brioBalance}, 자정에 초기화)`
+                    : lang === 'ja' ? `Brioが不足しています (残量: ⚡${brioBalance}, 深夜リセット)`
+                    : lang === 'zh' ? `Brio不足 (余量: ⚡${brioBalance}, 午夜重置)`
+                    : `Not enough Brio (balance: ⚡${brioBalance}, resets at midnight)`)
                 } else {
                   setInputMode('smart')
                 }
@@ -185,8 +185,8 @@ export function SettingsModal({
           </p>
           {/* AI 사용량 progress bar */}
           {user && (() => {
-            const count = aiUsageCount ?? 0
-            const limit = aiDailyLimit ?? 10
+            const count = brioBalance ?? 0
+            const limit = brioDailyLimit ?? 10
             const pct = Math.min((count / limit) * 100, 100)
             const barColor = pct <= 50 ? 'var(--color-primary)'
               : pct <= 80 ? '#f59e0b'

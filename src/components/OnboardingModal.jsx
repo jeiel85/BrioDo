@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { SpeechRecognition } from '@capacitor-community/speech-recognition'
+import { LocalNotifications } from '@capacitor/local-notifications'
 
 const ONBOARDING_KEY = 'briodo-onboarding-done'
 
@@ -142,7 +145,78 @@ const SCREENS = [
     }
   },
   {
-    // Screen 3: Account / cloud sync
+    // Screen 3: Permissions
+    render: ({ lang, onNext, onSkip }) => {
+      const isNative = Capacitor.isNativePlatform()
+      const title = lang === 'ko' ? '앱 권한 설정' : lang === 'ja' ? 'アプリ権限の設定' : lang === 'zh' ? '应用权限设置' : 'App Permissions'
+      const subtitle = lang === 'ko'
+        ? '아래 권한을 허용하면 AI 음성 입력과\n알림 기능을 바로 사용할 수 있어요.'
+        : lang === 'ja' ? 'これらを許可するとAI音声入力と\n通知機能がすぐに使えます。'
+        : lang === 'zh' ? '允许以下权限，即可立即使用\nAI语音输入和通知功能。'
+        : 'Allow these permissions to use\nAI voice input and notifications.'
+      const nextLabel = lang === 'ko' ? '다음' : lang === 'ja' ? '次へ' : lang === 'zh' ? '下一步' : 'Next'
+      const skipLabel = lang === 'ko' ? '나중에 설정할게요' : lang === 'ja' ? '後で設定する' : lang === 'zh' ? '稍后设置' : 'Set up later'
+
+      const requestMic = async () => {
+        if (!isNative) return
+        try { await SpeechRecognition.requestPermissions() } catch (e) {}
+      }
+      const requestNotif = async () => {
+        if (!isNative) return
+        try { await LocalNotifications.requestPermissions() } catch (e) {}
+      }
+
+      const perms = [
+        {
+          icon: '🎤',
+          name: lang === 'ko' ? '마이크' : lang === 'ja' ? 'マイク' : lang === 'zh' ? '麦克风' : 'Microphone',
+          desc: lang === 'ko' ? 'AI 음성 입력 사용' : lang === 'ja' ? 'AI音声入力に使用' : lang === 'zh' ? '用于AI语音输入' : 'For AI voice input',
+          action: requestMic,
+          btnLabel: lang === 'ko' ? '허용하기' : lang === 'ja' ? '許可する' : lang === 'zh' ? '允许' : 'Allow',
+        },
+        {
+          icon: '🔔',
+          name: lang === 'ko' ? '알림' : lang === 'ja' ? '通知' : lang === 'zh' ? '通知' : 'Notifications',
+          desc: lang === 'ko' ? '할 일 리마인더 수신' : lang === 'ja' ? 'タスクリマインダーの受信' : lang === 'zh' ? '接收任务提醒' : 'For task reminders',
+          action: requestNotif,
+          btnLabel: lang === 'ko' ? '허용하기' : lang === 'ja' ? '許可する' : lang === 'zh' ? '允许' : 'Allow',
+        },
+      ]
+
+      return (
+        <div className="onboarding-screen">
+          <div className="onboarding-icon" style={{ fontSize: '56px' }}>🔐</div>
+          <h2 className="onboarding-title">{title}</h2>
+          <p className="onboarding-subtitle" style={{ whiteSpace: 'pre-line' }}>{subtitle}</p>
+          <div className="onboarding-perm-list">
+            {perms.map(({ icon, name, desc, action, btnLabel }) => (
+              <div key={name} className="onboarding-perm-row">
+                <span className="onboarding-perm-icon">{icon}</span>
+                <div className="onboarding-perm-info">
+                  <div className="onboarding-perm-name">{name}</div>
+                  <div className="onboarding-perm-desc">{desc}</div>
+                </div>
+                {isNative && (
+                  <button className="onboarding-perm-btn" onClick={action}>{btnLabel}</button>
+                )}
+              </div>
+            ))}
+          </div>
+          {!isNative && (
+            <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', textAlign: 'center', margin: '8px 0' }}>
+              {lang === 'ko' ? '권한 설정은 Android 기기에서 가능합니다.' : 'Permissions are managed on Android devices.'}
+            </p>
+          )}
+          <div className="onboarding-actions">
+            <button className="onboarding-next-btn" onClick={onNext}>{nextLabel}</button>
+            <button className="onboarding-skip-btn" onClick={onSkip}>{skipLabel}</button>
+          </div>
+        </div>
+      )
+    }
+  },
+  {
+    // Screen 4: Account / cloud sync
     render: ({ lang, onLogin, onSkip }) => {
       const title = lang === 'ko' ? '어디서든 내 할 일을' : lang === 'ja' ? 'どこでも自分のタスクを' : lang === 'zh' ? '随时随地访问您的任务' : 'Your tasks, everywhere'
       const subtitle = lang === 'ko' ? 'Google 로그인으로 클라우드 백업과\nGoogle 캘린더 연동을 즉시 사용해보세요.' : lang === 'ja' ? 'Googleログインでクラウドバックアップと\nGoogleカレンダー連携をすぐにお使いいただけます。' : lang === 'zh' ? '使用Google登录，立即体验\n云端备份和Google日历同步。' : 'Sign in with Google to enable cloud backup and Google Calendar sync.'
