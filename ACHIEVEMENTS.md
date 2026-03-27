@@ -1,4 +1,4 @@
-# BlendDo 업적 목록 (Achievements)
+# BrioDo 업적 목록 (Achievements)
 
 > 50개 업적 아이디어 — 앱 활성화 + 사용자 동기 부여 목적
 > 현재 구현된 것은 ✅, 미구현은 ⬜로 표시

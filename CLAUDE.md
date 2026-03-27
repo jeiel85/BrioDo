@@ -161,7 +161,7 @@ npx cap sync android
 cd android && ./gradlew assembleDebug
 
 # 4. Galaxy S24 설치 (ADB 경로: D:\Android\Sdk, 한글 경로 인코딩 문제로 이 경로 사용)
-/d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z install -r "D:/Project/BlendDo/android/app/build/outputs/apk/debug/app-debug.apk"
+/d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z install -r "D:/Project/BrioDo/android/app/build/outputs/apk/debug/app-debug.apk"
 
 # 5. 앱 실행
 /d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z shell am start -n app.briodo/.MainActivity
