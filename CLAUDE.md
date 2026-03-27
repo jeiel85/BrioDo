@@ -15,8 +15,8 @@
 
 > **이 규칙들은 사용자가 매번 요청하지 않아도 자동으로 적용한다.**
 
-1. **빌드 = 전체 파이프라인**: 소스 변경 후 빌드 시 → `build → cap sync → gradlew → adb install → adb start` 전체 자동 실행. Galaxy S24(`R3CWC0KB53Z`)에 설치까지 완료해야 빌드 작업이 끝난 것.
-2. **커밋 + 푸시 자동 세트**: 소스코드 변경 → 즉시 `git commit` + `git push` 함께 처리.
+1. **커밋 + 푸시 자동 세트**: 소스코드 변경 → 즉시 `git commit` + `git push` 함께 처리.
+2. **빌드 파이프라인은 명시 요청 시만 실행**: "빌드해줘" / "디바이스에 올려줘" 등 명시적 요청이 있을 때만 `build → cap sync → gradlew → adb install → adb start` 전체 실행. Galaxy S24(`R3CWC0KB53Z`)에 설치까지 완료해야 빌드 작업이 끝난 것. gradle은 항상 `--quiet` 플래그 사용.
 3. **버전 이력 유지**: 기능 추가/버그 수정 시 `PROJECT_HISTORY.md`에 날짜·세션·내용 기록 후 커밋.
 4. **localStorage 키 네임스페이스**: 모든 키는 `briodo-*` 또는 `briodo_*` 접두사 사용.
 
@@ -147,8 +147,7 @@ keyPassword=blenddo2024
 
 ### 빌드 순서 — 디버그 APK + Galaxy S24 자동 설치 (개발용 표준 파이프라인)
 
-> **규칙**: `npx cap sync android`까지 완료하면 반드시 ADB 설치 + 앱 실행까지 자동 진행한다.
-> 사용자가 별도 요청 없이도 이 파이프라인 전체를 실행하는 것이 기본 동작.
+> **규칙**: "빌드해줘" / "디바이스에 올려줘" 등 명시적 요청 시에만 실행. 소스 변경만으로는 자동 실행하지 않는다.
 
 ```bash
 # 1. 웹 에셋 빌드
@@ -157,8 +156,8 @@ npm run build
 # 2. Android 동기화
 npx cap sync android
 
-# 3. APK 빌드
-cd android && ./gradlew assembleDebug
+# 3. APK 빌드 (--quiet으로 불필요한 로그 억제)
+cd android && ./gradlew assembleDebug --quiet
 
 # 4. Galaxy S24 설치 (ADB 경로: D:\Android\Sdk, 한글 경로 인코딩 문제로 이 경로 사용)
 /d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z install -r "D:/Project/BrioDo/android/app/build/outputs/apk/debug/app-debug.apk"
