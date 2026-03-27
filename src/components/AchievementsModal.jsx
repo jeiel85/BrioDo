@@ -80,23 +80,32 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
               </div>
               {items.map(ach => {
                 const unlocked = unlockedIds.has(ach.id)
+                const isSecret = !!ach.hidden
+                const isSecretLocked = isSecret && !unlocked
+                const isSecretUnlocked = isSecret && unlocked
                 const expanded = expandedId === ach.id
                 const name = ach.name?.[lang] || ach.name?.ko
                 const desc = ach.desc?.[lang] || ach.desc?.ko
                 const stars = Math.ceil(ach.difficulty / 2)
+                const secretLabel = lang === 'ko' ? '비밀 업적' : lang === 'ja' ? '秘密実績' : lang === 'zh' ? '秘密成就' : 'Secret Achievement'
+                const secretHint = lang === 'ko' ? '잠금 해제 후 공개됩니다' : lang === 'ja' ? '解除後に公開されます' : lang === 'zh' ? '解锁后公开' : 'Revealed after unlocking'
                 return (
                   <div
                     key={ach.id}
-                    className={`ach-list-item ${unlocked ? 'unlocked' : 'locked'} ${expanded ? 'expanded' : ''}`}
+                    className={`ach-list-item ${unlocked ? 'unlocked' : 'locked'} ${isSecretUnlocked ? 'secret-unlocked' : ''} ${expanded ? 'expanded' : ''}`}
                     onClick={() => toggle(ach.id)}
                   >
                     <div className="ach-list-row">
                       <div className={`ach-list-icon ${unlocked ? '' : 'locked-icon'}`}>
-                        {unlocked ? ach.icon : '🔒'}
+                        {isSecretLocked ? '🔒' : unlocked ? ach.icon : '🔒'}
                       </div>
                       <div className="ach-list-info">
                         <div className="ach-list-name">
-                          {name} {!unlocked && <span className="locked-badge">🔒</span>}
+                          {isSecretLocked
+                            ? <span className="ach-secret-label">{secretLabel}</span>
+                            : <>{name} {isSecretUnlocked && <span className="ach-secret-badge">✨</span>}</>
+                          }
+                          {!unlocked && !isSecretLocked && <span className="locked-badge">🔒</span>}
                         </div>
                         <div className="ach-list-stars">
                           {'★'.repeat(stars)}{'☆'.repeat(5 - stars)}
@@ -106,8 +115,14 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
                     </div>
                     {expanded && (
                       <div className="ach-list-detail">
-                        <div className="ach-list-real-name">{name}</div>
-                        <div className="ach-list-desc">{desc}</div>
+                        {isSecretLocked ? (
+                          <div className="ach-list-desc ach-secret-hint">{secretHint}</div>
+                        ) : (
+                          <>
+                            <div className="ach-list-real-name">{name}</div>
+                            <div className="ach-list-desc">{desc}</div>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
