@@ -53,6 +53,9 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
 
   if (!achievement) return null
 
+  const BRIO_BY_DIFF = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 7, 7: 10, 8: 15, 9: 20, 10: 30 }
+  const brioReward = achievement.brioReward ?? BRIO_BY_DIFF[achievement.difficulty] ?? 0
+  const isSecret = achievement.hidden === true
   const name = achievement.name?.[lang] || achievement.name?.ko || ''
   const desc = achievement.desc?.[lang] || achievement.desc?.ko || ''
 
@@ -80,13 +83,18 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
         </div>
         <div className="ach-unlock-icon">{achievement.icon}</div>
         <div className="ach-unlock-title">
-          {lang === 'ko' ? '업적 달성!' : lang === 'ja' ? '実績解除！' : lang === 'zh' ? '成就解锁！' : 'Achievement Unlocked!'}
+          {isSecret
+            ? (lang === 'ko' ? '🔮 비밀 업적 해제!' : lang === 'ja' ? '🔮 秘密実績解除！' : lang === 'zh' ? '🔮 秘密成就解锁！' : '🔮 Secret Achievement!')
+            : (lang === 'ko' ? '업적 달성!' : lang === 'ja' ? '実績解除！' : lang === 'zh' ? '成就解锁！' : 'Achievement Unlocked!')}
         </div>
         <div className="ach-unlock-name">{name}</div>
         <div className="ach-unlock-desc">{desc}</div>
         <div className="ach-unlock-difficulty">
           {'★'.repeat(Math.ceil(achievement.difficulty / 2))}{'☆'.repeat(5 - Math.ceil(achievement.difficulty / 2))}
         </div>
+        {brioReward > 0 && (
+          <div className="ach-unlock-brio">⚡+{brioReward}</div>
+        )}
         <div className="ach-unlock-tap">
           {lang === 'ko' ? '탭하여 닫기' : lang === 'ja' ? 'タップして閉じる' : lang === 'zh' ? '点击关闭' : 'Tap to close'}
         </div>

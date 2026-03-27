@@ -1,4 +1,5 @@
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
+import { trackEngagement } from '../hooks/useAchievements'
 import { useRef } from 'react'
 
 /**
@@ -13,6 +14,7 @@ export function BrioChargeModal({ onClose, onCharge, balance, lang }) {
     // TODO: Phase 2에서 AdMob 보상형 광고로 교체
     // import { showRewardedAd } from '../hooks/useAdMob'
     // showRewardedAd((amount) => { onCharge(amount); onClose() })
+    trackEngagement('adsWatched', true)
     onCharge(5)
     onClose()
   }

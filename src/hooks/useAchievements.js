@@ -139,9 +139,120 @@ export const ACHIEVEMENT_DEFS = [
   { id: 'E10', icon: '📅', difficulty: 8, category: 'engagement', name: n('한달 개근','Month Perfect','月皆勤','月度全勤'), desc: n('30일 연속 앱 실행','Open the app for 30 days in a row','アプリを30日連続起動','连续30天打开应用'), check: s => (s.flags?.appStreak || 0) >= 30 },
   { id: 'E11', icon: '💎', difficulty: 9, category: 'engagement', name: n('앱 100일','100 Days','アプリ100日','应用100天'), desc: n('앱을 100일 이상 사용','Use the app for 100+ days total','アプリを100日以上使用','累计使用应用100天'), check: s => (s.flags?.totalOpens || 0) >= 100 },
   { id: 'E12', icon: '👑', difficulty: 10, category: 'engagement', name: n('앱 200일','200 Days','アプリ200日','应用200天'), desc: n('앱을 200일 이상 사용','Use the app for 200+ days total','アプリを200日以上使用','累计使用应用200天'), check: s => (s.flags?.totalOpens || 0) >= 200 },
+  // ── 추가 공개 업적 44개 (총 150개) ──
+  // Streak +++
+  { id: 'S10', icon: '💫', difficulty: 10, category: 'streak', name: n('60일의 여정','60-Day Journey','60日の旅','60日旅程'), desc: n('60일 연속 최소 1개 완료','60-day streak','60日連続完了','连续60天完成'), check: s => s.streak >= 60 },
+  { id: 'S11', icon: '🌟', difficulty: 10, category: 'streak', name: n('90일의 의지','90-Day Will','90日の意志','90日意志力'), desc: n('90일 연속 최소 1개 완료','90-day streak','90日連続完了','连续90天完成'), check: s => s.streak >= 90 },
+  // Completion +++
+  { id: 'C12', icon: '🎗️', difficulty: 9, category: 'completion', name: n('300개 클럽','300 Club','300達成','300件成就'), desc: n('누적 300개 완료','300 total completions','累計300件完了','累计完成300件'), check: s => s.totalCompleted >= 300 },
+  { id: 'C13', icon: '🌄', difficulty: 9, category: 'completion', name: n('새벽 50번','50 Dawns','夜明け50回','黎明50次'), desc: n('오전 9시 전 완료 50번 누적','50 completions before 9am','午前9時前50回完了','上午9点前累计完成50次'), check: s => s.earlyBird >= 50 },
+  { id: 'C14', icon: '🌪️', difficulty: 10, category: 'completion', name: n('하루 25개','Daily 25','1日25件','每日25件'), desc: n('하루에 25개 이상 완료','Complete 25+ tasks in one day','1日に25件以上完了','一天完成25件以上'), check: s => s.todayCompleted >= 25 },
+  { id: 'C15', icon: '🌙', difficulty: 7, category: 'completion', name: n('밤 30번','30 Nights','夜30回','夜晚30次'), desc: n('밤 11시 이후 30번 이상 완료','Complete 30+ tasks after 11pm','夜11時以降30回以上完了','晚上11点后完成30次以上'), check: s => s.nightOwl >= 30 },
+  // Daily +++
+  { id: 'D11', icon: '🌅', difficulty: 8, category: 'daily', name: n('새벽 30번','30 Dawns','夜明け30回','黎明30次'), desc: n('오전 9시 전 완료 30번 누적','30 completions before 9am','午前9時前30回完了','上午9点前累计完成30次'), check: s => s.earlyBird >= 30 },
+  { id: 'D12', icon: '⚡', difficulty: 9, category: 'daily', name: n('스피드런 마스터','Speed Run Master','スピードランマスター','速通大师'), desc: n('당일 등록 후 1시간 내 완료 15회','15 tasks completed within 1 hour of adding','追加後1時間以内を15回達成','添加后1小时内完成15次'), check: s => s.speedRun >= 15 },
+  { id: 'D13', icon: '🏅', difficulty: 9, category: 'daily', name: n('월요일 50개','Monday 50','月曜日50件','周一50件'), desc: n('월요일에 누적 50개 완료','Complete 50 tasks total on Mondays','月曜日に累計50件完了','周一累计完成50件'), check: s => s.mondayCompletions >= 50 },
+  { id: 'D14', icon: '🎭', difficulty: 9, category: 'daily', name: n('태그 7종 하루','7-Tag Day','7タグ1日','一天7种标签'), desc: n('하루에 7가지 이상 다른 태그 완료','Complete tasks with 7+ different tags in a day','1日に7種類以上のタグ完了','一天完成7种以上不同标签'), check: s => s.todayTagVariety >= 7 },
+  // Weekly +++
+  { id: 'W9', icon: '🔥', difficulty: 10, category: 'weekly', name: n('이번 달 300개','Month 300','今月300件','本月300件'), desc: n('이번 달 300개 이상 완료','300+ completions this month','今月300件以上完了','本月完成300件以上'), check: s => s.monthCompleted >= 300 },
+  { id: 'W10', icon: '💥', difficulty: 10, category: 'weekly', name: n('주간 100개','Weekly 100','週間100件','周100件'), desc: n('한 주에 100개 이상 완료','100+ completions in a week','1週間に100件以上完了','一周内完成100件以上'), check: s => s.weekCompleted >= 100 },
+  { id: 'W11', icon: '🌸', difficulty: 9, category: 'weekly', name: n('평일 누적 100개','Weekday 100','平日累計100件','工作日累计100件'), desc: n('월~목 완료 합산 100개 이상','100+ completions on weekdays total','平日累計100件完了','工作日累计完成100件'), check: s => s.weekdayTotal >= 100 },
+  // Recurrence +++
+  { id: 'R9', icon: '🎡', difficulty: 10, category: 'recurrence', name: n('반복 500회','500 Reps','500回繰り返し','500次重复'), desc: n('반복 일정 누적 500회 완료','500 total recurring completions','繰り返し累計500回完了','累计完成500次重复任务'), check: s => s.completedRecurringCount >= 500 },
+  { id: 'R10', icon: '🌀', difficulty: 10, category: 'recurrence', name: n('반복 10종','10-Type Routine','10種ルーティン','10种例行任务'), desc: n('서로 다른 반복 일정 10개 동시 활성화','10 different recurring tasks active','10種の繰り返しタスクを同時に','同时激活10种不同的重复任务'), check: s => s.activeRecurrences >= 10 },
+  // Tags +++
+  { id: 'T9', icon: '🗃️', difficulty: 8, category: 'tag', name: n('태그 25가지','Tag 25','タグ25種','25种标签'), desc: n('서로 다른 태그 25가지 사용','Use 25 different tags','25種類のタグを使用','使用25种不同标签'), check: s => s.uniqueTagCount >= 25 },
+  { id: 'T10', icon: '🌐', difficulty: 9, category: 'tag', name: n('태그 40가지','Tag 40','タグ40種','40种标签'), desc: n('서로 다른 태그 40가지 사용','Use 40 different tags','40種類のタグを使用','使用40种不同标签'), check: s => s.uniqueTagCount >= 40 },
+  { id: 'T11', icon: '🔮', difficulty: 10, category: 'tag', name: n('하루 10태그','10-Tag Day','10タグ1日','一天10种标签'), desc: n('하루에 10가지 이상 다른 태그 완료','Complete tasks with 10+ different tags in a day','1日に10種類以上タグ完了','一天完成10种以上不同标签'), check: s => s.todayTagVariety >= 10 },
+  // Subtasks +++
+  { id: 'ST8', icon: '🏗️', difficulty: 9, category: 'subtask', name: n('하위 300개','300 Subtasks','サブタスク300件','300个子任务'), desc: n('하위 태스크 누적 300개 완료','300 total subtask completions','サブタスク累計300件完了','累计完成300个子任务'), check: s => s.totalSubtasksCompleted >= 300 },
+  { id: 'ST9', icon: '🧬', difficulty: 10, category: 'subtask', name: n('하위 400개','400 Subtasks','サブタスク400件','400个子任务'), desc: n('하위 태스크 누적 400개 완료','400 total subtask completions','サブタスク累計400件完了','累计完成400个子任务'), check: s => s.totalSubtasksCompleted >= 400 },
+  { id: 'ST10', icon: '🔬', difficulty: 8, category: 'subtask', name: n('대형 계획 달성','Big Plan Done','大型計画達成','完成大型计划'), desc: n('하위 태스크 8개 이상인 할 일 완료','Complete a task with 8+ subtasks','8件以上サブタスクのタスクを完了','完成含8个以上子任务的任务'), check: s => s.completedBigPlan8 },
+  // Priority +++
+  { id: 'P9', icon: '🚒', difficulty: 9, category: 'priority', name: n('긴급 50개','Urgent 50','緊急50件','紧急50件'), desc: n('긴급 우선순위 50개 완료','Complete 50 urgent tasks','緊急優先度タスクを50件完了','完成50件紧急任务'), check: s => s.completedByPriority.urgent >= 50 },
+  { id: 'P10', icon: '🎯', difficulty: 9, category: 'priority', name: n('높음 100개','High 100','高優先度100件','高优先100件'), desc: n('높음 우선순위 100개 완료','Complete 100 high-priority tasks','高優先度100件完了','完成100件高优先级任务'), check: s => s.completedByPriority.high >= 100 },
+  { id: 'P11', icon: '⚖️', difficulty: 9, category: 'priority', name: n('균형의 달인','Balance Master','バランスの達人','平衡大师'), desc: n('각 우선순위 30개씩 완료','Complete 30 tasks at each priority level','各優先度30件完了','每种优先级完成30件'), check: s => s.completedByPriority.low >= 30 && s.completedByPriority.medium >= 30 && s.completedByPriority.high >= 30 && s.completedByPriority.urgent >= 30 },
+  { id: 'P12', icon: '🧘', difficulty: 9, category: 'priority', name: n('낮음 100개','Low 100','低優先度100件','低优先100件'), desc: n('낮음 우선순위 100개 완료','Complete 100 low-priority tasks','低優先度100件完了','完成100件低优先级任务'), check: s => s.completedByPriority.low >= 100 },
+  // AI +++
+  { id: 'AI9', icon: '🤖', difficulty: 10, category: 'ai', name: n('AI 200개','AI 200','AI200件','AI200件'), desc: n('AI 입력으로 200개 할 일 생성','Create 200 tasks using AI input','AI入力で200件タスク作成','用AI输入创建200件任务'), check: s => (s.flags?.aiTasks || 0) >= 200 },
+  { id: 'AI10', icon: '🎤', difficulty: 10, category: 'ai', name: n('음성 200개','Voice 200','音声200件','语音200件'), desc: n('음성 입력으로 200개 할 일 생성','Create 200 tasks using voice input','音声入力で200件タスク作成','用语音输入创建200件任务'), check: s => (s.flags?.voiceTasks || 0) >= 200 },
+  { id: 'AI11', icon: '🧠', difficulty: 9, category: 'ai', name: n('AI 150개','AI 150','AI150件','AI150件'), desc: n('AI 입력으로 150개 할 일 생성','Create 150 tasks using AI input','AI入力で150件タスク作成','用AI输入创建150件任务'), check: s => (s.flags?.aiTasks || 0) >= 150 },
+  // Calendar +++
+  { id: 'CAL5', icon: '🗓️', difficulty: 7, category: 'calendar', name: n('캘린더 75개','Calendar 75','カレンダー75件','日历75件'), desc: n('캘린더 연동 할 일 75개 이상','75+ tasks synced with calendar','カレンダー連携75件以上','日历同步75件以上'), check: s => s.calSyncCount >= 75 },
+  { id: 'CAL6', icon: '📅', difficulty: 9, category: 'calendar', name: n('캘린더 150개','Calendar 150','カレンダー150件','日历150件'), desc: n('캘린더 연동 할 일 150개 이상','150+ tasks synced with calendar','カレンダー連携150件以上','日历同步150件以上'), check: s => s.calSyncCount >= 150 },
+  { id: 'CAL7', icon: '🔗', difficulty: 10, category: 'calendar', name: n('캘린더 200개','Calendar 200','カレンダー200件','日历200件'), desc: n('캘린더 연동 할 일 200개 이상','200+ tasks synced with calendar','カレンダー連携200件以上','日历同步200件以上'), check: s => s.calSyncCount >= 200 },
+  // Notes +++
+  { id: 'N6', icon: '📓', difficulty: 8, category: 'notes', name: n('노트 125개','Note 125','ノート125件','笔记125件'), desc: n('설명이 있는 할 일 125개 완료','Complete 125 tasks with descriptions','説明付きタスクを125件完了','完成125件带描述的任务'), check: s => s.completedWithDescription >= 125 },
+  { id: 'N7', icon: '📜', difficulty: 9, category: 'notes', name: n('노트 150개','Note 150','ノート150件','笔记150件'), desc: n('설명이 있는 할 일 150개 완료','Complete 150 tasks with descriptions','説明付きタスクを150件完了','完成150件带描述的任务'), check: s => s.completedWithDescription >= 150 },
+  { id: 'N8', icon: '📚', difficulty: 10, category: 'notes', name: n('노트 200개','Note 200','ノート200件','笔记200件'), desc: n('설명이 있는 할 일 200개 완료','Complete 200 tasks with descriptions','説明付きタスクを200件完了','完成200件带描述的任务'), check: s => s.completedWithDescription >= 200 },
+  // Special +++
+  { id: 'SP9', icon: '🎃', difficulty: 4, category: 'special', name: n('할로윈','Halloween','ハロウィン','万圣节'), desc: n('10월 31일에 할 일 완료','Complete a task on October 31st','10月31日にタスクを完了','在10月31日完成任务'), check: s => s.special?.halloween },
+  { id: 'SP10', icon: '🌷', difficulty: 3, category: 'special', name: n('근로자의 날','Labor Day','労働者の日','劳动节'), desc: n('5월 1일에 할 일 완료','Complete a task on May 1st','5月1日にタスクを完了','在5月1日完成任务'), check: s => s.special?.laborDay },
+  { id: 'SP11', icon: '🏛️', difficulty: 3, category: 'special', name: n('제헌절','Constitution Day','制憲節','制宪节'), desc: n('7월 17일에 할 일 완료','Complete a task on July 17th','7月17日にタスクを完了','在7月17日完成任务'), check: s => s.special?.constitutionDay },
+  { id: 'SP12', icon: '🎊', difficulty: 4, category: 'special', name: n('한해의 마지막','Year\'s End','大晦日','年末'), desc: n('12월 31일에 할 일 완료','Complete a task on December 31st','12月31日にタスクを完了','在12月31日完成任务'), check: s => s.special?.dec31 },
+  // Engagement +++
+  { id: 'E13', icon: '💠', difficulty: 10, category: 'engagement', name: n('업적 50개','50 Achievements','実績50個','50个成就'), desc: n('50개 이상 업적 달성','Unlock 50 or more achievements','50個以上の実績を解除','解锁50个以上成就'), check: s => s.unlockedCount >= 50 },
+  { id: 'E14', icon: '🔱', difficulty: 10, category: 'engagement', name: n('업적 75개','75 Achievements','実績75個','75个成就'), desc: n('75개 이상 업적 달성','Unlock 75 or more achievements','75個以上の実績を解除','解锁75个以上成就'), check: s => s.unlockedCount >= 75 },
+  { id: 'E15', icon: '📱', difficulty: 9, category: 'engagement', name: n('앱 150일','150 Days','アプリ150日','应用150天'), desc: n('앱을 150일 이상 사용','Use the app for 150+ days total','アプリを150日以上使用','累计使用应用150天'), check: s => (s.flags?.totalOpens || 0) >= 150 },
+  { id: 'E16', icon: '🌍', difficulty: 10, category: 'engagement', name: n('앱 300일','300 Days','アプリ300日','应用300天'), desc: n('앱을 300일 이상 사용','Use the app for 300+ days total','アプリを300日以上使用','累计使用应用300天'), check: s => (s.flags?.totalOpens || 0) >= 300 },
+  { id: 'E17', icon: '🎨', difficulty: 2, category: 'engagement', name: n('테마 변경','Theme Changed','テーマ変更','更改主题'), desc: n('앱 테마를 처음 변경','Change the app theme for the first time','アプリのテーマを初めて変更','首次更改应用主题'), check: s => s.flags?.themeChanged },
+  { id: 'E18', icon: '🌐', difficulty: 2, category: 'engagement', name: n('언어 변경','Language Changed','言語変更','更改语言'), desc: n('앱 언어를 처음 변경','Change the app language for the first time','アプリの言語を初めて変更','首次更改应用语言'), check: s => s.flags?.languageChanged },
+  // ── 비공개 업적 50개 (hidden: true) ──
+  { id: 'X1', icon: '🌋', hidden: true, brioReward: 40, difficulty: 10, category: 'streak', name: n('200일의 용암','Lava Streak','200日の溶岩','200日熔岩'), desc: n('200일 연속 최소 1개 완료','200-day streak','200日連続完了','连续200天完成'), check: s => s.streak >= 200 },
+  { id: 'X2', icon: '🌞', hidden: true, brioReward: 50, difficulty: 10, category: 'streak', name: n('1년의 기적','Year Miracle','1年の奇跡','一年奇迹'), desc: n('365일 연속 최소 1개 완료','365-day streak','365日連続完了','连续365天完成'), check: s => s.streak >= 365 },
+  { id: 'X3', icon: '🌅', hidden: true, brioReward: 30, difficulty: 9, category: 'daily', name: n('새벽의 전사','Dawn Warrior','夜明けの戦士','黎明战士'), desc: n('새벽 5시 전 완료 30번 누적','30 completions before 5am','午前5時前に30回完了','凌晨5点前累计完成30次'), check: s => (s.flags?.dawn5am || 0) >= 30 },
+  { id: 'X4', icon: '🏔️', hidden: true, brioReward: 40, difficulty: 10, category: 'completion', name: n('5000의 산','5000 Peak','5000の山','5000之山'), desc: n('누적 5000개 완료','5000 total completions','累計5000件完了','累计完成5000件'), check: s => s.totalCompleted >= 5000 },
+  { id: 'X5', icon: '🌌', hidden: true, brioReward: 50, difficulty: 10, category: 'completion', name: n('만 개의 별','10K Stars','1万の星','万颗星'), desc: n('누적 10000개 완료','10000 total completions','累計10000件完了','累计完成10000件'), check: s => s.totalCompleted >= 10000 },
+  { id: 'X6', icon: '🌪️', hidden: true, brioReward: 35, difficulty: 10, category: 'daily', name: n('하루 50개','Daily 50','1日50件','每日50件'), desc: n('하루에 50개 이상 완료','Complete 50+ tasks in one day','1日に50件以上完了','一天完成50件以上'), check: s => s.todayCompleted >= 50 },
+  { id: 'X7', icon: '🎄', hidden: true, brioReward: 30, difficulty: 5, category: 'special', name: n('크리스마스의 기적','Christmas Miracle','クリスマスの奇跡','圣诞奇迹'), desc: n('12월 25일에 할 일 완료 (비밀 보상)','Complete a task on December 25th','12月25日にタスクを完了','在12月25日完成任务'), check: s => s.special?.christmas },
+  { id: 'X8', icon: '🎆', hidden: true, brioReward: 30, difficulty: 5, category: 'special', name: n('새해 첫 할 일','New Year First','新年初タスク','新年第一件'), desc: n('1월 1일에 할 일 완료 (비밀 보상)','Complete a task on January 1st','1月1日にタスクを完了','在1月1日完成任务'), check: s => s.special?.newYear },
+  { id: 'X9', icon: '💘', hidden: true, brioReward: 30, difficulty: 5, category: 'special', name: n('발렌타인 계획자','Valentine Planner','バレンタイン計画者','情人节规划者'), desc: n('2월 14일에 할 일 완료 (비밀 보상)','Complete a task on February 14th','2月14日にタスクを完了','在2月14日完成任务'), check: s => s.special?.valentine },
+  { id: 'X10', icon: '🎃', hidden: true, brioReward: 30, difficulty: 5, category: 'special', name: n('할로윈 완료','Halloween Done','ハロウィン完了','万圣节完成'), desc: n('10월 31일에 할 일 완료 (비밀 보상)','Complete a task on October 31st','10月31日にタスクを完了','在10月31日完成任务'), check: s => s.special?.halloween },
+  { id: 'X11', icon: '⚡', hidden: true, brioReward: 30, difficulty: 9, category: 'daily', name: n('번개 완료','Lightning Done','雷の完了','闪电完成'), desc: n('등록 후 5분 내 완료 10회','10 tasks completed within 5 minutes of adding','追加後5分以内に10回完了','添加后5分钟内完成10次'), check: s => (s.flags?.lightning5m || 0) >= 10 },
+  { id: 'X12', icon: '🎯', hidden: true, brioReward: 35, difficulty: 10, category: 'daily', name: n('저격수','Sniper','狙撃手','狙击手'), desc: n('등록 후 1분 내 완료 5회','5 tasks completed within 1 minute of adding','追加後1分以内に5回完了','添加后1分钟内完成5次'), check: s => (s.flags?.sniper1m || 0) >= 5 },
+  { id: 'X13', icon: '🌙', hidden: true, brioReward: 30, difficulty: 8, category: 'special', name: n('자정의 전사','Midnight Warrior','深夜の戦士','午夜战士'), desc: n('00:00~00:05 사이에 할 일 완료 5회','5 tasks completed between 00:00-00:05','00:00〜00:05の間に5回完了','在00:00-00:05之间完成5次'), check: s => (s.flags?.midnight5min || 0) >= 5 },
+  { id: 'X14', icon: '🎨', hidden: true, brioReward: 35, difficulty: 8, category: 'tag', name: n('태그 마스터 X','Tag Master X','タグマスターX','标签大师X'), desc: n('서로 다른 태그 20가지 사용 (비밀 보상)','Use 20 different tags (secret bonus)','20種類のタグを使用','使用20种不同标签'), check: s => s.uniqueTagCount >= 20 },
+  { id: 'X15', icon: '👑', hidden: true, brioReward: 40, difficulty: 10, category: 'priority', name: n('우선순위 황제','Priority Emperor','優先度皇帝','优先级皇帝'), desc: n('4가지 우선순위 각 50개씩 완료','Complete 50 tasks at each priority level','各優先度50件完了','每种优先级完成50件'), check: s => s.completedByPriority.low >= 50 && s.completedByPriority.medium >= 50 && s.completedByPriority.high >= 50 && s.completedByPriority.urgent >= 50 },
+  { id: 'X16', icon: '📅', hidden: true, brioReward: 30, difficulty: 7, category: 'weekly', name: n('모든 요일 정복','All Weekdays','全曜日征服','征服所有工作日'), desc: n('월~일 모든 요일에 최소 1개씩 완료','Complete at least 1 task on every day of the week','月〜日全曜日に1件以上完了','一周每天都完成至少1件'), check: s => (s.flags?.allWeekdays || 0) >= 7 },
+  { id: 'X17', icon: '🕐', hidden: true, brioReward: 45, difficulty: 10, category: 'daily', name: n('24시간 전사','24-Hour Warrior','24時間戦士','24小时战士'), desc: n('하루 0~23시 모든 시간대에 완료 기록','Complete tasks in all 24 hours of the day','0〜23時の全時間帯に完了記録','在一天的所有24个小时都完成任务'), check: s => (s.flags?.allHours || 0) >= 24 },
+  { id: 'X18', icon: '🔔', hidden: true, brioReward: 30, difficulty: 7, category: 'special', name: n('정각 챌린저','On-The-Hour','正刻チャレンジャー','整点挑战者'), desc: n('정각(분=0)에 할 일 완료 7회','Complete 7 tasks exactly on the hour','正時(分=0)に7回完了','在整点完成7次任务'), check: s => (s.flags?.onTheHour || 0) >= 7 },
+  { id: 'X19', icon: '🤖', hidden: true, brioReward: 35, difficulty: 9, category: 'ai', name: n('AI 백 개 X','AI 100 X','AI百件X','AI100件X'), desc: n('AI 입력으로 100개 할 일 생성 (비밀 보상)','Create 100 tasks using AI (secret bonus)','AI入力で100件タスク作成','用AI输入创建100件任务'), check: s => (s.flags?.aiTasks || 0) >= 100 },
+  { id: 'X20', icon: '🎙️', hidden: true, brioReward: 35, difficulty: 8, category: 'ai', name: n('음성 오십 X','Voice 50 X','音声50件X','语音50件X'), desc: n('음성 입력으로 50개 할 일 생성 (비밀 보상)','Create 50 tasks using voice (secret bonus)','音声入力で50件タスク作成','用语音输入创建50件任务'), check: s => (s.flags?.voiceTasks || 0) >= 50 },
+  { id: 'X21', icon: '🧬', hidden: true, brioReward: 30, difficulty: 8, category: 'ai', name: n('AI+음성 콤보','AI+Voice Combo','AI+音声コンボ','AI+语音组合'), desc: n('하루에 AI와 음성 각각 5회 이상 사용','Use both AI and voice 5+ times each in one day','1日にAIと音声それぞれ5回以上使用','一天内AI和语音各使用5次以上'), check: s => s.flags?.aiAndVoiceDay },
+  { id: 'X22', icon: '📅', hidden: true, brioReward: 35, difficulty: 9, category: 'calendar', name: n('캘린더 백 개 X','Calendar 100 X','カレンダー100件X','日历100件X'), desc: n('Google 캘린더 이벤트 100개 동기화 (비밀 보상)','100 tasks synced with calendar (secret bonus)','カレンダー連携100件','日历同步100件'), check: s => s.calSyncCount >= 100 },
+  { id: 'X23', icon: '🔗', hidden: true, brioReward: 30, difficulty: 8, category: 'calendar', name: n('캘린더 한 달','Calendar Month','カレンダー1ヶ月','日历一个月'), desc: n('30일 동안 캘린더 동기화 상태 유지','Keep calendar sync active for 30 days','30日間カレンダー連携を維持','保持日历同步30天'), check: s => s.flags?.calendarMonth30 },
+  { id: 'X24', icon: '📝', hidden: true, brioReward: 40, difficulty: 10, category: 'subtask', name: n('하위 태스크 500','500 Subtasks','サブタスク500件','500个子任务'), desc: n('하위 태스크 누적 500개 완료','500 total subtask completions','サブタスク累計500件完了','累计完成500个子任务'), check: s => s.totalSubtasksCompleted >= 500 },
+  { id: 'X25', icon: '🧩', hidden: true, brioReward: 35, difficulty: 10, category: 'subtask', name: n('초대형 계획','Mega Plan','超大型計画','超大型计划'), desc: n('하위 태스크 20개 이상인 할 일 완료','Complete a task with 20+ subtasks','サブタスク20件以上のタスクを完了','完成含20个以上子任务的任务'), check: s => s.flags?.bigPlan20 },
+  { id: 'X26', icon: '📦', hidden: true, brioReward: 35, difficulty: 9, category: 'completion', name: n('할 일 천 개 등록','1000 Registered','タスク千件登録','登记1000件'), desc: n('총 등록 할 일 수 1000개 달성','Register 1000 total tasks (completed or not)','合計1000件タスクを登録','累计登记1000件任务'), check: s => s.totalRegistered >= 1000 },
+  { id: 'X27', icon: '🔥', hidden: true, brioReward: 45, difficulty: 10, category: 'weekly', name: n('월간 500','Month 500','月間500件','月度500件'), desc: n('한 달에 500개 이상 완료','500+ completions in a month','1ヶ月に500件以上完了','一个月内完成500件以上'), check: s => s.monthCompleted >= 500 },
+  { id: 'X28', icon: '💥', hidden: true, brioReward: 35, difficulty: 9, category: 'daily', name: n('24시간 20개','24h Burst','24時間20件','24小时20件'), desc: n('24시간 안에 20개 완료','Complete 20 tasks within 24 hours','24時間以内に20件完了','24小时内完成20件'), check: s => s.flags?.burst24h20 },
+  { id: 'X29', icon: '🌟', hidden: true, brioReward: 50, difficulty: 10, category: 'streak', name: n('100일 × 평균 5개','100 Days × 5 Avg','100日×5件平均','100天×平均5件'), desc: n('100일 연속 + 하루 평균 5개 이상','100-day streak AND 5+ tasks/day average','100日連続＋1日平均5件以上','连续100天且每天平均5件以上'), check: s => s.streak >= 100 && s.flags?.avg5perDay100 },
+  { id: 'X30', icon: '☀️', hidden: true, brioReward: 40, difficulty: 10, category: 'daily', name: n('50일 얼리버드','50-Day Early Bird','50日アーリーバード','50天早起鸟'), desc: n('50일 연속 오전 9시 전 완료','50 days in a row completing tasks before 9am','50日連続午前9時前完了','连续50天在上午9点前完成任务'), check: s => s.flags?.earlyBirdStreak50 },
+  { id: 'X31', icon: '💯', hidden: true, brioReward: 45, difficulty: 10, category: 'weekly', name: n('완벽한 한 달','Perfect Month','完璧な1ヶ月','完美一个月'), desc: n('한 달 동안 등록한 모든 할 일 완료','Complete every task registered in a month','1ヶ月間の全タスクを完了','完成一个月内登记的所有任务'), check: s => s.flags?.perfectMonth },
+  { id: 'X32', icon: '🏆', hidden: true, brioReward: 40, difficulty: 10, category: 'weekly', name: n('3달 연속 100+','3 Months 100+','3ヶ月連続100+','连续3月100+'), desc: n('3개월 연속 월별 100개 이상 완료','100+ completions for 3 consecutive months','3ヶ月連続で月100件以上完了','连续3个月每月完成100件以上'), check: s => s.flags?.month100x3 },
+  { id: 'X33', icon: '🦉', hidden: true, brioReward: 30, difficulty: 8, category: 'daily', name: n('올빼미 100','Night Owl 100','夜型100','夜猫子100'), desc: n('밤 11시 이후 할 일 100개 완료','Complete 100+ tasks after 11pm','夜11時以降100件完了','晚上11点后完成100件'), check: s => s.nightOwl >= 100 },
+  { id: 'X34', icon: '🌃', hidden: true, brioReward: 35, difficulty: 9, category: 'daily', name: n('30일 밤샘','30 Night Streak','30日夜更かし','30天夜间连续'), desc: n('30일 연속 밤 11시 이후 완료','Complete tasks after 11pm for 30 days in a row','30日連続夜11時以降完了','连续30天在晚上11点后完成任务'), check: s => s.flags?.nightStreak30 },
+  { id: 'X35', icon: '🎖️', hidden: true, brioReward: 50, difficulty: 10, category: 'priority', name: n('우선순위 전설','Priority Legend','優先度の伝説','优先级传奇'), desc: n('모든 우선순위 각 100개씩 완료','Complete 100 tasks at each priority level','各優先度100件完了','每种优先级完成100件'), check: s => s.completedByPriority.low >= 100 && s.completedByPriority.medium >= 100 && s.completedByPriority.high >= 100 && s.completedByPriority.urgent >= 100 },
+  { id: 'X36', icon: '🚨', hidden: true, brioReward: 35, difficulty: 9, category: 'priority', name: n('긴급 하루 10','Urgent Day 10','緊急1日10件','紧急一天10件'), desc: n('하루에 긴급 할 일 10개 완료','Complete 10 urgent tasks in one day','1日に緊急タスク10件完了','一天完成10件紧急任务'), check: s => s.flags?.urgentDay10 },
+  { id: 'X37', icon: '🔄', hidden: true, brioReward: 40, difficulty: 10, category: 'recurrence', name: n('반복 100회','100 Reps X','繰り返し100回X','100次重复X'), desc: n('같은 반복 일정 100회 완료','Complete the same recurring task 100 times','同じ繰り返しタスクを100回完了','同一重复任务完成100次'), check: s => s.flags?.sameRecurring100 },
+  { id: 'X38', icon: '🌀', hidden: true, brioReward: 45, difficulty: 10, category: 'recurrence', name: n('반복 오중주','Recurring Quintet','繰り返し五重奏','重复五重奏'), desc: n('5가지 다른 반복 일정 각 30회씩 완료','Complete 5 different recurring tasks 30 times each','5種の繰り返しタスクをそれぞれ30回完了','5种不同重复任务各完成30次'), check: s => s.flags?.multiRecurring5x30 },
+  { id: 'X39', icon: '📆', hidden: true, brioReward: 40, difficulty: 10, category: 'engagement', name: n('365일 사용','365 Days Used','365日使用','使用365天'), desc: n('앱 사용 총 365일 (비연속 허용)','Use the app for 365 total days','アプリを累計365日使用','累计使用应用365天'), check: s => (s.flags?.totalOpens || 0) >= 365 },
+  { id: 'X40', icon: '📱', hidden: true, brioReward: 30, difficulty: 9, category: 'engagement', name: n('천 번 실행','1000 Launches','千回起動','1000次启动'), desc: n('앱 실행 1000회','Launch the app 1000 times','アプリを1000回起動','应用启动1000次'), check: s => (s.flags?.totalOpens || 0) >= 1000 },
+  { id: 'X41', icon: '⏰', hidden: true, brioReward: 30, difficulty: 8, category: 'special', name: n('자정 완료','Exact Midnight','深夜0時完了','午夜整点完成'), desc: n('정확히 00:00에 할 일 완료','Complete a task exactly at midnight (00:00)','正確に00:00にタスクを完了','在00:00整点完成任务'), check: s => s.flags?.exactMidnight },
+  { id: 'X42', icon: '🎊', hidden: true, brioReward: 30, difficulty: 5, category: 'special', name: n('한해의 마지막 X','Year\'s End X','大晦日X','年末X'), desc: n('12월 31일에 할 일 완료 (비밀 보상)','Complete a task on December 31st (secret bonus)','12月31日にタスクを完了','在12月31日完成任务'), check: s => s.special?.dec31 },
+  { id: 'X43', icon: '🌸', hidden: true, brioReward: 40, difficulty: 10, category: 'special', name: n('사계절 전사','Four Seasons','四季の戦士','四季战士'), desc: n('봄/여름/가을/겨울 각각 50개 완료','Complete 50 tasks in each of the 4 seasons','春夏秋冬それぞれ50件完了','在四个季节各完成50件'), check: s => s.flags?.allSeasons50 },
+  { id: 'X44', icon: '📺', hidden: true, brioReward: 30, difficulty: 7, category: 'engagement', name: n('광고 애청자','Ad Watcher','広告愛好者','广告爱好者'), desc: n('광고 시청으로 브리오 20회 충전','Recharge brio by watching 20 ads','広告視聴でブリオ20回チャージ','通过看广告充值20次'), check: s => (s.flags?.adsWatched || 0) >= 20 },
+  { id: 'X45', icon: '🏅', hidden: true, brioReward: 30, difficulty: 8, category: 'engagement', name: n('업적 부자','Brio Rich','実績持ち','成就富翁'), desc: n('업적으로 브리오 200개 획득','Earn 200 brio from achievements','実績からブリオを200個獲得','通过成就获得200个能量'), check: s => (s.flags?.brioFromAchievements || 0) >= 200 },
+  { id: 'X46', icon: '♻️', hidden: true, brioReward: 35, difficulty: 7, category: 'engagement', name: n('재충전 달인','Recharge Master','再充電の達人','再充值达人'), desc: n('브리오를 0으로 소진 후 충전 10회','Recharge from zero brio 10 times','ブリオを0にした後10回チャージ','将能量耗尽后充值10次'), check: s => (s.flags?.brioEmptied || 0) >= 10 },
+  { id: 'X47', icon: '🌈', hidden: true, brioReward: 40, difficulty: 10, category: 'engagement', name: n('업적 컬렉터 120','Achievement Collector 120','実績コレクター120','成就收集者120'), desc: n('공개 업적 120개 달성','Unlock 120 public achievements','公開実績120個を解除','解锁120个公开成就'), check: s => s.unlockedPublicCount >= 120 },
+  { id: 'X48', icon: '👑', hidden: true, brioReward: 50, difficulty: 10, category: 'engagement', name: n('업적 완파','Achievement Legend','実績完全制覇','成就传说'), desc: n('공개 업적 150개 전부 달성','Unlock all 150 public achievements','公開実績150個を全解除','解锁所有150个公开成就'), check: s => s.unlockedPublicCount >= 150 },
+  { id: 'X49', icon: '🔮', hidden: true, brioReward: 30, difficulty: 5, category: 'engagement', name: n('비밀의 시작','Secret Start','秘密の始まり','秘密的开始'), desc: n('첫 비밀 업적 달성','Unlock your first secret achievement','初めての秘密実績を解除','解锁第一个秘密成就'), check: s => (s.unlockedSecretCount || 0) >= 1 },
+  { id: 'X50', icon: '💎', hidden: true, brioReward: 50, difficulty: 10, category: 'engagement', name: n('비밀 전도사','Secret Evangelist','秘密の伝道師','秘密传道士'), desc: n('비밀 업적 10개 달성','Unlock 10 secret achievements','秘密実績を10個解除','解锁10个秘密成就'), check: s => (s.unlockedSecretCount || 0) >= 10 },
 ]
 
-export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
+const ACHIEVEMENT_BRIO_REWARD = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 7, 7: 10, 8: 15, 9: 20, 10: 30 }
+
+export function useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio }) {
   const [notifications, setNotifications] = useState([])
   const [unlockQueue, setUnlockQueue] = useState([])
   const [currentUnlock, setCurrentUnlock] = useState(null)
@@ -167,7 +278,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
     
     let earlyBird = 0, nightOwl = 0, speedRun = 0, mondayCompletions = 0, monthCompleted = 0
     let satComplete = 0, sunComplete = 0, calSyncCount = 0
-    let special = { newYear: false, christmas: false, spring: false, aprilFools: false, liberationDay: false, hangeulDay: false, valentine: false, childrensDay: false }
+    let special = { newYear: false, christmas: false, spring: false, aprilFools: false, liberationDay: false, hangeulDay: false, valentine: false, childrensDay: false, halloween: false, laborDay: false, constitutionDay: false, dec31: false }
     let completedRecurringCount = 0, recurringStreak = 0
     const nowMonth = new Date().getMonth()
     
@@ -182,6 +293,10 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
         if (t.date.endsWith('-10-09')) special.hangeulDay = true
         if (t.date.endsWith('-02-14')) special.valentine = true
         if (t.date.endsWith('-05-05')) special.childrensDay = true
+        if (t.date.endsWith('-10-31')) special.halloween = true
+        if (t.date.endsWith('-05-01')) special.laborDay = true
+        if (t.date.endsWith('-07-17')) special.constitutionDay = true
+        if (t.date.endsWith('-12-31')) special.dec31 = true
         if (t.completedAt) {
           const d = new Date(t.completedAt)
           const hr = d.getHours()
@@ -208,6 +323,9 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
     const weekendFocus = satComplete >= 3 && sunComplete >= 3
     const calendarUsed = calSyncCount > 0
     const calendarMaintained = calSyncCount >= 10
+    const completedBigPlan8 = todos.some(t => t.completed && (t.subtasks?.filter(s => s.completed).length || 0) >= 8)
+    const totalRegistered = todos.length
+    const weekdayTotal = todos.filter(t => t.completed && t.completedAt && (() => { const d = new Date(t.completedAt); return d.getDay() > 0 && d.getDay() < 6 })()).length
     const perfectWeek = weeklyPulse?.length >= 7 && weeklyPulse.every(d => d.completed > 0)
     
     let weekdayWarrior = false
@@ -231,7 +349,8 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
       weekendFocus, weekdayWarrior, calendarUsed, calendarMaintained,
       perfectWeek, calSyncCount,
       special, completedRecurringCount, recurringStreak, flags,
-      unlockedCount: 0,
+      completedBigPlan8, totalRegistered, weekdayTotal,
+      unlockedCount: 0, unlockedPublicCount: 0, unlockedSecretCount: 0,
     }
   }, [todos, todayStr, weeklyPulse])
 
@@ -273,12 +392,14 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
   }, [user?.uid])
 
   const computedUnlocked = useMemo(() => {
+    const metaIds = ['E1','E6','E7','E8','E9','E13','E14','X47','X48','X49','X50']
     const firstPass = ACHIEVEMENT_DEFS.filter(a => {
-      if (['E1','E6','E7','E8','E9'].includes(a.id)) return false
+      if (metaIds.includes(a.id)) return false
       try { return a.check(stats) } catch { return false }
     })
-    const count = firstPass.length
-    const statsWithCount = { ...stats, unlockedCount: count }
+    const unlockedPublicCount = firstPass.filter(a => !a.hidden).length
+    const unlockedSecretCount = firstPass.filter(a => a.hidden).length
+    const statsWithCount = { ...stats, unlockedCount: unlockedPublicCount, unlockedPublicCount, unlockedSecretCount }
     return new Set(
       ACHIEVEMENT_DEFS.filter(a => { try { return a.check(statsWithCount) } catch { return false } }).map(a => a.id)
     )
@@ -300,6 +421,17 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
       setNotifications(prev => [...prev, ...newAchs])
       setUnlockQueue(prev => [...prev, ...newAchs])
 
+      // 브리오 보상 지급
+      const totalReward = newAchs.reduce((sum, a) => sum + (a.brioReward ?? ACHIEVEMENT_BRIO_REWARD[a.difficulty] ?? 0), 0)
+      if (totalReward > 0) {
+        if (chargeBrio) chargeBrio(totalReward)
+        try {
+          const flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}')
+          flags.brioFromAchievements = (flags.brioFromAchievements || 0) + totalReward
+          localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
+        } catch (e) {}
+      }
+
       if (user?.uid) {
         setDoc(doc(db, 'userSettings', user.uid), {
           unlockedIds: [...nextPersisted],
@@ -317,7 +449,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
   }, [unlockQueue, currentUnlock])
 
   const unlockedSortedByDifficulty = useMemo(() =>
-    ACHIEVEMENT_DEFS.filter(a => unlockedIds.has(a.id)).sort((a, b) => b.difficulty - a.difficulty),
+    ACHIEVEMENT_DEFS.filter(a => !a.hidden && unlockedIds.has(a.id)).sort((a, b) => b.difficulty - a.difficulty),
     [unlockedIds]
   )
 

@@ -24,10 +24,11 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
   const headerRef = useRef(null)
   const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose, { handleRef: headerRef })
 
-  const categories = [...new Set(ACHIEVEMENT_DEFS.map(a => a.category))]
-  const unlockedCount = unlockedIds.size
+  const visibleDefs = ACHIEVEMENT_DEFS.filter(a => !a.hidden)
+  const categories = [...new Set(visibleDefs.map(a => a.category))]
+  const unlockedCount = visibleDefs.filter(a => unlockedIds.has(a.id)).length
 
-  const filtered = ACHIEVEMENT_DEFS.filter(a => {
+  const filtered = visibleDefs.filter(a => {
     if (filter === 'unlocked') return unlockedIds.has(a.id)
     if (filter === 'locked') return !unlockedIds.has(a.id)
     return true
@@ -48,7 +49,7 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
           <div className="achievements-modal-header">
             <div className="achievements-modal-title">
               <span>{lang === 'ko' ? '모든 업적' : lang === 'ja' ? '全実績' : lang === 'zh' ? '全部成就' : 'All Achievements'}</span>
-              <span className="achievements-count-badge">{unlockedCount} / {ACHIEVEMENT_DEFS.length}</span>
+              <span className="achievements-count-badge">{unlockedCount} / {visibleDefs.length}</span>
             </div>
             <button className="modal-close-btn" onClick={onClose}>✕</button>
           </div>
