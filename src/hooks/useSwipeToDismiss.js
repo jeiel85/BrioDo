@@ -64,8 +64,9 @@ export function useSwipeToDismiss(onClose, { disabled = false, scrollRef = null,
       modalRef.current.style.transform = `translateY(${travel}px)`
     }
     if (overlayRef.current) {
-      // 배경 어두움이 서서히 사라짐 (0.65 기준)
-      const progress = Math.min(travel / 260, 1)
+      // 80% 내려왔을 때부터 배경 밝아지기 시작
+      const deadzone = DISMISS_DISTANCE * 0.8
+      const progress = Math.min(Math.max(0, (travel - deadzone) / (260 - deadzone)), 1)
       overlayRef.current.style.opacity = String(Math.max(0.05, 1 - progress * 0.9))
     }
   }, [])
