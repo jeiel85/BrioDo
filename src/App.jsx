@@ -873,8 +873,8 @@ function App() {
             if (mode === 'smart') {
               if (aiUsageCount >= AI_DAILY_LIMIT) {
                 showToastMsg(lang === 'ko'
-                  ? `하루 사용량(${aiUsageCount}/${AI_DAILY_LIMIT})을 소진해서 수동 입력으로 전환됩니다`
-                  : `Daily AI limit reached (${aiUsageCount}/${AI_DAILY_LIMIT}). Switching to manual.`)
+                  ? `오늘 브리오(${aiUsageCount}/${AI_DAILY_LIMIT})를 모두 소진하여 수동 입력으로 전환됩니다`
+                  : `Daily Brio limit reached (${aiUsageCount}/${AI_DAILY_LIMIT}). Switching to manual.`)
                 handleOpenAddModal()
               } else {
                 setShowSmartModal(true)
