@@ -33,7 +33,7 @@ export function SettingsModal({
   theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate,
   inputMode, setInputMode,
-  brioBalance, brioDailyLimit, onAiLimitToast,
+  brioBalance, onAiLimitToast,
   completionCalendarMode, setCompletionCalendarMode,
   defaultReminderOffset, setDefaultReminderOffset,
   allDayReminderTime, setAllDayReminderTime,
@@ -183,36 +183,6 @@ export function SettingsModal({
               ? L('자유롭게 입력하면 날짜·태그를 AI가 자동 분석합니다', 'AI detects date & tags from natural text', '自由入力でAIが日付・タグを自動分析します', '自由输入，AI自动分析日期和标签')
               : L('날짜·태그를 직접 지정해 저장합니다', 'Manually set date, tags and priority', '日付・タグを直接指定して保存します', '手动指定日期、标签并保存')}
           </p>
-          {/* AI 사용량 progress bar */}
-          {user && (() => {
-            const count = brioBalance ?? 0
-            const limit = brioDailyLimit ?? 10
-            const pct = Math.min((count / limit) * 100, 100)
-            const barColor = pct <= 50 ? 'var(--color-primary)'
-              : pct <= 80 ? '#f59e0b'
-              : 'var(--color-error)'
-            return (
-              <div style={{ marginTop: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)' }}>
-                    {L('⚡ 브리오 (2시간 자동 충전)', '⚡ Brio (auto +1 every 2h)', '⚡ Brio (2時間ごと自動充電)', '⚡ Brio (每2小时自动充电)')}
-                  </span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: barColor }}>
-                    {count}/{limit}
-                  </span>
-                </div>
-                <div style={{ height: '6px', borderRadius: '9999px', background: 'var(--color-surface-container)', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${pct}%`,
-                    borderRadius: '9999px',
-                    background: barColor,
-                    transition: 'width 0.4s ease, background 0.4s ease',
-                  }} />
-                </div>
-              </div>
-            )
-          })()}
         </div>
 
         <div className="settings-section">

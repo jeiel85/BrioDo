@@ -116,7 +116,8 @@ export function useTheme() {
           await StatusBar.setBackgroundColor({ color: hexColor })
           const [r, g, b] = hexMatch ? hexMatch.slice(0, 3).map(Number) : [255, 255, 255]
           const brightness = (r * 299 + g * 587 + b * 114) / 1000
-          await StatusBar.setStyle({ style: brightness > 128 ? Style.Light : Style.Dark })
+          // brightness > 128 = 밝은 배경 → 아이콘은 어둡게(Style.Dark), 반대도 마찬가지
+          await StatusBar.setStyle({ style: brightness > 128 ? Style.Dark : Style.Light })
         } catch (e) {
           console.error("StatusBar error:", e)
         }
@@ -143,7 +144,7 @@ export function useTheme() {
       await StatusBar.setBackgroundColor({ color: hexColor })
       const [r, g, b] = hexMatch ? hexMatch.slice(0, 3).map(Number) : [255, 255, 255]
       const brightness = (r * 299 + g * 587 + b * 114) / 1000
-      await StatusBar.setStyle({ style: brightness > 128 ? Style.Light : Style.Dark })
+      await StatusBar.setStyle({ style: brightness > 128 ? Style.Dark : Style.Light })
     } catch (e) {}
   }
 

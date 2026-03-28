@@ -24,9 +24,12 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
   const headerRef = useRef(null)
   const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose, { handleRef: headerRef })
 
-  const visibleDefs = ACHIEVEMENT_DEFS.filter(a => !a.hidden)
+  // 잠긴 비밀업적은 숨기되, 달성한 비밀업적은 목록에 포함
+  const visibleDefs = ACHIEVEMENT_DEFS.filter(a => !a.hidden || unlockedIds.has(a.id))
   const categories = [...new Set(visibleDefs.map(a => a.category))]
-  const unlockedCount = visibleDefs.filter(a => unlockedIds.has(a.id)).length
+  // 전체 카운트: 비밀업적 포함 전체 달성 수 / 전체 업적 수
+  const unlockedCount = ACHIEVEMENT_DEFS.filter(a => unlockedIds.has(a.id)).length
+  const totalCount = ACHIEVEMENT_DEFS.length
 
   const filtered = visibleDefs.filter(a => {
     if (filter === 'unlocked') return unlockedIds.has(a.id)
@@ -49,7 +52,7 @@ export function AchievementsModal({ onClose, unlockedIds, lang }) {
           <div className="achievements-modal-header">
             <div className="achievements-modal-title">
               <span>{lang === 'ko' ? '모든 업적' : lang === 'ja' ? '全実績' : lang === 'zh' ? '全部成就' : 'All Achievements'}</span>
-              <span className="achievements-count-badge">{unlockedCount} / {visibleDefs.length}</span>
+              <span className="achievements-count-badge">{unlockedCount} / {totalCount}</span>
             </div>
             <button className="modal-close-btn" onClick={onClose}>✕</button>
           </div>

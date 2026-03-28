@@ -897,7 +897,7 @@ function App() {
           reminderOffset={smartReminderOffset} setReminderOffset={setSmartReminderOffset}
           defaultReminderOffset={defaultReminderOffset}
           autoStartVoice={!smartText}
-          brioBalance={brioBalance} brioDailyLimit={DAILY_BRIO}
+          brioBalance={brioBalance}
         />
       )}
 
@@ -921,7 +921,7 @@ function App() {
           viewMode={viewMode} setViewMode={setViewMode}
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
-          brioBalance={brioBalance} brioDailyLimit={DAILY_BRIO}
+          brioBalance={brioBalance}
           onAiLimitToast={(msg) => showToastMsg(msg)}
           completionCalendarMode={completionCalendarMode} setCompletionCalendarMode={setCompletionCalendarModePersisted}
           defaultReminderOffset={defaultReminderOffset} setDefaultReminderOffset={setDefaultReminderOffsetPersisted}
