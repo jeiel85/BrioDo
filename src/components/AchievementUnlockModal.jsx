@@ -53,8 +53,9 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
 
   if (!achievement) return null
 
-  const BRIO_BY_DIFF = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 7, 7: 10, 8: 15, 9: 20, 10: 30 }
-  const brioReward = achievement.brioReward ?? BRIO_BY_DIFF[achievement.difficulty] ?? 0
+  const BRIO_BY_DIFF = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 5, 8: 7, 9: 10, 10: 15 }
+  const REWARD_CAP = 15
+  const brioReward = Math.min(achievement.brioReward ?? BRIO_BY_DIFF[achievement.difficulty] ?? 0, REWARD_CAP)
   const isSecret = achievement.hidden === true
   const name = achievement.name?.[lang] || achievement.name?.ko || ''
   const desc = achievement.desc?.[lang] || achievement.desc?.ko || ''

@@ -250,7 +250,9 @@ export const ACHIEVEMENT_DEFS = [
   { id: 'X50', icon: '💎', hidden: true, brioReward: 50, difficulty: 10, category: 'engagement', name: n('비밀 전도사','Secret Evangelist','秘密の伝道師','秘密传道士'), desc: n('비밀 업적 10개 달성','Unlock 10 secret achievements','秘密実績を10個解除','解锁10个秘密成就'), check: s => (s.unlockedSecretCount || 0) >= 10 },
 ]
 
-const ACHIEVEMENT_BRIO_REWARD = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 7, 7: 10, 8: 15, 9: 20, 10: 30 }
+// 업적 보상 재조정 — 광고 수익 균형화 (구: 1→1,2→2,...,10→30)
+const ACHIEVEMENT_BRIO_REWARD = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 5, 8: 7, 9: 10, 10: 15 }
+const ACHIEVEMENT_REWARD_CAP = 15 // 숨겨진 업적 포함 단일 보상 상한
 
 export function useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio }) {
   const [notifications, setNotifications] = useState([])
@@ -422,7 +424,10 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio
       setUnlockQueue(prev => [...prev, ...newAchs])
 
       // 브리오 보상 지급
-      const totalReward = newAchs.reduce((sum, a) => sum + (a.brioReward ?? ACHIEVEMENT_BRIO_REWARD[a.difficulty] ?? 0), 0)
+      const totalReward = newAchs.reduce((sum, a) => {
+        const base = a.brioReward ?? ACHIEVEMENT_BRIO_REWARD[a.difficulty] ?? 0
+        return sum + Math.min(base, ACHIEVEMENT_REWARD_CAP)
+      }, 0)
       if (totalReward > 0) {
         if (chargeBrio) chargeBrio(totalReward)
         try {

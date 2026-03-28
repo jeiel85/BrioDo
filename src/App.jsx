@@ -596,7 +596,7 @@ function App() {
             setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
             await saveLocalTodo({ ...localPayload, ...finalData })
             await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
-            consumeBrio(1)
+            consumeBrio(2) // AI 전체 분석(태그+일정+우선순위) = 2 브리오
           }
           // AI 분석 완료 후 알림 스케줄 (날짜가 확정된 시점)
           scheduleNotification({ ...localPayload, ...finalData, id: newId })
@@ -859,7 +859,7 @@ function App() {
           onClick={() => {
             const mode = user ? inputMode : 'manual'
             if (mode === 'smart') {
-              if (!hasBrio()) {
+              if (!hasBrio(2)) {
                 setShowBrioChargeModal(true)
               } else {
                 setShowSmartModal(true)
