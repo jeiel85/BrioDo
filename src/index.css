@@ -3071,14 +3071,13 @@ body.modal-open { overflow: hidden; }
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  /* backdrop-filter는 visible 상태에서만 — Android WebView GPU 충돌 방지 */
-  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+  transition: opacity 0.3s ease;
   will-change: opacity;
+  transform: translateZ(0);
 }
 .ach-unlock-overlay.visible {
   opacity: 1;
   pointer-events: all;
-  backdrop-filter: blur(6px);
 }
 .ach-unlock-card {
   position: relative;

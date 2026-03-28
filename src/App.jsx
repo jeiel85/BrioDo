@@ -286,6 +286,16 @@ function App() {
     }
   }, [isLockScreen, showLockPreview])
 
+  // 앱 포그라운드 복귀 시 상태바 재동기화 (#51 #48)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    let listener
+    CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) setTimeout(() => syncStatusBar(), 300)
+    }).then(l => { listener = l })
+    return () => listener?.remove()
+  }, [syncStatusBar])
+
   const handleLockToggleTorch = async (on) => {
     try { await LockScreenNative?.toggleTorch({ on }) } catch(e) {}
   }

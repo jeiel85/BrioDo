@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 
@@ -121,7 +121,7 @@ export function useTheme() {
         } catch (e) {
           console.error("StatusBar error:", e)
         }
-      }, 50)
+      }, 300)
     }
   }, [theme, randomColors])
 
@@ -132,7 +132,7 @@ export function useTheme() {
     localStorage.setItem('briodo-font-scale', fontScale)
   }, [fontScale])
 
-  const syncStatusBar = async () => {
+  const syncStatusBar = useCallback(async () => {
     if (!Capacitor.isNativePlatform()) return
     try {
       const bodyBg = getComputedStyle(document.body).backgroundColor
@@ -146,7 +146,7 @@ export function useTheme() {
       const brightness = (r * 299 + g * 587 + b * 114) / 1000
       await StatusBar.setStyle({ style: brightness > 128 ? Style.Dark : Style.Light })
     } catch (e) {}
-  }
+  }, [])
 
   return { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar }
 }
