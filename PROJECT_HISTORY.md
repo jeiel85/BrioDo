@@ -2,6 +2,28 @@
 
 본 문서는 BrioDo 프로젝트의 개발 과정, 주요 결정 사항, 실패 및 개선 사례를 기록하여 프로젝트의 방향성을 유지하기 위해 작성되었습니다.
 
+---
+
+## 2026-03-28 — AdMob 보상형 광고 실제 연동
+
+**세션 목표:** BrioChargeModal의 광고 시청 버튼을 실제 AdMob 보상형 광고로 교체 (Phase 1 즉시 지급 → Phase 2 AdMob 연동)
+
+**주요 작업:**
+- `@capacitor-community/admob` 패키지 설치 및 android/build.gradle 패치 (jcenter→mavenCentral, proguard-android-optimize)
+- `src/hooks/useAdMob.js` 신규 생성: `initAdMob()` (앱 초기화), `showRewardedAd(onRewarded)` (보상형 광고 호출 + 리스너 해제)
+- `src/components/BrioChargeModal.jsx`: 실제 AdMob 보상형 광고 호출로 교체, 광고 준비 중 버튼 비활성화 로딩 상태, 광고 실패 시 즉시 지급 폴백
+- `src/App.jsx`: 앱 시작 useEffect에서 `initAdMob()` 호출 추가
+- `android/app/src/main/AndroidManifest.xml`: `<application>` 내 AdMob APPLICATION_ID meta-data 추가 (앱 ID: `ca-app-pub-7262251786684458~9750978148`)
+- `capacitor.config.json`: AdMob 플러그인 appId 설정 추가
+- `.env`: `VITE_ADMOB_REWARDED_ID` 추가 (광고 단위 ID: `ca-app-pub-7262251786684458/2962208516`)
+
+**광고 단위:**
+- 앱 ID: `ca-app-pub-7262251786684458~9750978148`
+- 보상형 광고 단위 ID: `ca-app-pub-7262251786684458/2962208516`
+- 폴백 테스트 ID (DEV 미설정 환경): `ca-app-pub-3940256099942544/5224354917` (구글 공식 테스트 ID)
+
+**커밋:** `feat: AdMob 보상형 광고 실제 연동 (#23)`
+
 ## 📌 프로젝트 개요
 - **이름**: BrioDo (브리오두) - *이전 명칭: BlendDo → Todoest*
 - **슬로건**: "Do it with brio." / "활기차게, 해내다."
