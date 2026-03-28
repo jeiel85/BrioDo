@@ -52,7 +52,15 @@ export function SettingsModal({
 }) {
   const L = (ko, en, ja, zh) => lang === 'ko' ? ko : lang === 'ja' ? (ja ?? en) : lang === 'zh' ? (zh ?? en) : en
   const [licensesExpanded, setLicensesExpanded] = useState(false)
+  const [activeTab, setActiveTab] = useState('appearance')
   const hasCalendarToken = !!localStorage.getItem('googleAccessToken')
+
+  const TABS = [
+    { id: 'appearance', icon: '🎨', label: L('외관', 'Look', '外観', '外观') },
+    { id: 'features',   icon: '⚡', label: L('기능', 'Features', '機能', '功能') },
+    { id: 'notify',     icon: '🔔', label: L('알림', 'Alerts', '通知', '通知') },
+    { id: 'account',    icon: '☁️', label: L('계정', 'Account', 'アカウント', '账号') },
+  ]
   const close = () => setShowSettings(false)
   const headerRef = useRef(null)
   const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(close, { handleRef: headerRef })
@@ -69,11 +77,25 @@ export function SettingsModal({
           </h2>
           <button className="settings-close" onClick={close}>✕</button>
         </div>
+        {/* ─── 탭 네비게이션 ─── */}
+        <div className="settings-tabs">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              className={`settings-tab-btn${activeTab === tab.id ? ' active' : ''}`}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              <span className="settings-tab-icon">{tab.icon}</span>
+              <span className="settings-tab-label">{tab.label}</span>
+            </button>
+          ))}
+        </div>
         </div>
 
-        <div className="settings-scroll-body">
+        <div className="settings-scroll-body settings-tab-body">
 
-        {/* ─── 언어 설정 ─── */}
+        {/* ─── 외관 탭: 언어, 글자크기, 테마 ─── */}
+        {activeTab === 'appearance' && <div className="settings-tab-content">
         <div className="settings-section">
           <h3>{lang === 'ko' ? '언어' : lang === 'ja' ? '言語' : lang === 'zh' ? '语言' : 'Language'}</h3>
           <div className="lang-selector">
@@ -151,6 +173,10 @@ export function SettingsModal({
           </div>
         </div>
 
+        </div>} {/* end appearance tab */}
+
+        {/* ─── 기능 탭: 입력방식, 기본보기 ─── */}
+        {activeTab === 'features' && <div className="settings-tab-content">
         <div className="settings-section">
           <h3>{L('할 일 입력 방식', 'Input Mode', '入力方法', '输入方式')}</h3>
           <div className="font-size-selector">
@@ -184,7 +210,10 @@ export function SettingsModal({
               : L('날짜·태그를 직접 지정해 저장합니다', 'Manually set date, tags and priority', '日付・タグを直接指定して保存します', '手动指定日期、标签并保存')}
           </p>
         </div>
+        </div>} {/* end features tab */}
 
+        {/* ─── 알림 탭: 알림기본값, 종일알림, 기본보기, 날씨, 잠금화면 ─── */}
+        {activeTab === 'notify' && <div className="settings-tab-content">
         <div className="settings-section">
           <h3>{L('알림 기본값', 'Default Reminder', '通知デフォルト', '默认提醒')}</h3>
           <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', lineHeight: '1.4' }}>
@@ -389,7 +418,10 @@ export function SettingsModal({
             </>
           )}
         </div>
+        </div>} {/* end notify tab */}
 
+        {/* ─── 계정 탭: 캘린더, 로그인, 앱정보 ─── */}
+        {activeTab === 'account' && <div className="settings-tab-content">
         {user && (
           <div className="settings-section">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
@@ -559,6 +591,7 @@ export function SettingsModal({
             <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Do it with brio.</div>
           </div>
         </div>
+        </div>} {/* end account tab */}
 
         </div>
       </div>
