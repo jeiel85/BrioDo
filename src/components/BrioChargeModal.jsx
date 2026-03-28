@@ -1,22 +1,30 @@
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import { trackEngagement } from '../hooks/useAchievements'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+import { showRewardedAd } from '../hooks/useAdMob'
 
 /**
  * 브리오 충전 모달
- * - 광고 시청 → +5 브리오 (Phase 1: 즉시 지급, Phase 2: AdMob 연동)
+ * - 광고 시청 → +5 브리오 (AdMob 보상형 광고 연동)
  */
 export function BrioChargeModal({ onClose, onCharge, balance, lang }) {
   const handleRef = useRef(null)
   const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose, { handleRef })
+  const [adLoading, setAdLoading] = useState(false)
 
-  const handleWatchAd = () => {
-    // TODO: Phase 2에서 AdMob 보상형 광고로 교체
-    // import { showRewardedAd } from '../hooks/useAdMob'
-    // showRewardedAd((amount) => { onCharge(amount); onClose() })
+  const handleWatchAd = async () => {
+    setAdLoading(true)
     trackEngagement('adsWatched', true)
-    onCharge(5)
-    onClose()
+    const success = await showRewardedAd((amount) => {
+      onCharge(amount || 5)
+      onClose()
+    })
+    if (!success) {
+      // 광고 실패 시 폴백: 즉시 지급
+      onCharge(5)
+      onClose()
+    }
+    setAdLoading(false)
   }
 
   const t = {
@@ -40,8 +48,8 @@ export function BrioChargeModal({ onClose, onCharge, balance, lang }) {
           <p className="brio-charge-body">{t.body}</p>
           <p className="brio-charge-balance">{t.balance}</p>
 
-          <button className="brio-charge-ad-btn" onClick={handleWatchAd}>
-            {t.ad}
+          <button className="brio-charge-ad-btn" onClick={handleWatchAd} disabled={adLoading}>
+            {adLoading ? (lang === 'ko' ? '광고 준비 중...' : lang === 'ja' ? '広告準備中...' : lang === 'zh' ? '广告加载中...' : 'Loading ad...') : t.ad}
           </button>
           <button className="brio-charge-manual-btn" onClick={onClose}>
             {t.manual}

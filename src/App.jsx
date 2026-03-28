@@ -9,6 +9,7 @@ import { syncEventToGoogle } from './calendar'
 import { formatTime, matchesRecurrence } from './utils/helpers'
 import { useAchievements, trackEngagement } from './hooks/useAchievements'
 import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
+import { initAdMob } from './hooks/useAdMob'
 import { fetchWeather } from './hooks/useWeather'
 
 import { useLanguage } from './hooks/useLanguage'
@@ -118,6 +119,7 @@ function App() {
   // 알림 채널 초기화 및 앱 사용 빈도 트래킹 (앱 시작 시 1회)
   useEffect(() => {
     initNotificationChannels()
+    initAdMob()
     
     // 일일 접속 및 연속 접속 트래킹
     trackEngagement('totalOpens', true)
