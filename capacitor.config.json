@@ -3,6 +3,11 @@
   "appName": "BrioDo",
   "webDir": "dist",
   "plugins": {
+    "StatusBar": {
+      "style": "LIGHT",
+      "backgroundColor": "#10151f",
+      "overlaysWebView": false
+    },
     "AdMob": {
       "appId": {
         "android": "ca-app-pub-7262251786684458~9750978148"
