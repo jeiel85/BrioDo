@@ -23,11 +23,26 @@ export function Header({
   onNotificationTap,
   weatherData,
   weatherLoading,
+  brioBalance,
+  maxBrio,
+  nextChargeMs,
+  onBrioClick,
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
 
   const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
+
+  const formatChargeTimer = (ms) => {
+    if (ms == null) return null
+    const totalMins = Math.ceil(ms / 60000)
+    const hrs = Math.floor(totalMins / 60)
+    const mins = totalMins % 60
+    if (hrs > 0) return `${hrs}h${mins > 0 ? mins + 'm' : ''}`
+    return `${mins}m`
+  }
+
+  const brioStatus = brioBalance >= maxBrio ? 'full' : brioBalance <= 0 ? 'empty' : brioBalance <= 2 ? 'low' : 'normal'
 
   const getDayClass = (dayOfWeek) => {
     if (dayOfWeek === 0) return 'day-sunday'
@@ -111,6 +126,15 @@ export function Header({
             <span className="curator-app-name">BrioDo</span>
           </div>
           <div className="curator-top-actions">
+            {brioBalance != null && (
+              <button className={`brio-header-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
+                <span className="brio-chip-icon">⚡</span>
+                <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
+                {brioStatus !== 'full' && nextChargeMs != null && (
+                  <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
+                )}
+              </button>
+            )}
             <button
               className={`curator-icon-btn ${isSearchOpen ? 'active' : ''}`}
               onClick={() => { const next = !isSearchOpen; setIsSearchOpen(next); if (!next) setSearchQuery('') }}

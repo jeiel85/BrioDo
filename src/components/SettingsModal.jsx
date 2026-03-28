@@ -161,10 +161,10 @@ export function SettingsModal({
                   onAiLimitToast?.(L('스마트 입력은 로그인 후 이용할 수 있어요', 'Sign in to use Smart Input', 'スマート入力はログイン後にご利用いただけます', '智能输入需要登录后才能使用'))
                 } else if (brioBalance <= 0) {
                   onAiLimitToast?.(lang === 'ko'
-                    ? `브리오가 부족합니다 (잔량: ⚡${brioBalance}, 자정에 초기화)`
-                    : lang === 'ja' ? `Brioが不足しています (残量: ⚡${brioBalance}, 深夜リセット)`
-                    : lang === 'zh' ? `Brio不足 (余量: ⚡${brioBalance}, 午夜重置)`
-                    : `Not enough Brio (balance: ⚡${brioBalance}, resets at midnight)`)
+                    ? `브리오가 부족합니다 (잔량: ⚡${brioBalance}, 2시간마다 자동 충전)`
+                    : lang === 'ja' ? `Brioが不足しています (残量: ⚡${brioBalance}, 2時間ごとに自動充電)`
+                    : lang === 'zh' ? `Brio不足 (余量: ⚡${brioBalance}, 每2小时自动充电)`
+                    : `Not enough Brio (balance: ⚡${brioBalance}, auto-charges every 2h)`)
                 } else {
                   setInputMode('smart')
                 }
@@ -195,7 +195,7 @@ export function SettingsModal({
               <div style={{ marginTop: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                   <span style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)' }}>
-                    {L('⚡ 브리오 (자정 초기화)', '⚡ Brio (resets midnight)', '⚡ Brio (深夜リセット)', '⚡ Brio (午夜重置)')}
+                    {L('⚡ 브리오 (2시간 자동 충전)', '⚡ Brio (auto +1 every 2h)', '⚡ Brio (2時間ごと自動充電)', '⚡ Brio (每2小时自动充电)')}
                   </span>
                   <span style={{ fontSize: '11px', fontWeight: 700, color: barColor }}>
                     {count}/{limit}

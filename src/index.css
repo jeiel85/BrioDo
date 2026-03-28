@@ -261,6 +261,59 @@ body {
   color: var(--color-primary);
 }
 
+/* ─── Brio Header Chip ─── */
+.brio-header-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1.5px solid transparent;
+  background: var(--color-surface-container);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+.brio-header-chip:active { opacity: 0.75; }
+.brio-chip-icon { font-size: 13px; }
+.brio-chip-count { color: var(--color-on-surface); }
+.brio-chip-max { font-weight: 400; opacity: 0.5; font-size: 11px; }
+.brio-chip-timer {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.65;
+  margin-left: 1px;
+}
+
+/* 상태별 색상 */
+.brio-header-chip.brio-full {
+  border-color: #FFD700;
+  background: rgba(255, 215, 0, 0.12);
+}
+.brio-header-chip.brio-full .brio-chip-icon { filter: drop-shadow(0 0 3px #FFD700); }
+.brio-header-chip.brio-full .brio-chip-count { color: #b8860b; }
+
+.brio-header-chip.brio-low {
+  border-color: #FF9800;
+  background: rgba(255, 152, 0, 0.1);
+}
+.brio-header-chip.brio-low .brio-chip-count { color: #e65100; }
+
+.brio-header-chip.brio-empty {
+  border-color: var(--color-error);
+  background: rgba(var(--color-error-rgb, 176, 0, 32), 0.08);
+  animation: brio-empty-pulse 2s ease-in-out infinite;
+}
+.brio-header-chip.brio-empty .brio-chip-count { color: var(--color-error); }
+
+@keyframes brio-empty-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 /* ─── Greeting + Momentum Orb ─── */
 .curator-greeting {
   display: flex;

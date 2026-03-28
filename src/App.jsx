@@ -93,7 +93,7 @@ function App() {
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
 
   // 브리오 에너지 시스템
-  const { balance: brioBalance, consume: consumeBrio, charge: chargeBrio, hasBrio } = useBrio()
+  const { balance: brioBalance, consume: consumeBrio, charge: chargeBrio, hasBrio, maxBrio, nextChargeMs } = useBrio()
   const [showBrioChargeModal, setShowBrioChargeModal] = useState(false)
   const toastTimerRef = useRef(null)
   const [toastMsg, setToastMsg] = useState('')
@@ -776,6 +776,10 @@ function App() {
         onNotificationTap={() => setShowNotificationsModal(true)}
         weatherData={weatherEnabled ? weatherData : null}
         weatherLoading={weatherLoading}
+        brioBalance={brioBalance}
+        maxBrio={maxBrio}
+        nextChargeMs={nextChargeMs}
+        onBrioClick={() => setShowBrioChargeModal(true)}
       />
 
       {showNotificationsModal && (
