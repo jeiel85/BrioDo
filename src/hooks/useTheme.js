@@ -90,6 +90,28 @@ export function useTheme() {
     setTheme('random')
   }
 
+  // getComputedStyle은 Android WebView에서 CSS 변수를 못 읽음 → 테마 state 직접 사용
+  const getStatusBarColors = useCallback((t, rc) => {
+    let isDark
+    if (t === 'dark') {
+      isDark = true
+    } else if (t === 'light' || t === 'materialyou') {
+      isDark = false
+    } else if (t === 'system') {
+      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    } else if (t === 'random' && rc) {
+      // hsl(X, 15%, 8%) → 어두운 / hsl(X, 30%, 98%) → 밝은: lightness < 50 이면 dark
+      const m = (rc['--color-surface'] || '').match(/(\d+)%\s*\)/)
+      isDark = m ? parseInt(m[1]) < 50 : false
+    } else {
+      isDark = false
+    }
+    return {
+      bg: isDark ? '#10151f' : '#f4f3fa',
+      style: isDark ? Style.Light : Style.Dark,
+    }
+  }, [])
+
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('theme-light', 'theme-dark', 'theme-system', 'theme-materialyou')
@@ -107,23 +129,13 @@ export function useTheme() {
     if (Capacitor.isNativePlatform()) {
       setTimeout(async () => {
         try {
-          const bodyBg = getComputedStyle(document.body).backgroundColor
-          const hexMatch = bodyBg.match(/\d+/g)
-          let hexColor = '#FFFFFF'
-          if (hexMatch && hexMatch.length >= 3) {
-            hexColor = '#' + hexMatch.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase()
-          }
-          await StatusBar.setBackgroundColor({ color: hexColor })
-          const [r, g, b] = hexMatch ? hexMatch.slice(0, 3).map(Number) : [255, 255, 255]
-          const brightness = (r * 299 + g * 587 + b * 114) / 1000
-          // brightness > 128 = 밝은 배경 → 아이콘은 어둡게(Style.Dark), 반대도 마찬가지
-          await StatusBar.setStyle({ style: brightness > 128 ? Style.Dark : Style.Light })
-        } catch (e) {
-          console.error("StatusBar error:", e)
-        }
-      }, 300)
+          const { bg, style } = getStatusBarColors(theme, randomColors)
+          await StatusBar.setBackgroundColor({ color: bg })
+          await StatusBar.setStyle({ style })
+        } catch (e) {}
+      }, 100)
     }
-  }, [theme, randomColors])
+  }, [theme, randomColors, getStatusBarColors])
 
   useEffect(() => {
     const root = document.documentElement
@@ -135,18 +147,13 @@ export function useTheme() {
   const syncStatusBar = useCallback(async () => {
     if (!Capacitor.isNativePlatform()) return
     try {
-      const bodyBg = getComputedStyle(document.body).backgroundColor
-      const hexMatch = bodyBg.match(/\d+/g)
-      let hexColor = '#FFFFFF'
-      if (hexMatch && hexMatch.length >= 3) {
-        hexColor = '#' + hexMatch.slice(0, 3).map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase()
-      }
-      await StatusBar.setBackgroundColor({ color: hexColor })
-      const [r, g, b] = hexMatch ? hexMatch.slice(0, 3).map(Number) : [255, 255, 255]
-      const brightness = (r * 299 + g * 587 + b * 114) / 1000
-      await StatusBar.setStyle({ style: brightness > 128 ? Style.Dark : Style.Light })
+      const t = localStorage.getItem('briodo-theme') || 'dark'
+      const rc = (() => { try { return JSON.parse(localStorage.getItem('briodo-random-colors')) } catch { return null } })()
+      const { bg, style } = getStatusBarColors(t, rc)
+      await StatusBar.setBackgroundColor({ color: bg })
+      await StatusBar.setStyle({ style })
     } catch (e) {}
-  }, [])
+  }, [getStatusBarColors])
 
   return { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar }
 }
