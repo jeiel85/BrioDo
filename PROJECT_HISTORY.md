@@ -4,14 +4,20 @@
 
 ---
 
-## 2026-03-29 — 상태바 동기화 + 업적 모달 개선 (#51 #48 #50)
+## 2026-03-29 — 상태바 동기화 근본 수정 + 업적 모달 개선 (#51 #48 #50)
 
 **세션 목표:** 디바이스 테스트에서 발견된 버그 3종 수정
 
+**근본 원인 (상태바):**
+1. `android/app/src/main/res/values/styles.xml`에 `windowLightStatusBar=true` 하드코딩 → Android XML이 JS API보다 우선 적용되어 항상 검은 아이콘 강제
+2. `getComputedStyle(document.body)` → Android WebView에서 CSS 변수 해석 불가 → 항상 잘못된 brightness 계산
+3. Capacitor `Style` enum 반전: `Style.Dark` = 흰색 아이콘(어두운 배경용), `Style.Light` = 검은 아이콘(밝은 배경용)
+
 **주요 변경:**
-- `useTheme.js`: `syncStatusBar` → `useCallback` 래핑으로 참조 안정화, `setTimeout` 50ms → 300ms (CSS 적용 대기 충분히)
-- `App.jsx`: `CapApp.addListener('appStateChange')` 추가 — 앱 포그라운드 복귀 시 상태바 재동기화 (#51 다크테마, #48 흰 테마)
-- `index.css`: `.ach-unlock-overlay` `backdrop-filter` 트랜지션 제거 + `transform: translateZ(0)` GPU 레이어 강제 (#50 흰 테마 깜빡임)
+- `styles.xml`: `windowLightStatusBar` true → false (XML 강제 해제)
+- `capacitor.config.json`: StatusBar 초기값 `style: "DARK"` (흰색 아이콘, 기본 다크 테마 대응)
+- `useTheme.js`: `getComputedStyle` 제거 → 테마 state 직접 읽어 StatusBar 결정. `appStateChange` 리스너로 앱 재개 시 재동기화
+- `index.css`: `.ach-unlock-overlay` `backdrop-filter` 트랜지션 제거 + GPU 레이어 강제 (#50 흰 테마 깜빡임)
 
 **수정 이슈:** #51 (다크 테마 상단바), #48 (흰 테마 상단 글씨), #50 (흰 테마 업적 깜빡임)
 
