@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-03-28 — Play Store 출시 준비 자산 생성 (#25)
+
+**세션 목표:** Play Store 제출에 필요한 자산 준비
+
+**주요 작업:**
+- `docs/privacy-policy.html`: AdMob 광고 식별자(GAID) 항목 추가, 광고 섹션 신설, 날짜 업데이트
+- `docs/store-listing.md`: 한/영 앱 설명, Data Safety 섹션 가이드, 릴리즈 노트 작성
+- `docs/icon-512.png`: 앱 아이콘 512×512 (퍼플 그라디언트 + 체크마크 + ⚡ 브리오 뱃지)
+- `docs/featured-graphic.png`: 피처드 그래픽 1024×500 (기능 소개 + 목업 UI)
+- `CLAUDE.md`: ADB 경로 업데이트 (jeiel PC: `/c/Users/jeiel/AppData/Local/Android/Sdk`)
+
+**개인정보처리방침 URL:** `https://jeiel85.github.io/BrioDo/privacy-policy.html`
+
+**남은 작업 (수동):** 스크린샷 캡처, Play Console 앱 등록, Google OAuth 프로덕션 전환, AAB 빌드
+
+**커밋:** `docs: 개인정보처리방침 AdMob 항목 추가 + Play Store 등록 정보 작성 (#25)`
+
+---
+
 ## 2026-03-28 — AdMob 보상형 광고 실제 연동
 
 **세션 목표:** BrioChargeModal의 광고 시청 버튼을 실제 AdMob 보상형 광고로 교체 (Phase 1 즉시 지급 → Phase 2 AdMob 연동)

@@ -159,11 +159,14 @@ npx cap sync android
 # 3. APK 빌드 (--quiet으로 불필요한 로그 억제)
 cd android && ./gradlew assembleDebug --quiet
 
-# 4. Galaxy S24 설치 (ADB 경로: D:\Android\Sdk, 한글 경로 인코딩 문제로 이 경로 사용)
-/d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z install -r "D:/Project/BrioDo/android/app/build/outputs/apk/debug/app-debug.apk"
+# 4. Galaxy S24 설치
+# PC마다 ADB 경로 확인 필요 (아래 중 해당하는 경로 사용)
+# - jeiel PC: /c/Users/jeiel/AppData/Local/Android/Sdk/platform-tools/adb.exe
+# - 구 PC (D드라이브): /d/Android/Sdk/platform-tools/adb.exe
+"/c/Users/jeiel/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s R3CWC0KB53Z install -r "D:/Project/BrioDo/android/app/build/outputs/apk/debug/app-debug.apk"
 
 # 5. 앱 실행
-/d/Android/Sdk/platform-tools/adb.exe -s R3CWC0KB53Z shell am start -n app.briodo/.MainActivity
+"/c/Users/jeiel/AppData/Local/Android/Sdk/platform-tools/adb.exe" -s R3CWC0KB53Z shell am start -n app.briodo/.MainActivity
 ```
 
 > ADB 경로 주의: `C:/Users/용은/...` 경로는 bash에서 한글 인코딩 오류 → `/d/Android/Sdk/...` 사용
