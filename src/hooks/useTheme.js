@@ -108,7 +108,7 @@ export function useTheme() {
     }
     return {
       bg: isDark ? '#10151f' : '#f4f3fa',
-      style: isDark ? Style.Light : Style.Dark,
+      style: isDark ? Style.Dark : Style.Light,
     }
   }, [])
 
