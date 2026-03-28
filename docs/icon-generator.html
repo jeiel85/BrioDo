@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #fff; display: flex; align-items: center; justify-content: center; width: 512px; height: 512px; overflow: hidden; }
+    .icon {
+      width: 512px;
+      height: 512px;
+      background: linear-gradient(145deg, #7C3AED 0%, #6750A4 40%, #4F378B 100%);
+      border-radius: 112px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .icon::before {
+      content: '';
+      position: absolute;
+      top: -60px;
+      right: -60px;
+      width: 280px;
+      height: 280px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 50%;
+    }
+    .icon::after {
+      content: '';
+      position: absolute;
+      bottom: -80px;
+      left: -40px;
+      width: 240px;
+      height: 240px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+    }
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      z-index: 1;
+    }
+    .check-circle {
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .checkmark {
+      width: 120px;
+      height: 120px;
+    }
+    .bolt {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 56px;
+      height: 56px;
+      background: #FACC15;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .app-name {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 72px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -2px;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.2);
+    }
+    .app-name span {
+      color: #FACC15;
+    }
+  </style>
+</head>
+<body>
+  <div class="icon">
+    <div class="logo-wrap">
+      <div class="check-circle">
+        <svg class="checkmark" viewBox="0 0 120 120" fill="none">
+          <circle cx="60" cy="60" r="54" stroke="white" stroke-width="8" opacity="0.3"/>
+          <polyline points="30,62 52,84 90,40" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <div class="bolt">⚡</div>
+      </div>
+      <div class="app-name">Brio<span>Do</span></div>
+    </div>
+  </div>
+</body>
+</html>

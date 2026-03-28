@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800;900&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #fff;
+      width: 1024px;
+      height: 500px;
+      overflow: hidden;
+      font-family: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+    }
+    .graphic {
+      width: 1024px;
+      height: 500px;
+      background: linear-gradient(135deg, #1e0a4a 0%, #3b1fa8 35%, #6750A4 65%, #8b5cf6 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 72px;
+      position: relative;
+      overflow: hidden;
+    }
+    /* decorative circles */
+    .circle1 {
+      position: absolute; top: -120px; right: 320px;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.05);
+    }
+    .circle2 {
+      position: absolute; bottom: -140px; left: 160px;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+    }
+    .circle3 {
+      position: absolute; top: -60px; right: -60px;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: rgba(139,92,246,0.3);
+    }
+
+    /* Left: branding */
+    .left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 20px;
+      z-index: 1;
+    }
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .logo-icon {
+      width: 72px; height: 72px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 36px;
+    }
+    .app-name {
+      font-size: 56px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -1px;
+    }
+    .app-name span { color: #FACC15; }
+    .tagline {
+      font-size: 22px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.5px;
+    }
+    .features {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      color: rgba(255,255,255,0.8);
+      font-weight: 600;
+    }
+    .feature-icon {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* Right: mock UI card */
+    .right {
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .mock-card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 20px 24px;
+      width: 340px;
+    }
+    .mock-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .mock-todo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .mock-todo:last-child { border-bottom: none; }
+    .todo-check {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.5);
+      flex-shrink: 0;
+    }
+    .todo-check.done {
+      background: #FACC15;
+      border-color: #FACC15;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px;
+    }
+    .todo-text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.9);
+      font-weight: 600;
+      flex: 1;
+    }
+    .todo-text.done { opacity: 0.5; text-decoration: line-through; }
+    .todo-tag {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-weight: 700;
+    }
+    .tag-work { background: rgba(250,204,21,0.2); color: #FACC15; }
+    .tag-personal { background: rgba(167,243,208,0.2); color: #6ee7b7; }
+    .tag-ai { background: rgba(196,181,253,0.2); color: #c4b5fd; }
+
+    .mock-ai-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(250,204,21,0.15);
+      border: 1px solid rgba(250,204,21,0.3);
+      border-radius: 12px;
+      padding: 10px 16px;
+      width: 340px;
+    }
+    .ai-icon { font-size: 20px; }
+    .ai-text { font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 600; line-height: 1.4; }
+    .ai-text strong { color: #FACC15; }
+
+    .brio-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="graphic">
+    <div class="circle1"></div>
+    <div class="circle2"></div>
+    <div class="circle3"></div>
+
+    <div class="left">
+      <div class="logo-row">
+        <div class="logo-icon">✅</div>
+        <div class="app-name">Brio<span>Do</span></div>
+      </div>
+      <div class="tagline">활기차게, 해내다.</div>
+      <div class="features">
+        <div class="feature-item">
+          <div class="feature-icon">🤖</div>
+          AI 자연어 할 일 입력
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🎤</div>
+          음성 인식 지원
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📅</div>
+          Google 캘린더 자동 동기화
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🌐</div>
+          오프라인에서도 완벽 동작
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="mock-card">
+        <div class="mock-header">📋 오늘 할 일</div>
+        <div class="mock-todo">
+          <div class="todo-check done">✓</div>
+          <div class="todo-text done">팀 주간 회의</div>
+          <div class="todo-tag tag-work">업무</div>
+        </div>
+        <div class="mock-todo">
+          <div class="todo-check"></div>
+          <div class="todo-text">프로젝트 보고서 작성</div>
+          <div class="todo-tag tag-work">업무</div>
+        </div>
+        <div class="mock-todo">
+          <div class="todo-check"></div>
+          <div class="todo-text">저녁 운동 30분</div>
+          <div class="todo-tag tag-personal">개인</div>
+        </div>
+        <div class="mock-todo">
+          <div class="todo-check"></div>
+          <div class="todo-text">독서 — 1챕터</div>
+          <div class="todo-tag tag-personal">개인</div>
+        </div>
+      </div>
+      <div class="mock-ai-badge">
+        <div class="ai-icon">✨</div>
+        <div class="ai-text"><strong>AI가 자동 분석</strong>했어요<br/>"내일 오전 팀 미팅" → 날짜·태그 자동 설정</div>
+      </div>
+      <div class="brio-badge">⚡ 브리오 42 &nbsp;·&nbsp; AI 스마트 입력 가능</div>
+    </div>
+  </div>
+</body>
+</html>
