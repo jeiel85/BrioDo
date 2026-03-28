@@ -218,6 +218,47 @@
 
 ## 📝 최근 활동 로그 (Recent Activity)
 
+- **2026-03-28** (세션 20~21 — 버그 수정 다수 + 설정 탭 UX + Brio 경제 재설계 + AdMob 연동):
+
+  **버그 수정 (#34, #35, #36, #38, #40, #44, #45)**
+  - **#45 StatusBar 색상 반전 버그 수정**: `useTheme.js`의 `brightness > 128 ? Style.Light : Style.Dark` 로직이 반전되어 있어 밝은 테마에서 상단 시계/배터리 아이콘이 흰색(안 보임)으로 표시되던 문제 수정. 올바른 로직: 밝은 배경 → `Style.Dark`(어두운 아이콘), 어두운 배경 → `Style.Light`(밝은 아이콘). `useEffect`와 `syncStatusBar` 함수 두 곳 모두 수정.
+  - **#44 업적 카운트 비밀 업적 미포함 버그 수정**: `AchievementsModal.jsx`에서 `visibleDefs`(표시용)와 `unlockedCount`/`totalCount`(뱃지용) 계산을 분리. 뱃지는 숨겨진 비밀 업적까지 포함한 전체 기준으로 표시.
+  - **#40 AI 사용량 게이지 진행바 제거**: `SettingsModal.jsx`에서 AI 게이지 progress bar 완전 제거. Brio 경제 재설계에 따른 UI 정리.
+  - **#36 업적 언락 모달 confetti 깜빡임(flicker) 버그 수정**: `useAchievements.js`의 `dismissUnlock`, `clearNotifications` 함수를 `useCallback`으로 안정화. 기존에는 매 렌더마다 새 함수 참조가 생성되어 `AchievementUnlockModal`의 `useEffect([achievement, onDismiss])`가 재실행 → confetti 반복 발생.
+  - 업적 언락 모달 glow 애니메이션 딜레이 0.6s 추가 (card 등장 애니메이션 이후 시작).
+
+  **설정 모달 탭 네비게이션 (#42, #43)**
+  - `SettingsModal.jsx`를 4탭 구조로 재편: **외관**(언어·글자크기·테마) / **기능**(입력방식) / **알림**(알림기본값·종일알림·기본보기·날씨·잠금화면) / **계정**(구글캘린더·로그인·앱정보).
+  - `index.css`: `.settings-tabs`, `.settings-tab-btn`, `.settings-tab-icon`, `.settings-tab-label`, `.settings-tab-body` 스타일 추가. 가로 모드(≥600px)에서 2열 그리드 레이아웃.
+  - `settings-scroll-body` padding 상단 16px 제거 (탭 바텀 보더와 간격 최적화).
+
+  **Brio 경제 시스템 재설계 (#37)**
+  - 20년차 마케터 관점 분석: 업적 총 보상 509개 → ~150개로 축소, AI 소비 1 → 2 브리오, 시간 기반 자동 충전(2h/1개, 하루 최대 10개) 도입.
+  - `useBrio.js`: `CHARGE_INTERVAL_MS = 2h`, `MAX_BRIO = 10`, `BRIO_REWARD_BY_DIFFICULTY` 최대값 15로 캡. 자정 리셋 → 시간 누적 충전으로 전환. 기존 사용자 마이그레이션 로직 포함.
+  - `App.jsx`: AI 분석 시 `hasBrio(2)` 체크, `consumeBrio(2)` 소비.
+  - `AchievementUnlockModal.jsx`: BRIO_BY_DIFF 표시값 동기화.
+
+  **AdMob 보상형 광고 연동 (#23)**
+  - `@capacitor-community/admob` 설치 및 android/build.gradle 패치.
+  - `src/hooks/useAdMob.js` 신규: `initAdMob()`, `showRewardedAd(onRewarded)`.
+  - `BrioChargeModal.jsx`: 실제 AdMob 광고 호출, 준비 중 로딩 상태, 실패 시 즉시 지급 폴백.
+  - `AndroidManifest.xml`: AdMob App ID meta-data 추가.
+  - 앱 ID: `ca-app-pub-7262251786684458~9750978148`, 광고 단위: `ca-app-pub-7262251786684458/2962208516`.
+
+  **Play Store 출시 준비 자산 (#25)**
+  - `docs/privacy-policy.html`: AdMob GAID 항목 추가, 광고 섹션 신설.
+  - `docs/store-listing.md`: 한/영 앱 설명, Data Safety 섹션, 릴리즈 노트.
+  - `docs/icon-512.png`, `docs/featured-graphic.png`: 512×512 아이콘 + 1024×500 피처드 그래픽.
+
+  **디바이스 테스트 후 발견된 이슈 (신규 등록)**
+  - **#46** 날씨 지역명 영문 표시 — 코드 수정 완료, 캐시 초기화 필요
+  - **#47** AdMob 광고 불러오기 실패 — 초기화/환경 문제 진단 필요
+  - **#48** 흰색 테마에서 헤더 텍스트 안 보임 — CSS 수정 필요
+  - **#49** 화면 좌우 스와이프로 날짜 이동 — 기능 요청
+  - **#50** 흰색 테마에서 업적 달성 시 화면 깜빡임 — 진단 필요 (useCallback 수정으로 일부 개선됐을 수 있음)
+
+  **닫힌 이슈:** #23, #25 (부분), #34, #35, #36, #37, #38, #40, #42, #43, #44, #45
+
 - **2026-03-26** (세션 19 — 구글 로그인 분석, 태블릿 로드맵, 문서 정비):
   - **구글 로그인 코드 검토**: `useAuth.js` 분기 로직 정상 확인. 사용자가 경험하는 "웹뷰 같은 화면"은 `grantOfflineAccess: true` 설정으로 인해 Google이 Calendar 스코프 refresh token 발급 시 Chrome Custom Tab으로 띄우는 OAuth 동의 화면이며, 최초 로그인 1회에만 표시되는 정상 동작. 코드 수정 불필요.
   - **미래 개선 메모**: `@codetrix-studio/capacitor-google-auth`는 deprecated된 구글 Sign-In SDK v4 사용 중. 장기적으로 `@capawesome-team/capacitor-google-sign-in`(Android Credential Manager API)로 교체 고려.
