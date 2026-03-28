@@ -2965,18 +2965,20 @@ body.modal-open { overflow: hidden; }
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(6px);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  /* backdrop-filter는 visible 상태에서만 — Android WebView GPU 충돌 방지 */
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+  will-change: opacity;
 }
 .ach-unlock-overlay.visible {
   opacity: 1;
   pointer-events: all;
+  backdrop-filter: blur(6px);
 }
 .ach-unlock-card {
   position: relative;
@@ -2989,11 +2991,13 @@ body.modal-open { overflow: hidden; }
   transform: scale(0.7) translateY(20px);
   transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 0 30px rgba(255, 215, 0, 0.3), 0 20px 60px rgba(0,0,0,0.5);
-  animation: ach-glow-pulse 2s ease-in-out infinite;
+  /* glow 애니메이션은 visible 상태에서만 시작 — 즉시 시작 시 깜빡거림 원인 */
   overflow: hidden;
+  will-change: transform;
 }
 .ach-unlock-card.visible {
   transform: scale(1) translateY(0);
+  animation: ach-glow-pulse 2s ease-in-out infinite;
 }
 @keyframes ach-glow-pulse {
   0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.3), 0 20px 60px rgba(0,0,0,0.5); }

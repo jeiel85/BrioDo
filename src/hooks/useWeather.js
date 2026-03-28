@@ -105,7 +105,9 @@ export async function fetchWeather(locationKey = '', lang = 'en') {
       highC: Math.round(Number(today.maxtempC)),
       lowC: Math.round(Number(today.mintempC)),
       desc: cur.weatherDesc?.[0]?.value || '',
-      area: json.nearest_area?.[0]?.areaName?.[0]?.value || '',
+      // 사용자가 직접 입력한 위치명은 그대로 표시 (언어 유지)
+      // IP 자동 감지(빈 문자열)일 때만 wttr.in 반환값 사용
+      area: locationKey.trim() || json.nearest_area?.[0]?.areaName?.[0]?.value || '',
       region: json.nearest_area?.[0]?.region?.[0]?.value || '',
       country: json.nearest_area?.[0]?.country?.[0]?.value || '',
     }
