@@ -11,18 +11,18 @@ export function BrioChargeModal({ onClose, onCharge, balance, lang }) {
   const handleRef = useRef(null)
   const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(onClose, { handleRef })
   const [adLoading, setAdLoading] = useState(false)
+  const [adError, setAdError] = useState(false)
 
   const handleWatchAd = async () => {
     setAdLoading(true)
-    trackEngagement('adsWatched', true)
+    setAdError(false)
     const success = await showRewardedAd((amount) => {
+      trackEngagement('adsWatched', true)
       onCharge(amount || 5)
       onClose()
     })
     if (!success) {
-      // 광고 실패 시 폴백: 즉시 지급
-      onCharge(5)
-      onClose()
+      setAdError(true)
     }
     setAdLoading(false)
   }
@@ -51,6 +51,11 @@ export function BrioChargeModal({ onClose, onCharge, balance, lang }) {
           <button className="brio-charge-ad-btn" onClick={handleWatchAd} disabled={adLoading}>
             {adLoading ? (lang === 'ko' ? '광고 준비 중...' : lang === 'ja' ? '広告準備中...' : lang === 'zh' ? '广告加载中...' : 'Loading ad...') : t.ad}
           </button>
+          {adError && (
+            <p style={{ fontSize: '12px', color: 'var(--color-error)', margin: '8px 0 0', textAlign: 'center' }}>
+              {lang === 'ko' ? '광고를 불러오지 못했어요. 잠시 후 다시 시도해주세요.' : lang === 'ja' ? '広告を読み込めませんでした。後でもう一度試してください。' : lang === 'zh' ? '无法加载广告，请稍后重试。' : 'Ad failed to load. Please try again later.'}
+            </p>
+          )}
           <button className="brio-charge-manual-btn" onClick={onClose}>
             {t.manual}
           </button>
