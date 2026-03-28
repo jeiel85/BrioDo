@@ -3050,7 +3050,8 @@ body.modal-open { overflow: hidden; }
 }
 .ach-unlock-card.visible {
   transform: scale(1) translateY(0);
-  animation: ach-glow-pulse 2s ease-in-out infinite;
+  /* 진입 transition(0.5s) 완료 후 glow 시작 — 동시 실행 시 깜빡거림 방지 */
+  animation: ach-glow-pulse 2s ease-in-out 0.6s infinite;
 }
 @keyframes ach-glow-pulse {
   0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.3), 0 20px 60px rgba(0,0,0,0.5); }
