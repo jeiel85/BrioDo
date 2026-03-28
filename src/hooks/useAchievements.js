@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { calcStreak } from '../utils/helpers'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -462,9 +462,9 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio
     unlockedIds,
     unlockedSortedByDifficulty,
     notifications,
-    clearNotifications: () => setNotifications([]),
+    clearNotifications: useCallback(() => setNotifications([]), []),
     currentUnlock,
-    dismissUnlock: () => setCurrentUnlock(null),
+    dismissUnlock: useCallback(() => setCurrentUnlock(null), []),
   }
 }
 
