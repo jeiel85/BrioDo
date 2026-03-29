@@ -594,19 +594,21 @@ function App() {
       setTimeout(async () => {
         try {
           let finalData = { text: savedText, date: today, time: '', tags: [], reminderOffset: savedReminderOffset }
-          const ai = await getAiFullAnalysis(savedText)
-          if (ai) {
-            finalData = {
-              text: ai.refinedText || savedText,
-              date: ai.date || today,
-              time: ai.time || '',
-              tags: ai.categories || [],
-              reminderOffset: savedReminderOffset
+          if (hasBrio(2)) {
+            const ai = await getAiFullAnalysis(savedText)
+            if (ai) {
+              finalData = {
+                text: ai.refinedText || savedText,
+                date: ai.date || today,
+                time: ai.time || '',
+                tags: ai.categories || [],
+                reminderOffset: savedReminderOffset
+              }
+              setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
+              await saveLocalTodo({ ...localPayload, ...finalData })
+              await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
+              consumeBrio(2) // AI 전체 분석(태그+일정+우선순위) = 2 브리오
             }
-            setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
-            await saveLocalTodo({ ...localPayload, ...finalData })
-            await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
-            consumeBrio(2) // AI 전체 분석(태그+일정+우선순위) = 2 브리오
           }
           // AI 분석 완료 후 알림 스케줄 (날짜가 확정된 시점)
           scheduleNotification({ ...localPayload, ...finalData, id: newId })
