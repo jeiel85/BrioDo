@@ -622,7 +622,7 @@ function App() {
       }, 300)
     } else {
       await addSyncQueue('set', newId, initialData)
-      if (savedReminderTime) scheduleNotification({ ...localPayload })
+      if (savedReminderOffset !== null) scheduleNotification({ ...localPayload })
     }
   }
 
