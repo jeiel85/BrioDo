@@ -1852,6 +1852,17 @@ body.modal-open { overflow: hidden; }
   transition: opacity 0.2s;
 }
 .smart-save-btn:disabled { opacity: 0.4; cursor: default; }
+.smart-save-btn { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.smart-save-brio-cost { opacity: 0.75; font-size: 0.82em; font-weight: 600; }
+.smart-brio-warn {
+  font-size: 12px;
+  color: var(--color-error, #b3261e);
+  text-align: center;
+  margin: 0 0 8px;
+  padding: 6px 12px;
+  background: color-mix(in srgb, var(--color-error, #b3261e) 10%, transparent);
+  border-radius: 8px;
+}
 
 /* ─── 큰 마이크 버튼 (스마트 입력 주요 CTA) ─── */
 .mic-large-btn {
