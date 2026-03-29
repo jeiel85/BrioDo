@@ -4,6 +4,19 @@
 
 ---
 
+## 2026-03-29 — 버그 수정 4종 (#53 #46 #52 #47)
+
+**세션 목표:** 빌드 전 잔여 버그 4종 해결
+
+**수정 내용:**
+1. **#53 Brio 잔량 체크 누락** — `App.jsx` `handleSmartSave`의 setTimeout 콜백 첫 줄에 `if (!hasBrio(2)) return` 추가. 기존엔 `consumeBrio(2)` 실패해도 AI 분석이 이미 완료된 상태였음.
+2. **#46/#52 날씨 지역명 영어 표시** — `useWeather.js`: wttr.in 응답의 lat/lon으로 Nominatim OpenStreetMap 역지오코딩 호출(`lang=ko`). `lang === 'ko'` + IP 자동감지 시에만 적용. "Kwangmyeong" → "광명시" 형태로 수정.
+3. **#47 광고 로딩 stuck** — `useAdMob.js`: `RewardAdPluginEvents.Dismissed`, `FailedToShow` 핸들러 추가. 기존엔 Rewarded 이벤트만 처리 → 광고 중간 닫기/실패 시 Promise 미해결로 로딩 상태 무한 대기. ※ 실제 광고 fill 미발생 시 AdMob 대시보드 앱 승인 상태 확인 필요.
+
+**수정 이슈:** #53, #46, #52, #47
+
+---
+
 ## 2026-03-29 — 상태바 동기화 근본 수정 + 업적 모달 개선 (#51 #48 #50)
 
 **세션 목표:** 디바이스 테스트에서 발견된 버그 3종 수정

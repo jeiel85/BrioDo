@@ -593,6 +593,7 @@ function App() {
       await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
       setTimeout(async () => {
         try {
+          if (!hasBrio(2)) return
           let finalData = { text: savedText, date: today, time: '', tags: [], reminderOffset: savedReminderOffset }
           if (hasBrio(2)) {
             const ai = await getAiFullAnalysis(savedText)

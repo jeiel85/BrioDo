@@ -16,22 +16,35 @@ export async function initAdMob() {
 
 export async function showRewardedAd(onRewarded) {
   try {
-    const adId = REWARDED_AD_ID;
-
     await AdMob.prepareRewardVideoAd({
-      adId,
+      adId: REWARDED_AD_ID,
       isTesting: import.meta.env.DEV || IS_TEST_AD,
     });
 
     return new Promise((resolve) => {
-      const rewardedListener = AdMob.addListener(RewardAdPluginEvents.Rewarded, (reward) => {
-        rewardedListener.then(l => l.remove());
+      const listeners = [];
+      const cleanup = () => listeners.forEach(l => l.then(h => h.remove()).catch(() => {}));
+
+      listeners.push(AdMob.addListener(RewardAdPluginEvents.Rewarded, (reward) => {
+        cleanup();
         onRewarded(reward.amount || 5);
         resolve(true);
-      });
+      }));
+
+      listeners.push(AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
+        cleanup();
+        resolve(false);
+      }));
+
+      listeners.push(AdMob.addListener(RewardAdPluginEvents.FailedToShow, (error) => {
+        console.warn('AdMob FailedToShow:', error);
+        cleanup();
+        resolve(false);
+      }));
 
       AdMob.showRewardVideoAd().catch((e) => {
         console.warn('AdMob show failed:', e);
+        cleanup();
         resolve(false);
       });
     });
