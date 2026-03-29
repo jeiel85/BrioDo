@@ -234,12 +234,22 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           </div>
         )}
 
+        {brioBalance !== undefined && brioBalance < 2 && !isListening && (
+          <p className="smart-brio-warn">
+            {lang === 'ko'
+              ? `⚡ Brio 부족 — AI 없이 저장됩니다 (잔량: ${brioBalance})`
+              : `⚡ Low Brio — will save without AI (balance: ${brioBalance})`}
+          </p>
+        )}
         <button
           className="smart-save-btn"
           onClick={() => onSave(smartText)}
           disabled={!smartText.trim() || isAiAnalyzing || isListening}
         >
-          {lang === 'ko' ? '저장' : 'Save'}
+          <span>{lang === 'ko' ? '저장' : 'Save'}</span>
+          {(brioBalance === undefined || brioBalance >= 2) && (
+            <span className="smart-save-brio-cost">⚡2</span>
+          )}
         </button>
         </div>{/* /smart-input-body */}
       </div>
