@@ -99,15 +99,33 @@ export async function fetchWeather(locationKey = '', lang = 'en') {
     const today = json.weather?.[0]
     if (!cur || !today) throw new Error('Invalid response')
 
+    let area = locationKey.trim() || json.nearest_area?.[0]?.areaName?.[0]?.value || ''
+
+    // 한국어 + IP 자동감지 시: Nominatim 역지오코딩으로 한국어 도시명 조회
+    if (!locationKey.trim() && lang === 'ko') {
+      const lat = json.nearest_area?.[0]?.latitude?.[0]?.value
+      const lon = json.nearest_area?.[0]?.longitude?.[0]?.value
+      if (lat && lon) {
+        try {
+          const nr = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ko`,
+            { signal: AbortSignal.timeout(4000), headers: { 'Accept-Language': 'ko' } }
+          )
+          if (nr.ok) {
+            const nd = await nr.json()
+            area = nd.address?.city || nd.address?.town || nd.address?.county || nd.address?.state || area
+          }
+        } catch {}
+      }
+    }
+
     const data = {
       icon: getWeatherIcon(Number(cur.weatherCode)),
       tempC: Math.round(Number(cur.temp_C)),
       highC: Math.round(Number(today.maxtempC)),
       lowC: Math.round(Number(today.mintempC)),
       desc: cur.weatherDesc?.[0]?.value || '',
-      // 사용자가 직접 입력한 위치명은 그대로 표시 (언어 유지)
-      // IP 자동 감지(빈 문자열)일 때만 wttr.in 반환값 사용
-      area: locationKey.trim() || json.nearest_area?.[0]?.areaName?.[0]?.value || '',
+      area,
       region: json.nearest_area?.[0]?.region?.[0]?.value || '',
       country: json.nearest_area?.[0]?.country?.[0]?.value || '',
     }
