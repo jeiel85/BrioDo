@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-03-30 — 스토어 등록 준비 (세션 20)
+
+**세션 목표:** 스토어 제출용 자산 준비 및 버전 정보 수정
+
+**수행 작업:**
+1. **versionName 수정** — `"1.0"` → `"1.0.0"` (android/app/build.gradle)
+2. **스크린샷 5장 캡처** — Galaxy S24 ADB 스크린샷 → `docs/screenshots/`
+   - 01_today.png (오늘 탭)
+   - 02_smart_input.png (할 일 입력 모달)
+   - 03_settings.png (설정 화면)
+   - 04_collection.png (컬렉션/업적)
+   - 05_tasks.png (전체 할 일)
+3. **GitHub Pages 확인** — `https://jeiel85.github.io/BrioDo/` 빌드 완료 (개인정보처리방침 URL 사용 가능)
+4. **릴리즈 빌드** — v1.0.0 AAB(7.6MB) + APK(5.3MB) 재생성
+
+**다음 할 일:**
+- Samsung Galaxy Store 등록 (https://seller.samsungapps.com)
+- Google OAuth 동의 화면 프로덕션 전환 (Google Cloud Console)
+- Google Play Store 등록 ($25 개발자 계정 필요)
+
+---
+
 ## 2026-03-30 — 릴리즈 전 코드 감사 + 보안 수정 (세션 19)
 
 **세션 목표:** Play Store 출시 전 코드 감사 및 릴리즈 블로커 수정
