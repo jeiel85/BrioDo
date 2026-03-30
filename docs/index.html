@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrioDo — 활기차게, 해내다.</title>
+  <meta name="description" content="BrioDo는 AI와 Google 캘린더가 연동되는 스마트 할 일 관리 앱입니다. Gemini AI로 자연어 입력, 음성 인식, 오프라인 우선 동작을 지원합니다." />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+      background: #f5f0ff;
+      color: #1c1b1f;
+      line-height: 1.6;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #6750a4 0%, #9c7cd6 100%);
+      color: #fff;
+      padding: 64px 24px 80px;
+      text-align: center;
+    }
+    .hero-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 22px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    .hero .tagline {
+      font-size: 1.15rem;
+      opacity: 0.88;
+      margin-bottom: 32px;
+    }
+    .btn-download {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff;
+      color: #6750a4;
+      font-weight: 700;
+      font-size: 1rem;
+      padding: 14px 28px;
+      border-radius: 50px;
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.22); }
+
+    /* Features */
+    .section { max-width: 760px; margin: 0 auto; padding: 56px 24px; }
+    .section h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #6750a4;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px 20px;
+      box-shadow: 0 2px 10px rgba(103,80,164,0.09);
+    }
+    .feature-card .icon { font-size: 2rem; margin-bottom: 12px; }
+    .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; color: #3b2d6e; }
+    .feature-card p { font-size: 0.9rem; color: #49454f; }
+
+    /* App purpose */
+    .purpose {
+      background: #fff;
+      border-left: 4px solid #6750a4;
+      border-radius: 0 12px 12px 0;
+      padding: 20px 24px;
+      margin: 0 0 32px;
+      font-size: 0.95rem;
+      color: #3b2d6e;
+    }
+
+    /* Privacy / Links */
+    .links-section {
+      background: #ede8ff;
+      padding: 40px 24px;
+      text-align: center;
+    }
+    .links-section h2 { font-size: 1.2rem; font-weight: 700; color: #3b2d6e; margin-bottom: 16px; }
+    .link-list { list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+    .link-list a {
+      display: inline-block;
+      background: #6750a4;
+      color: #fff;
+      padding: 10px 22px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+    .link-list a:hover { background: #7965af; }
+    .link-list a.secondary {
+      background: transparent;
+      color: #6750a4;
+      border: 2px solid #6750a4;
+    }
+    .link-list a.secondary:hover { background: #ede8ff; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 28px 24px;
+      font-size: 0.82rem;
+      color: #79747e;
+    }
+    footer a { color: #6750a4; text-decoration: none; }
+
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 2rem; }
+      .hero { padding: 48px 20px 64px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <img src="icon-512.png" alt="BrioDo 아이콘" class="hero-icon" />
+    <h1>BrioDo</h1>
+    <p class="tagline">활기차게, 해내다. — AI와 함께하는 스마트 할 일 관리</p>
+    <a href="https://github.com/jeiel85/BrioDo/releases/latest" class="btn-download">
+      ⬇ Android APK 다운로드
+    </a>
+  </section>
+
+  <!-- App Purpose -->
+  <div class="section">
+    <div class="purpose">
+      BrioDo는 AI와 Google 캘린더가 연동되는 스마트 할 일 관리 Android 앱입니다.
+      자연어로 할 일을 입력하면 Gemini AI가 날짜·시간·태그·우선순위를 자동으로 설정하고,
+      Google 캘린더와 양방향으로 동기화합니다. 로그인 없이도 게스트 모드로 바로 사용할 수 있습니다.
+    </div>
+
+    <!-- Features -->
+    <h2>주요 기능</h2>
+    <div class="features">
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>AI 자연어 입력</h3>
+        <p>"내일 오전 10시 팀 미팅"처럼 자연어로 입력하면 Gemini AI가 날짜·태그·우선순위를 자동 설정합니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📅</div>
+        <h3>Google 캘린더 연동</h3>
+        <p>할 일을 추가·수정·완료하면 Google 캘린더에 즉시 반영됩니다. 전용 "BrioDo" 캘린더로 깔끔하게 분리됩니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🎤</div>
+        <h3>음성 인식 입력</h3>
+        <p>말하는 대로 할 일이 만들어집니다. Android 네이티브 음성 인식으로 빠르게 기록하세요.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌐</div>
+        <h3>오프라인 우선</h3>
+        <p>인터넷 없이도 완벽하게 동작합니다. 온라인이 되면 클라우드에 자동 동기화됩니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🏆</div>
+        <h3>200개 업적 시스템</h3>
+        <p>할 일을 완료할수록 업적을 획득하고 브리오 포인트를 모을 수 있습니다.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🌍</div>
+        <h3>4개 언어 지원</h3>
+        <p>한국어, English, 日本語, 中文을 지원합니다. 설정에서 언제든지 변경 가능합니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Links -->
+  <div class="links-section">
+    <h2>다운로드 및 링크</h2>
+    <ul class="link-list">
+      <li><a href="https://github.com/jeiel85/BrioDo/releases/latest">최신 APK 다운로드</a></li>
+      <li><a href="https://github.com/jeiel85/BrioDo" class="secondary">GitHub 저장소</a></li>
+      <li><a href="https://jeiel85.github.io/BrioDo/privacy-policy.html" class="secondary">개인정보처리방침</a></li>
+    </ul>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    BrioDo — Do it with brio.<br />
+    © 2026 BrioDo. MIT License.<br />
+    문의: <a href="mailto:jeiel85@gmail.com">jeiel85@gmail.com</a>
+    &nbsp;|&nbsp;
+    <a href="https://jeiel85.github.io/BrioDo/privacy-policy.html">개인정보처리방침</a>
+  </footer>
+
+</body>
+</html>
