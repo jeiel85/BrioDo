@@ -74,7 +74,6 @@ export async function scheduleNotification(todo) {
         channelId,
       }]
     })
-    console.log(`[Notif] scheduled: ${text} at ${at.toISOString()} (ch: ${channelId})`)
   } catch (e) {
     console.error('[Notif] schedule error:', e)
   }
@@ -84,7 +83,6 @@ export async function cancelNotification(todoId) {
   try {
     const notifId = toNotifId(todoId)
     await LocalNotifications.cancel({ notifications: [{ id: notifId }] })
-    console.log(`[Notif] cancelled: ${todoId}`)
   } catch (e) {
     console.error('[Notif] cancel error:', e)
   }

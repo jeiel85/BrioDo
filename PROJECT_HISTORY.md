@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-03-30 — 릴리즈 전 코드 감사 + 보안 수정 (세션 19)
+
+**세션 목표:** Play Store 출시 전 코드 감사 및 릴리즈 블로커 수정
+
+**수행 작업:**
+1. **소스 최신화** — `git pull origin main` (2 커밋 반영: AdMob/날씨/상태바 수정)
+2. **크리티컬 버그 머지** — `fix-critical-launch-issues-MrdAw` 브랜치 병합
+   - 오프라인 알림 미발송 오타 수정 (`savedReminderTime` → `savedReminderOffset !== null`)
+   - 네트워크 리스너 메모리 누수 방지 (Promise 체이닝 → 명시적 cleanup)
+3. **BLOCKER 수정: 코드 난독화 비활성화** — `android/app/build.gradle`
+   - `minifyEnabled false` → `true`, `shrinkResources true` 추가
+4. **BLOCKER 수정: console.log 전수 제거** — 민감 정보 Logcat 노출 방지
+   - `useAuth.js` (사용자 이메일, OAuth 토큰, deep link URL 등 9개 제거)
+   - `calendar.js` (토큰 갱신 로그 2개 제거)
+   - `useNotifications.js` (알림 scheduled/cancelled 로그 2개 제거)
+   - `useTodosData.js` (마이그레이션 로그 2개 제거)
+   - `console.error/warn`(실제 오류 핸들링)은 유지
+5. **WARNING 수정: allowBackup 비활성화** — `AndroidManifest.xml`
+   - `android:allowBackup="true"` → `false`
+
+**확인 사항:**
+- `.env`는 git-tracked 아님 (`.env.example`만 추적) → 보안 이상 없음
+
+---
+
 ## 2026-03-29 — 버그 수정 4종 (#53 #46 #52 #47)
 
 **세션 목표:** 빌드 전 잔여 버그 4종 해결

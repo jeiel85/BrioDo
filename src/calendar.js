@@ -28,12 +28,10 @@ export const refreshAccessTokenIfNeeded = async () => {
     if (refreshed?.authentication?.accessToken) {
       localStorage.setItem('googleAccessToken', refreshed.authentication.accessToken)
       localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
-      console.log('Calendar token refreshed ✓')
       return { success: true, expired: false }
     } else if (refreshed?.accessToken) {
       localStorage.setItem('googleAccessToken', refreshed.accessToken)
       localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
-      console.log('Calendar token refreshed ✓')
       return { success: true, expired: false }
     }
     return { success: false, expired: true }

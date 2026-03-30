@@ -62,7 +62,6 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
         const all = await getLocalTodos()
         const guests = all.filter(t => !t.uid && !t.completed)
         if (guests.length === 0) return
-        console.log(`Migrating ${guests.length} guest todo(s) to Firestore...`)
         for (const todo of guests) {
           const newDocRef = doc(collection(db, 'todos'))
           const { id: oldId, createdAt: _, ...rest } = todo
@@ -71,7 +70,6 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
           await deleteLocalTodo(oldId)
           await saveLocalTodo({ ...payload, id: newDocRef.id })
         }
-        console.log('Guest todos migrated ✓')
       } catch (e) { console.error('Guest migration error:', e) }
     }
     migrateGuestTodos()
