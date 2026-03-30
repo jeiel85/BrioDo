@@ -1,4 +1,18 @@
 # Add project specific ProGuard rules here.
+
+# capacitor-firebase/authentication references Facebook SDK optional classes.
+# We don't use Facebook login, so suppress missing class errors.
+-dontwarn com.facebook.**
+-keep class com.facebook.** { *; }
+
+# Capacitor WebView JS interface
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+
+# Keep R8 from stripping Capacitor plugin interfaces
+-keep class com.getcapacitor.** { *; }
+-keepclassmembers class com.getcapacitor.** { *; }
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
 #
