@@ -1,6 +1,6 @@
 # BrioDo 스토어 출시 체크리스트
 
-> 마지막 업데이트: 2026-03-30
+> 마지막 업데이트: 2026-03-30 (오전 세션)
 > 클로가 할 수 없는 **수동 작업** 목록입니다. 하나씩 완료 후 체크하세요.
 
 ---
@@ -39,17 +39,21 @@
 
 > 참고: `docs/play-store-submission.md`
 
-- [ ] https://play.google.com/console 개발자 계정 등록 ($25 결제)
-- [ ] "앱 만들기" → BrioDo 생성
-- [ ] 스토어 등록 정보 입력 (한국어 + English)
-  - 설명 전체: `play-store-submission.md` 복붙
+- ✅ 개발자 계정 등록 ($25 결제 완료)
+- ✅ "앱 만들기" → BrioDo 생성 완료
+- ✅ 스토어 설정 → 연락처 세부정보 저장 (이메일: jeiel85@gmail.com, 전화: +8210044722439)
+- [ ] **🔴 개발자 신원 인증** — Play Console 상단 배너 "세부정보 보기" 클릭 → 신분증 제출 (1~3일 소요, 내부 테스트 게시 전 필수)
+- [ ] 기본 스토어 등록정보 입력 (`Play Console → 앱 정보 → 스토어 등록정보`)
+  - 앱 이름: `BrioDo — Do it with brio.` ✅ 입력됨
+  - 간단한 설명 (80자): `docs/store-listing.md` 짧은 설명 (한국어, 마크다운 제거 텍스트)
+  - 자세한 설명: `docs/store-listing.md` 한국어 전체 설명 (마크다운 제거, 순수 텍스트로 붙여넣기)
+  - 아이콘 업로드: `docs/icon-512.png`
+  - 피처 그래픽 업로드: `docs/featured-graphic.png`
+  - 스크린샷 업로드: `docs/screenshots/01~05_*.png` (5장)
 - [ ] 콘텐츠 등급 IARC 설문 완료
 - [ ] 데이터 보안 섹션 작성
-  - 항목: `play-store-submission.md` Data Safety 표 참조
+  - 항목: `docs/store-listing.md` Data Safety 표 참조
 - [ ] 앱 액세스 설정 (게스트 모드로 리뷰 가능 설정)
-- [ ] 아이콘 업로드: `docs/icon-512.png`
-- [ ] 피처 그래픽 업로드: `docs/featured-graphic.png`
-- [ ] 스크린샷 업로드: `docs/screenshots/` 5장
 - [ ] 내부 테스트 트랙에 AAB 업로드
   - AAB 경로: `android/app/build/outputs/bundle/release/app-release.aab`
 - [ ] (**OAuth 심사 완료 후**) 프로덕션 트랙으로 이동 → 검토 제출
@@ -78,3 +82,4 @@
 - ✅ OAuth 심사 서류 작성 완료
 - ✅ Samsung Galaxy Store 개발자 계정 신청
 - ✅ 릴리즈 보안 수정 (난독화, console.log 제거, allowBackup)
+- ✅ Play Console 개발자 계정 생성 + 앱 등록 + 연락처 세부정보 저장
