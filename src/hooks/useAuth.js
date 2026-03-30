@@ -33,8 +33,6 @@ export function useAuth() {
   }, [loading])
 
   useEffect(() => {
-    console.log("Setting up Auth listener...")
-
     // 네이티브 환경에서 GoogleAuth 초기화
     if (Capacitor.isNativePlatform()) {
       GoogleAuth.initialize({
@@ -51,7 +49,6 @@ export function useAuth() {
 
     const checkTimer = setTimeout(() => {
       if (loading && !user) {
-        console.log("Auth Timeout - checking currentUser manually")
         if (auth.currentUser) {
           setUser(auth.currentUser)
           setLoading(false)
@@ -60,7 +57,6 @@ export function useAuth() {
     }, 3000)
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
-      console.log("Auth state changed:", u ? u.email : "No User")
       clearTimeout(checkTimer)
       setUser(u)
       setLoading(false)
@@ -75,7 +71,6 @@ export function useAuth() {
             const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
             if (oauthCredential?.accessToken) {
               localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
-              console.log("Access Token saved from Web Redirect")
             }
           }
         } catch (e) {
@@ -86,8 +81,8 @@ export function useAuth() {
     }
 
     if (Capacitor.isNativePlatform()) {
-      const handleDeepLink = CapApp.addListener('appUrlOpen', (data) => {
-        console.log('App opened with URL:', data.url)
+      const handleDeepLink = CapApp.addListener('appUrlOpen', (_data) => {
+        // deep link handled silently
       })
       return () => {
         unsubscribe()
@@ -112,14 +107,7 @@ export function useAuth() {
     try {
       if (Capacitor.isNativePlatform()) {
         // 네이티브: GoogleAuth 플러그인으로 OAuth2 accessToken 포함 로그인
-        console.log("Native login: GoogleAuth.signIn()")
         const googleUser = await GoogleAuth.signIn()
-        console.log("GoogleAuth result:", JSON.stringify({
-          email: googleUser?.email,
-          hasIdToken: !!googleUser?.authentication?.idToken,
-          hasAccessToken: !!googleUser?.authentication?.accessToken,
-        }))
-
         const { idToken, accessToken } = googleUser.authentication
         const credential = GoogleAuthProvider.credential(idToken, accessToken)
         await signInWithCredential(auth, credential)
@@ -128,19 +116,16 @@ export function useAuth() {
           localStorage.setItem('googleAccessToken', accessToken)
           localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
           setTokenExpired(false)
-          console.log("Native: Calendar accessToken saved ✓")
         } else {
           console.warn("Native: accessToken not returned")
         }
       } else {
         // 웹: 팝업 방식
-        console.log("Web login: signInWithPopup()")
         const result = await signInWithPopup(auth, googleProvider)
         const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
         if (oauthCredential?.accessToken) {
           localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
           localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
-          console.log("Web: accessToken saved ✓")
         }
       }
     } catch (e) {
