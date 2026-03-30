@@ -49,8 +49,9 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
       setIsOnline(status.connected)
       if (status.connected && user) await processSyncQueue()
     }
-    const listener = Network.addListener('networkStatusChange', handleNetworkChange)
-    return () => { listener.then(l => l.remove()) }
+    let networkListener = null
+    Network.addListener('networkStatusChange', handleNetworkChange).then(l => { networkListener = l })
+    return () => { networkListener?.remove() }
   }, [user])
 
   // 로그인 시 게스트 todos를 Firestore로 마이그레이션 (미완료 항목만)
