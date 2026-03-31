@@ -4,6 +4,36 @@
 
 ---
 
+## 2026-03-31 — 버그 수정 4종 + 앱 아이콘 교체 (세션 21)
+
+**세션 목표:** GitHub Issues 우선순위 선정 및 수정, 앱 아이콘 변경
+
+**수정 이슈:**
+1. **#73 업적 달성 시 화면 깜빡임 근본 수정**
+   - **원인 A**: `ach-glow-pulse` 애니메이션이 `box-shadow` 변화 → Android WebView full repaint → 깜빡임
+   - **원인 B (핵심)**: `canvas-confetti`가 생성한 `position: fixed` 전체화면 canvas가 `confetti.reset()` 미호출로 DOM 잔류 → 모달 닫힌 후에도 GPU 레이어 점유 → 일반 사용 중에도 깜빡임
+   - `AchievementUnlockModal.jsx`: useEffect cleanup + handleClick에 `confetti.reset()` 추가, confetti 250ms timer도 clearTimeout 처리
+   - `index.css`: `ach-glow-pulse`를 box-shadow 변화 → `::after` 가상 요소 + opacity 애니메이션으로 교체
+
+2. **#74 브리오 꽉 찬 상태에서 업적/광고 보상 누락**
+   - `useBrio.js`: `MAX_BRIO_OVERFLOW = 50` 상수 추가, `charge()` 캡을 `MAX_BRIO(10)` → `MAX_BRIO_OVERFLOW(50)`으로 완화
+   - 자동 충전은 여전히 10까지만, 업적·광고는 최대 50까지 보유 가능
+
+3. **#54 SmartInputModal AI 비용 안내 개선**
+   - Brio 부족 시 저장 버튼 텍스트 `저장` → `저장 (AI 없음)`으로 명시 (ja/zh 다국어 포함)
+   - 버튼 스타일 구분: `.smart-save-btn.no-ai` (회색 그라디언트)
+
+4. **#71 음성 인식 타임아웃 여유 개선**
+   - 네이티브 SpeechRecognition: `partialResults: false` → `true` (Android가 더 오래 입력 대기)
+   - 자동 재시도 횟수: 1회 → 2회 (Samsung SpeechRecognizer 간헐적 실패 대응)
+
+**앱 아이콘 교체:**
+- 5개 Gemini 생성 후보 중 `e6m8x9` 선정: B(BrioDo) + 체크마크 + 상향 화살표 + 컬러 그라디언트
+- `docs/icon-512.png` 교체 + Android 전 mipmap 크기(ldpi~xxxhdpi) 업데이트
+- 나머지 후보 4개 및 `docs/icon_choice/` 폴더 삭제 (git 용량 절감)
+
+---
+
 ## 2026-03-30 — 스토어 등록 준비 (세션 20)
 
 **세션 목표:** 스토어 제출용 자산 준비 및 버전 정보 수정
