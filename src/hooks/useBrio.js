@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 
 const BRIO_KEY = 'briodo-brio'
 export const MAX_BRIO = 10
+export const MAX_BRIO_OVERFLOW = 50 // 업적·광고로 최대 보유 가능 (자동 충전은 MAX_BRIO까지)
 export const DAILY_BRIO = MAX_BRIO // backward compat
 export const CHARGE_INTERVAL_MS = 2 * 60 * 60 * 1000 // 2시간마다 1개 자동 충전
 
@@ -105,10 +106,10 @@ export function useBrio() {
     return true
   }, [])
 
-  // 브리오 충전 (업적 보상·광고 등 — MAX_BRIO 상한, 기존 잔량 감소 없음)
+  // 브리오 충전 (업적 보상·광고 등 — MAX_BRIO_OVERFLOW 상한, 자동 충전과 별개)
   const charge = useCallback((amount) => {
     const current = getBrioData()
-    const newBalance = Math.max(current.balance, Math.min(current.balance + amount, MAX_BRIO))
+    const newBalance = Math.min(current.balance + amount, MAX_BRIO_OVERFLOW)
     const updated = {
       ...current,
       balance: newBalance,

@@ -59,7 +59,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         const result = await SpeechRecognition.start({
           language: langCode,
           maxResults: 1,
-          partialResults: false,
+          partialResults: true,
           popup: false,
         })
 
@@ -72,8 +72,8 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         console.warn('[SpeechRecognition]', rawMsg)
         const msg = rawMsg.toLowerCase()
         const isNoMatch = msg.includes('no match') || msg.includes('didn\'t understand') || msg.includes('no speech')
-        if (isNoMatch && retryCount < 1) {
-          // 1회 자동 재시도 (Samsung SpeechRecognizer 간헐적 실패 대응)
+        if (isNoMatch && retryCount < 2) {
+          // 최대 2회 자동 재시도 (Samsung SpeechRecognizer 간헐적 실패 대응)
           retryingRef.current = true
           setIsRetrying(true)
         } else if (msg.includes('permission') || msg.includes('denied')) {
@@ -242,11 +242,15 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           </p>
         )}
         <button
-          className="smart-save-btn"
+          className={`smart-save-btn${brioBalance !== undefined && brioBalance < 2 ? ' no-ai' : ''}`}
           onClick={() => onSave(smartText)}
           disabled={!smartText.trim() || isAiAnalyzing || isListening}
         >
-          <span>{lang === 'ko' ? '저장' : 'Save'}</span>
+          <span>
+            {brioBalance !== undefined && brioBalance < 2
+              ? (lang === 'ko' ? '저장 (AI 없음)' : lang === 'ja' ? '保存 (AI なし)' : lang === 'zh' ? '保存 (无AI)' : 'Save (No AI)')
+              : (lang === 'ko' ? '저장' : lang === 'ja' ? '保存' : lang === 'zh' ? '保存' : 'Save')}
+          </span>
           {(brioBalance === undefined || brioBalance >= 2) && (
             <span className="smart-save-brio-cost">⚡2</span>
           )}

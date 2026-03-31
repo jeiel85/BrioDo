@@ -22,14 +22,14 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
   useEffect(() => {
     if (achievement) {
       setVisible(true)
-      
+
       confetti({
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
         colors: ['#FFD700', '#FF6B6B', '#4FC3F7', '#81C784', '#CE93D8']
       })
-      setTimeout(() => {
+      const confettiTimer = setTimeout(() => {
         confetti({
           particleCount: 80,
           angle: 60,
@@ -47,7 +47,11 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
       }, 250)
 
       const timer = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 300) }, 5000)
-      return () => clearTimeout(timer)
+      return () => {
+        clearTimeout(timer)
+        clearTimeout(confettiTimer)
+        confetti.reset()
+      }
     }
   }, [achievement, onDismiss])
 
@@ -60,7 +64,7 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
   const name = achievement.name?.[lang] || achievement.name?.ko || ''
   const desc = achievement.desc?.[lang] || achievement.desc?.ko || ''
 
-  const handleClick = () => { setVisible(false); setTimeout(onDismiss, 300) }
+  const handleClick = () => { confetti.reset(); setVisible(false); setTimeout(onDismiss, 300) }
 
   return (
     <div
