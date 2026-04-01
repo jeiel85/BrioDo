@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
 
 const PARTICLES = [
@@ -18,10 +18,28 @@ const PARTICLES = [
 
 export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
   const [visible, setVisible] = useState(false)
+  // localAchievement: achievement prop이 null이 돼도 exit 애니메이션 동안 렌더링 유지
+  const [localAchievement, setLocalAchievement] = useState(null)
+  const rafRef = useRef(null)
+
+  const dismiss = (ach) => {
+    confetti.reset()
+    setVisible(false)
+    setTimeout(() => {
+      setLocalAchievement(null)
+      onDismiss()
+    }, 350)
+  }
 
   useEffect(() => {
     if (achievement) {
-      setVisible(true)
+      setLocalAchievement(achievement)
+
+      // rAF: 초기 visible=false 상태가 브라우저에 한 프레임 페인트된 후 transition 시작
+      // → 마운트 직후 setVisible(true) 동기 호출 시 transition이 생략되는 문제 방지
+      rafRef.current = requestAnimationFrame(() => {
+        setVisible(true)
+      })
 
       confetti({
         particleCount: 150,
@@ -46,8 +64,10 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
         })
       }, 250)
 
-      const timer = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 300) }, 5000)
+      const timer = setTimeout(() => dismiss(achievement), 5000)
+
       return () => {
+        cancelAnimationFrame(rafRef.current)
         clearTimeout(timer)
         clearTimeout(confettiTimer)
         confetti.reset()
@@ -55,21 +75,19 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
     }
   }, [achievement, onDismiss])
 
-  if (!achievement) return null
+  if (!localAchievement) return null
 
   const BRIO_BY_DIFF = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 5, 8: 7, 9: 10, 10: 15 }
   const REWARD_CAP = 15
-  const brioReward = Math.min(achievement.brioReward ?? BRIO_BY_DIFF[achievement.difficulty] ?? 0, REWARD_CAP)
-  const isSecret = achievement.hidden === true
-  const name = achievement.name?.[lang] || achievement.name?.ko || ''
-  const desc = achievement.desc?.[lang] || achievement.desc?.ko || ''
-
-  const handleClick = () => { confetti.reset(); setVisible(false); setTimeout(onDismiss, 300) }
+  const brioReward = Math.min(localAchievement.brioReward ?? BRIO_BY_DIFF[localAchievement.difficulty] ?? 0, REWARD_CAP)
+  const isSecret = localAchievement.hidden === true
+  const name = localAchievement.name?.[lang] || localAchievement.name?.ko || ''
+  const desc = localAchievement.desc?.[lang] || localAchievement.desc?.ko || ''
 
   return (
     <div
       className={`ach-unlock-overlay ${visible ? 'visible' : ''}`}
-      onClick={handleClick}
+      onClick={() => dismiss(localAchievement)}
     >
       <div className={`ach-unlock-card ${visible ? 'visible' : ''}`} onClick={e => e.stopPropagation()}>
         <div className="ach-particles">
@@ -86,7 +104,7 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
             />
           ))}
         </div>
-        <div className="ach-unlock-icon">{achievement.icon}</div>
+        <div className="ach-unlock-icon">{localAchievement.icon}</div>
         <div className="ach-unlock-title">
           {isSecret
             ? (lang === 'ko' ? '🔮 비밀 업적 해제!' : lang === 'ja' ? '🔮 秘密実績解除！' : lang === 'zh' ? '🔮 秘密成就解锁！' : '🔮 Secret Achievement!')
@@ -95,7 +113,7 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
         <div className="ach-unlock-name">{name}</div>
         <div className="ach-unlock-desc">{desc}</div>
         <div className="ach-unlock-difficulty">
-          {'★'.repeat(Math.ceil(achievement.difficulty / 2))}{'☆'.repeat(5 - Math.ceil(achievement.difficulty / 2))}
+          {'★'.repeat(Math.ceil(localAchievement.difficulty / 2))}{'☆'.repeat(5 - Math.ceil(localAchievement.difficulty / 2))}
         </div>
         {brioReward > 0 && (
           <div className="ach-unlock-brio">⚡+{brioReward}</div>
