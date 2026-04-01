@@ -37,7 +37,7 @@ function getBrioData() {
     // 기존 날짜 기반 데이터 마이그레이션 (date 필드 있으면 시간 충전으로 전환)
     if (saved.date && !saved.lastChargeAt) {
       return {
-        balance: Math.min(typeof saved.balance === 'number' ? saved.balance : MAX_BRIO, MAX_BRIO),
+        balance: Math.min(typeof saved.balance === 'number' ? saved.balance : MAX_BRIO, MAX_BRIO_OVERFLOW),
         lastChargeAt: Date.now(),
         totalEarned: saved.totalEarned || 0,
         totalSpent: saved.totalSpent || 0,
@@ -49,7 +49,7 @@ function getBrioData() {
       totalEarned: 0,
       totalSpent: 0,
       ...saved,
-      balance: Math.min(typeof saved.balance === 'number' ? saved.balance : MAX_BRIO, MAX_BRIO),
+      balance: Math.min(typeof saved.balance === 'number' ? saved.balance : MAX_BRIO, MAX_BRIO_OVERFLOW),
     }
     return applyTimeCharge(data)
   } catch {

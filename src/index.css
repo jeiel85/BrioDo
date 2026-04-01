@@ -2100,9 +2100,9 @@ body.modal-open { overflow: hidden; }
 .font-size-selector button span:last-child { font-size: 12px; }
 
 .font-size-selector button.active {
-  background: color-mix(in srgb, var(--color-primary) 15%, var(--color-surface-container-high));
+  background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-on-primary);
 }
 
 /* ─── Login Card (Guest State) ─── */

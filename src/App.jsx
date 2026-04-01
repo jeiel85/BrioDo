@@ -182,7 +182,7 @@ function App() {
   const [isLockScreen, setIsLockScreen] = useState(false)
   const [showLockPreview, setShowLockPreview] = useState(false)
   const [lockScreenEnabled, setLockScreenEnabled] = useState(
-    () => localStorage.getItem('lockScreenEnabled') !== 'false'
+    () => localStorage.getItem('lockScreenEnabled') === 'true'
   )
   const setLockScreenEnabledPersisted = (val) => {
     setLockScreenEnabled(val)
