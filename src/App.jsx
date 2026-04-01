@@ -991,6 +991,7 @@ function App() {
         <BrioChargeModal
           lang={lang}
           balance={brioBalance}
+          nextChargeMs={nextChargeMs}
           onCharge={chargeBrio}
           onClose={() => setShowBrioChargeModal(false)}
         />
