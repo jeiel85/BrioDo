@@ -166,7 +166,14 @@ function App() {
   const setLockScreenEnabledPersisted = (val) => {
     setLockScreenEnabled(val)
     localStorage.setItem('lockScreenEnabled', String(val))
-    if (!val) setIsLockScreen(false)
+    if (val) {
+      // 잠금화면 활성화: 포어그라운드 서비스 시작 (화면 켤 때 알림으로 BrioDo 진입)
+      LockScreenNative?.startLockScreenService().catch(() => {})
+    } else {
+      // 잠금화면 비활성화: 서비스 종료 + 알림 제거
+      LockScreenNative?.stopLockScreenService().catch(() => {})
+      setIsLockScreen(false)
+    }
   }
 
   // 캘린더 동기화 ON/OFF
@@ -391,6 +398,10 @@ function App() {
       })
       // 앱 최초 실행 시 잠금화면 체크
       checkLockScreen()
+      // lockScreenEnabled가 true이면 서비스가 실행 중인지 보장
+      if (localStorage.getItem('lockScreenEnabled') === 'true') {
+        LockScreenNative?.startLockScreenService().catch(() => {})
+      }
       return () => {
         backListener.then(l => l.remove())
         resumeListener.then(l => l.remove())

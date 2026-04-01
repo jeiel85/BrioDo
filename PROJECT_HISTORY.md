@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-04-02 — 잠금화면 서비스 구조 재설계 (#83) (세션 25)
+
+**세션 목표:** 잠금화면 설정 후 화면을 켜도 안 뜨는 근본 원인 해결
+
+### 근본 원인 분석
+
+기존 구조:
+- `checkLockScreen()` → `isKeyguardLocked()` → BrioDo 잠금화면 렌더
+- 이 함수는 `appStateChange({ isActive: true })` 에서만 호출
+- 문제: 화면을 켜면 **시스템 잠금화면**이 앞에 서있고 BrioDo는 뒤에 있음
+- BrioDo는 사용자가 직접 앱을 열어야만 잠금 감지 가능 → 자동 진입 불가
+
+### 해결 방법: Foreground Service + Notification
+
+Android에서 잠금화면 위에 앱을 자동으로 띄우는 유일한 신뢰할 수 있는 방법:
+1. Foreground Service 상시 실행
+2. `ACTION_SCREEN_ON` BroadcastReceiver로 화면 켜짐 감지
+3. 높은 우선순위 알림(PRIORITY_MAX + USE_FULL_SCREEN_INTENT) 발행
+4. 알림 탭 → MainActivity(`showWhenLocked=true`) → BrioDo 잠금화면 뷰 렌더
+
+### 수정 내용
+
+**새 파일:**
+- `LockScreenService.java`: Foreground Service
+  - `ACTION_SCREEN_ON` / `ACTION_USER_PRESENT` BroadcastReceiver 등록
+  - 화면 켜짐 시 PRIORITY_MAX + fullScreenIntent 알림 발행
+  - `START_STICKY`로 시스템 종료 후 자동 재시작
+
+**수정 파일:**
+- `LockScreenPlugin.java`: `startLockScreenService()`, `stopLockScreenService()`, `checkFullScreenIntentPermission()` 메서드 추가
+- `AndroidManifest.xml`: `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`, `USE_FULL_SCREEN_INTENT` 권한 + 서비스 등록
+- `App.jsx`: `setLockScreenEnabledPersisted` — 설정 ON 시 서비스 시작, OFF 시 종료. 앱 초기 실행 시 enabled=true이면 서비스 자동 시작
+
+---
+
 ## 2026-04-02 — 이슈 5종 대응 (세션 24)
 
 **세션 목표:** GitHub 우선순위 이슈 5종 처리

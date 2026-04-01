@@ -1,6 +1,7 @@
 package app.briodo;
 
 import android.app.KeyguardManager;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.camera2.CameraAccessException;
@@ -21,6 +22,49 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 public class LockScreenPlugin extends Plugin {
 
     private boolean torchOn = false;
+
+    // ── 잠금화면 서비스 제어 ─────────────────────────────────────
+
+    /** 잠금화면 포어그라운드 서비스 시작 — 설정 활성화 시 JS에서 호출 */
+    @PluginMethod
+    public void startLockScreenService(PluginCall call) {
+        Intent intent = new Intent(getContext(), LockScreenService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            getContext().startForegroundService(intent);
+        } else {
+            getContext().startService(intent);
+        }
+        call.resolve();
+    }
+
+    /** 잠금화면 서비스 중지 — 설정 비활성화 시 JS에서 호출 */
+    @PluginMethod
+    public void stopLockScreenService(PluginCall call) {
+        Intent intent = new Intent(getContext(), LockScreenService.class);
+        getContext().stopService(intent);
+        // 남아있는 알림도 제거
+        NotificationManager nm = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) nm.cancel(LockScreenService.NOTIF_ID);
+        call.resolve();
+    }
+
+    /**
+     * USE_FULL_SCREEN_INTENT 권한 확인 (Android 14+)
+     * — 미허용 시 JS에서 사용자에게 권한 안내 필요
+     */
+    @PluginMethod
+    public void checkFullScreenIntentPermission(PluginCall call) {
+        JSObject ret = new JSObject();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34
+            NotificationManager nm = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            ret.put("granted", nm != null && nm.canUseFullScreenIntent());
+        } else {
+            ret.put("granted", true);
+        }
+        call.resolve(ret);
+    }
+
+    // ── 잠금 상태 확인 ───────────────────────────────────────────
 
     @PluginMethod
     public void isLocked(PluginCall call) {
