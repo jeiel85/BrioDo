@@ -71,7 +71,7 @@ function App() {
     localStorage.setItem('completionCalendarMode', mode)
   }
 
-  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiTagsOnly, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode, lang })
+  const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode, lang })
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
@@ -153,27 +153,6 @@ function App() {
   const [newTodo, setNewTodo] = useState({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: 0, subtasks: [], recurrence: { type: 'none', endDate: null } })
   const [showDescInput, setShowDescInput] = useState(false)
 
-  // AI 태그 자동 제안 (디바운스)
-  const debounceTimer = useRef(null)
-  useEffect(() => {
-    if (showInputModal && !editingTodoId && newTodo.text.length > 3) {
-      if (debounceTimer.current) clearTimeout(debounceTimer.current)
-      debounceTimer.current = setTimeout(async () => {
-        const analysis = await getAiTagsOnly(newTodo.text)
-        if (analysis?.categories) {
-          const existingTags = newTodo.tagInput.split(/[,#\s]+/).map(tg => tg.trim().replace('#', '')).filter(Boolean)
-          const newUniqueTags = analysis.categories.filter(tag => !existingTags.includes(tag))
-          if (newUniqueTags.length > 0) {
-            setNewTodo(prev => ({
-              ...prev,
-              tagInput: [...new Set([...existingTags, ...newUniqueTags])].map(tg => '#' + tg).join(' ')
-            }))
-          }
-        }
-      }, 1200)
-    }
-    return () => clearTimeout(debounceTimer.current)
-  }, [newTodo.text, showInputModal])
 
   const [showExitToast, setShowExitToast] = useState(false)
   const lastBackPressRef = useRef(0)
@@ -919,7 +898,6 @@ function App() {
           t={t} lang={lang}
           newTodo={newTodo} setNewTodo={setNewTodo}
           showDescInput={showDescInput} setShowDescInput={setShowDescInput}
-          isAiAnalyzing={isAiAnalyzing}
           editingTodoId={editingTodoId}
           resetForm={resetForm}
           handleSaveTodo={handleSaveTodo}

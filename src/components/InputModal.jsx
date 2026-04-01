@@ -8,7 +8,7 @@ const PRIORITY_LABELS = {
   en: { low: 'Low', medium: 'Med', high: 'High', urgent: 'Urgent' },
 }
 
-export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setShowDescInput, isAiAnalyzing, editingTodoId, resetForm, handleSaveTodo }) {
+export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setShowDescInput, editingTodoId, resetForm, handleSaveTodo }) {
   const pLabels = PRIORITY_LABELS[lang] || PRIORITY_LABELS.en
   const priority = newTodo.priority ?? 'medium'
   const isEditing = !!editingTodoId
@@ -67,12 +67,6 @@ export function InputModal({ t, lang, newTodo, setNewTodo, showDescInput, setSho
             value={newTodo.description}
             onChange={e => setNewTodo({ ...newTodo, description: e.target.value })}
           />
-        )}
-
-        {isAiAnalyzing && (
-          <div style={{ fontSize: '11px', color: 'var(--color-primary)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span className="pulse-dot"></span> {t.aiThinking}
-          </div>
         )}
 
         <div className="priority-picker">
