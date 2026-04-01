@@ -21,6 +21,7 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
   // localAchievement: achievement prop이 null이 돼도 exit 애니메이션 동안 렌더링 유지
   const [localAchievement, setLocalAchievement] = useState(null)
   const rafRef = useRef(null)
+  const confettiTimerRef = useRef(null)
 
   const dismiss = (ach) => {
     confetti.reset()
@@ -37,47 +38,52 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
 
       // double-rAF: 첫 rAF는 레이아웃 계산 프레임, 두 번째 rAF에서 paint 완료 후 transition 시작
       // Android WebView는 single rAF만으로는 초기 paint 보장 불충분
+      // confetti를 setVisible과 동일 프레임에 실행 — overlay GPU 레이어 확립 이후에 confetti canvas 생성
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = requestAnimationFrame(() => {
           setVisible(true)
+          confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FFD700', '#FF6B6B', '#4FC3F7', '#81C784', '#CE93D8']
+          })
+          confettiTimerRef.current = setTimeout(() => {
+            confetti({
+              particleCount: 80,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0 },
+              colors: ['#FFD700', '#FF6B6B', '#4FC3F7']
+            })
+            confetti({
+              particleCount: 80,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1 },
+              colors: ['#81C784', '#CE93D8', '#FFD700']
+            })
+          }, 250)
         })
       })
-
-      confetti({
-        particleCount: 150,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#FFD700', '#FF6B6B', '#4FC3F7', '#81C784', '#CE93D8']
-      })
-      const confettiTimer = setTimeout(() => {
-        confetti({
-          particleCount: 80,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#FFD700', '#FF6B6B', '#4FC3F7']
-        })
-        confetti({
-          particleCount: 80,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#81C784', '#CE93D8', '#FFD700']
-        })
-      }, 250)
 
       const timer = setTimeout(() => dismiss(achievement), 5000)
 
       return () => {
         cancelAnimationFrame(rafRef.current)
         clearTimeout(timer)
-        clearTimeout(confettiTimer)
+        clearTimeout(confettiTimerRef.current)
         confetti.reset()
       }
     }
   }, [achievement, onDismiss])
 
-  if (!localAchievement) return null
+  // return null 제거 — overlay div를 항상 DOM에 유지
+  // 이유: return null 시 DOM에서 overlay가 제거되었다가 업적 발생 시 재추가됨.
+  // Android WebView는 position:fixed + will-change 요소의 GPU 레이어를 생성할 때 화면 전체를
+  // 재합성하며, 이 순간 흰 플래시(깜빡임)가 발생함.
+  // 항상 overlay div를 DOM에 유지하면 GPU 레이어가 최초 마운트 시 한 번만 생성되어 이후 깜빡임 없음.
+  if (!localAchievement) return <div className="ach-unlock-overlay" aria-hidden="true" />
 
   const BRIO_BY_DIFF = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 5, 8: 7, 9: 10, 10: 15 }
   const REWARD_CAP = 15

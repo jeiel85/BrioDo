@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-04-01 — 업적 모달 깜빡임 근본 수정 3차 (세션 22)
+
+**세션 목표:** 업적 달성 시 화면 깜빡임 근본 원인 완전 제거
+
+### 근본 원인 분석
+이전 수정(#73 #77 #78)에서 `box-shadow` transition 제거, `chargeBrio` 600ms 지연으로 2가지 원인을 제거했으나 깜빡임이 지속됨.
+
+**3번째 원인 — GPU 레이어 생성 타이밍:**
+- `AchievementUnlockModal`이 `!localAchievement`일 때 `return null` → overlay div가 DOM에서 제거
+- 업적 발생 시 overlay div가 DOM에 새로 추가됨
+- Android WebView는 `position: fixed + will-change: opacity`를 가진 요소가 DOM에 추가될 때 **GPU 레이어를 생성**하며 화면 전체를 재합성 → **흰 플래시(깜빡임)**
+
+**4번째 원인 — confetti DOM 변경 타이밍:**
+- `confetti()` 호출이 `setVisible(true)` **이전**에 실행됨 (effect 동기 코드)
+- overlay GPU 레이어가 확립되기 전에 confetti canvas가 DOM에 추가됨
+- Android WebView 재합성이 transition 시작 전에 발생 → 추가 깜빡임
+
+### 수정 내용 (`AchievementUnlockModal.jsx`)
+1. `if (!localAchievement) return null` → `return <div className="ach-unlock-overlay" aria-hidden="true" />`
+   - overlay div를 항상 DOM에 유지 → GPU 레이어 최초 마운트 시 1회만 생성
+   - 이후 업적 발생 시 기존 DOM 노드 업데이트 (React reconciliation) → GPU 레이어 재생성 없음
+2. `confetti()` 호출을 double-rAF 내부(`setVisible(true)` 직후)로 이동
+   - overlay GPU 레이어 확립 이후 confetti canvas 생성
+   - `confettiTimerRef` 추가로 cleanup 정확하게 처리
+
+---
+
 ## 2026-03-31 — 버그 수정 4종 + 앱 아이콘 교체 (세션 21)
 
 **세션 목표:** GitHub Issues 우선순위 선정 및 수정, 앱 아이콘 변경
