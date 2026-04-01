@@ -27,7 +27,7 @@ const RANDOM_THEME_PROPS = [
 ]
 
 export function useTheme() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('briodo-theme') || 'dark')
+  const [theme, setTheme] = useState(() => localStorage.getItem('briodo-theme') || 'light')
   const [fontScale, setFontScale] = useState(() => {
     const saved = localStorage.getItem('briodo-font-scale')
     if (saved === 'small') return 2
@@ -147,7 +147,7 @@ export function useTheme() {
   const syncStatusBar = useCallback(async () => {
     if (!Capacitor.isNativePlatform()) return
     try {
-      const t = localStorage.getItem('briodo-theme') || 'dark'
+      const t = localStorage.getItem('briodo-theme') || 'light'
       const rc = (() => { try { return JSON.parse(localStorage.getItem('briodo-random-colors')) } catch { return null } })()
       const { bg, style } = getStatusBarColors(t, rc)
       await StatusBar.setBackgroundColor({ color: bg })
