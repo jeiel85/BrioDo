@@ -15,22 +15,41 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   const [micError, setMicError] = useState('')
   const [partialText, setPartialText] = useState('')
 
+  // native 리스너 핸들 & 최신 partial 텍스트 ref
+  const partialListenerRef = useRef(null)
+  const stateListenerRef = useRef(null)
+  const pendingPartialRef = useRef('')
+
   const isNative = Capacitor.isNativePlatform()
   const langCode = getLangLocale(lang)
 
   const canRecord = isNative || !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
+  const cleanupNativeListeners = useCallback(async () => {
+    try { partialListenerRef.current?.remove() } catch {}
+    try { stateListenerRef.current?.remove() } catch {}
+    partialListenerRef.current = null
+    stateListenerRef.current = null
+  }, [])
+
   const stopMic = useCallback(async () => {
     isListeningRef.current = false
     if (isNative) {
+      // 마지막 partial 결과를 최종 텍스트로 커밋
+      const final = pendingPartialRef.current
+      pendingPartialRef.current = ''
+      if (final) {
+        setSmartText(prev => prev ? prev + ' ' + final : final)
+      }
       await SpeechRecognition.stop().catch(() => {})
+      await cleanupNativeListeners()
     } else {
       webRecognitionRef.current?.stop()
       webRecognitionRef.current = null
     }
     setIsListening(false)
     setPartialText('')
-  }, [isNative])
+  }, [isNative, cleanupNativeListeners, setSmartText])
 
   // mic을 먼저 정지하고 onClose 호출 — Android에서 세션 중첩 방지
   const handleClose = useCallback(async () => {
@@ -44,6 +63,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   const startMic = async (retryCount = 0) => {
     setMicError('')
     setPartialText('')
+    pendingPartialRef.current = ''
     retryingRef.current = false
 
     if (isNative) {
@@ -54,19 +74,46 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           await SpeechRecognition.requestPermissions().catch(() => {})
         }
 
+        await cleanupNativeListeners()
+
+        // partialResults 리스너 — 음성 인식 결과 실시간 수신
+        // partialResults: true 일 때 start()는 즉시 리턴하므로
+        // 실제 결과는 반드시 이 리스너로만 받아야 함
+        partialListenerRef.current = await SpeechRecognition.addListener('partialResults', (data) => {
+          if (data.matches?.length > 0) {
+            const text = data.matches[0]
+            pendingPartialRef.current = text
+            setPartialText(text)
+          }
+        })
+
+        // listeningState 리스너 — 자연 종료(묵음 감지) 처리
+        stateListenerRef.current = await SpeechRecognition.addListener('listeningState', (data) => {
+          if (data.status === 'stopped') {
+            const final = pendingPartialRef.current
+            pendingPartialRef.current = ''
+            if (final) {
+              setSmartText(prev => prev ? prev + ' ' + final : final)
+            }
+            isListeningRef.current = false
+            setIsListening(false)
+            setPartialText('')
+            cleanupNativeListeners()
+          }
+        })
+
         isListeningRef.current = true
         setIsListening(true)
-        const result = await SpeechRecognition.start({
+
+        // partialResults: true → start()는 즉시 리턴 (결과 없음)
+        // 결과는 위 addListener('partialResults')로 수신
+        await SpeechRecognition.start({
           language: langCode,
           maxResults: 1,
           partialResults: true,
           popup: false,
         })
 
-        if (result?.matches?.[0]) {
-          const transcript = result.matches[0]
-          setSmartText(prev => prev ? prev + ' ' + transcript : transcript)
-        }
       } catch (e) {
         const rawMsg = String(e?.message || e || 'unknown')
         console.warn('[SpeechRecognition]', rawMsg)
@@ -83,14 +130,15 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         } else {
           setMicError(lang === 'ko' ? '음성 인식을 다시 시도해 주세요 🎤' : 'Please try speaking again 🎤')
         }
-      } finally {
         if (!retryingRef.current) {
           isListeningRef.current = false
           setIsListening(false)
           setIsRetrying(false)
           setPartialText('')
+          await cleanupNativeListeners()
         }
       }
+
       if (retryingRef.current) return startMic(retryCount + 1)
     } else {
       const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition
@@ -137,6 +185,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
     return () => {
       if (isNative) {
         SpeechRecognition.stop().catch(() => {})
+        cleanupNativeListeners()
       } else {
         webRecognitionRef.current?.abort()
         webRecognitionRef.current = null
