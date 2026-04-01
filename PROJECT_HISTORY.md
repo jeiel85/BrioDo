@@ -4,6 +4,41 @@
 
 ---
 
+## 2026-04-02 — 이슈 5종 대응 (세션 24)
+
+**세션 목표:** GitHub 우선순위 이슈 5종 처리
+
+### #55/#79 — Brio Firestore 동기화 (`useBrio.js`)
+- 로그인 시 `userSettings/{uid}.brio` 에서 불러와 로컬과 병합 (더 높은 잔량 채택)
+- `consume()`/`charge()` 시 2초 디바운스로 Firestore 비동기 저장
+- `useBrio(user)` 시그니처 변경 — App.jsx에서 `useBrio(user)` 로 호출
+- 로그아웃/재설치 후 로그인해도 Brio 유실 없음
+
+### #82 — Brio 충전 진행률 표시기 (`BrioChargeModal.jsx`, `index.css`)
+- `useBrio`에서 `chargeProgress` (0~1) 반환 추가
+- BrioChargeModal에 **잔량 게이지 바** + **다음 자동 충전 타이머 바** 추가
+- 잔량 색상: 부족(빨강) / 보통(primary) / 가득(초록)
+- 타이머 바: primary → 골드 그라데이션
+
+### #67 — 날씨 지역명 한국어 표시 개선 (`useWeather.js`, `SettingsModal.jsx`)
+- **플랜 A**: 자동감지(locationKey 빈 값) 시 wttr.in 영어 로마자 지역명 숨김 → 온도·아이콘만 표시
+- **플랜 A 유지**: Nominatim 역지오코딩 시도는 유지, 실패 시 빈 값 (영어 노출 방지)
+- **플랜 B**: SettingsModal 지역명 입력란 아래 "예: 광명시, 서울" 안내 문구 추가
+
+### #71 — 음성 인식 대기 시간 여유롭게 개선 (`SmartInputModal.jsx`)
+- Android 묵음 감지(`listeningState: stopped`) 후 사용자가 완료 탭 전까지 자동 재시작
+- 최대 5회 자동 재시작 (`MAX_AUTO_RESTARTS`) — Galaxy 키보드처럼 길게 대기
+- 재시작 중 파형 느려지고 "계속 듣는 중..." 표시
+- 웹 폴백: `continuous: true` 로 변경
+- `.voice-wave-bar.paused` CSS 추가
+
+### #59 — 랜덤 테마 생성 시 ⚡1 Brio 소비 (`SettingsModal.jsx`, `App.jsx`)
+- 랜덤 테마 버튼에 `consumeBrio(1)` 연결
+- Brio 부족 시 테마 생성 차단
+- 버튼에 `⚡1` 비용 표시 추가
+
+---
+
 ## 2026-04-01 — 탭하여 말하기 버그 수정 + 이슈 정리 (세션 23)
 
 **세션 목표:** 버그 이슈 대응 — #80 탭하여 말하기, #73/#77 깜빡임 이슈 종결

@@ -30,7 +30,7 @@ export function SettingsModal({
   lang, langPref, setLangPref,
   // L(ko, en, ja, zh) — falls back to en for ja/zh if not provided
   fontScale, setFontScale,
-  theme, setTheme, generateRandomTheme,
+  theme, setTheme, generateRandomTheme, consumeBrio,
   viewMode, setViewMode, setSelectedDate,
   inputMode, setInputMode,
   brioBalance, onAiLimitToast,
@@ -158,9 +158,20 @@ export function SettingsModal({
               <span style={{ fontSize: '18px' }}>📱</span>
               <span>{L('시스템', 'System', 'システム', '跟随系统')}</span>
             </button>
-            <button className={theme === 'random' ? 'active' : ''} onClick={generateRandomTheme}>
+            <button
+              className={theme === 'random' ? 'active' : ''}
+              onClick={() => {
+                if (consumeBrio && !consumeBrio(1)) {
+                  // Brio 부족 시 토스트 없이 그냥 무시 (onAiLimitToast 재활용 가능하지만 UX 과함)
+                  // 대신 버튼 라벨에 ⚡1 비용 안내가 있어 사용자 인지 가능
+                  return
+                }
+                generateRandomTheme()
+              }}
+            >
               <span style={{ fontSize: '18px' }}>🎲</span>
               <span>{L('랜덤', 'Random', 'ランダム', '随机')}</span>
+              <span style={{ fontSize: '10px', opacity: 0.7, marginTop: '1px' }}>⚡1</span>
             </button>
             <button
               className={theme === 'materialyou' ? 'active' : ''}
@@ -302,6 +313,15 @@ export function SettingsModal({
                 placeholder={lang === 'ko' ? '도시명 (비우면 자동 감지)' : lang === 'ja' ? '都市名（空欄で自動）' : lang === 'zh' ? '城市名（留空自动）' : 'City name (blank = auto)'}
                 style={{ width: '100%', boxSizing: 'border-box' }}
               />
+              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginTop: '6px', lineHeight: '1.4' }}>
+                {lang === 'ko'
+                  ? '💡 한국어 지역명을 표시하려면 직접 입력하세요. 예: 광명시, 서울, 부산'
+                  : lang === 'ja'
+                  ? '💡 日本語の地名を表示するには直接入力してください。例: 東京, 大阪'
+                  : lang === 'zh'
+                  ? '💡 要显示中文地名，请直接输入。例如: 北京, 上海'
+                  : '💡 For localized city names, type directly. e.g. Gwangmyeong, Seoul'}
+              </p>
             </div>
           )}
         </div>

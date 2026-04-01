@@ -93,7 +93,7 @@ function App() {
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
 
   // 브리오 에너지 시스템
-  const { balance: brioBalance, consume: consumeBrio, charge: chargeBrio, hasBrio, maxBrio, nextChargeMs } = useBrio()
+  const { balance: brioBalance, consume: consumeBrio, charge: chargeBrio, hasBrio, maxBrio, nextChargeMs, chargeProgress } = useBrio(user)
   const [showBrioChargeModal, setShowBrioChargeModal] = useState(false)
   const toastTimerRef = useRef(null)
   const [toastMsg, setToastMsg] = useState('')
@@ -908,7 +908,7 @@ function App() {
         <SettingsModal
           lang={lang} langPref={langPref} setLangPref={setLangPref} t={t}
           fontScale={fontScale} setFontScale={setFontScale}
-          theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme}
+          theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme} consumeBrio={consumeBrio}
           viewMode={viewMode} setViewMode={setViewMode}
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
@@ -969,7 +969,9 @@ function App() {
         <BrioChargeModal
           lang={lang}
           balance={brioBalance}
+          maxBrio={maxBrio}
           nextChargeMs={nextChargeMs}
+          chargeProgress={chargeProgress}
           onCharge={chargeBrio}
           onClose={() => setShowBrioChargeModal(false)}
         />
