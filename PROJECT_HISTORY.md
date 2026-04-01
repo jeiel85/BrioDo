@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-04-01 — 탭하여 말하기 버그 수정 + 이슈 정리 (세션 23)
+
+**세션 목표:** 버그 이슈 대응 — #80 탭하여 말하기, #73/#77 깜빡임 이슈 종결
+
+### #80 — 탭하여 말하기 "듣는 중" 전환 안 됨 수정
+
+**근본 원인 — `partialResults: true` 즉시 리턴 문제:**
+- `@capacitor-community/speech-recognition` v7 스펙: `partialResults: true`로 `start()` 호출 시 **즉시 리턴** (결과 없음)
+- 실제 결과는 `addListener('partialResults', ...)` 이벤트로만 수신
+- 기존 코드는 `start()` 반환값에서 결과를 읽으려 했기 때문에 `setIsListening(true)` → `start()` 즉시 리턴 → `finally`에서 `setIsListening(false)` 가 React에 배치됨 → "듣는 중" UI가 절대 렌더되지 않음
+
+**수정 내용 (`SmartInputModal.jsx`):**
+1. `partialListenerRef` + `stateListenerRef` + `pendingPartialRef` 추가
+2. `start()` 전에 `addListener('partialResults')` 등록 — 결과를 `pendingPartialRef`에 실시간 저장
+3. `addListener('listeningState')` 등록 — 자연 종료(묵음) 시 partial 텍스트를 `smartText`에 커밋
+4. `start()` return값 처리 제거 — 즉시 리턴이므로 무의미
+5. `finally` 블록의 `setIsListening(false)` 제거 — 리스너/수동 stopMic으로만 관리
+6. `stopMic` 수정 — 정지 전 `pendingPartialRef.current` 커밋 + 리스너 cleanup
+7. 언마운트 시 `cleanupNativeListeners()` 호출 추가
+
+### #73/#77 — 업적 달성 깜빡임
+이전 세션 수정(세션 22)으로 해결 확인. 이슈 종결.
+
+---
+
 ## 2026-04-01 — 업적 모달 깜빡임 근본 수정 3차 (세션 22)
 
 **세션 목표:** 업적 달성 시 화면 깜빡임 근본 원인 완전 제거
