@@ -8,6 +8,17 @@
 
 **세션 목표:** 버그 이슈 대응 — #80 탭하여 말하기, #73/#77 깜빡임 이슈 종결
 
+### #81 — 수동 입력 시 AI 자동 태그 제거
+
+**원인:** App.jsx에 `showInputModal` 열릴 때 1200ms 디바운스로 `getAiTagsOnly()`를 호출해 태그를 자동 주입하는 useEffect가 존재. 자동 태그는 AI 전용 기능(SmartInput)이므로 수동 입력에 부적절.
+
+**수정 내용:**
+1. `App.jsx` — AI 태그 자동 제안 디바운스 useEffect 전체 제거
+2. `App.jsx` — `InputModal`에 `isAiAnalyzing` prop 전달 제거, `getAiTagsOnly` destructuring 제거
+3. `InputModal.jsx` — `isAiAnalyzing` prop 및 "AI 분석 중" 표시 UI 제거
+
+---
+
 ### #80 — 탭하여 말하기 "듣는 중" 전환 안 됨 수정
 
 **근본 원인 — `partialResults: true` 즉시 리턴 문제:**
