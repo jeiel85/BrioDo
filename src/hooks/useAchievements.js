@@ -423,13 +423,14 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio
       setNotifications(prev => [...prev, ...newAchs])
       setUnlockQueue(prev => [...prev, ...newAchs])
 
-      // 브리오 보상 지급
+      // 브리오 보상 지급 — 모달 진입 애니메이션(~500ms) 이후 실행
+      // 동기 호출 시 App 전체 re-render가 모달 visible 전환과 겹쳐 깜빡임 유발
       const totalReward = newAchs.reduce((sum, a) => {
         const base = a.brioReward ?? ACHIEVEMENT_BRIO_REWARD[a.difficulty] ?? 0
         return sum + Math.min(base, ACHIEVEMENT_REWARD_CAP)
       }, 0)
       if (totalReward > 0) {
-        if (chargeBrio) chargeBrio(totalReward)
+        setTimeout(() => { if (chargeBrio) chargeBrio(totalReward) }, 600)
         try {
           const flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}')
           flags.brioFromAchievements = (flags.brioFromAchievements || 0) + totalReward
