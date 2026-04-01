@@ -99,21 +99,25 @@ export async function fetchWeather(locationKey = '', lang = 'en') {
     const today = json.weather?.[0]
     if (!cur || !today) throw new Error('Invalid response')
 
-    let area = locationKey.trim() || json.nearest_area?.[0]?.areaName?.[0]?.value || ''
+    // Plan A: 자동감지(locationKey 빈 값) 시 영어 로마자 지역명 노출 방지
+    // - 사용자가 직접 입력한 경우(locationKey 있음)만 지역명 표시
+    // - 자동감지 시 wttr.in의 areaName은 항상 영어 로마자이므로 숨김
+    let area = locationKey.trim()
 
-    // 한국어 + IP 자동감지 시: Nominatim 역지오코딩으로 한국어 도시명 조회
-    if (!locationKey.trim() && lang === 'ko') {
+    // 자동감지 시 Nominatim 역지오코딩으로 한국어 도시명 조회 시도
+    // (wttr.in j1 응답에 lat/lon 미포함인 경우가 많아 실패해도 빈 값 유지)
+    if (!locationKey.trim()) {
       const lat = json.nearest_area?.[0]?.latitude?.[0]?.value
       const lon = json.nearest_area?.[0]?.longitude?.[0]?.value
       if (lat && lon) {
         try {
           const nr = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ko`,
-            { signal: AbortSignal.timeout(4000), headers: { 'Accept-Language': 'ko' } }
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${lang}`,
+            { signal: AbortSignal.timeout(4000), headers: { 'Accept-Language': lang } }
           )
           if (nr.ok) {
             const nd = await nr.json()
-            area = nd.address?.city || nd.address?.town || nd.address?.county || nd.address?.state || area
+            area = nd.address?.city || nd.address?.town || nd.address?.county || nd.address?.state || ''
           }
         } catch {}
       }

@@ -1928,6 +1928,12 @@ body.modal-open { overflow: hidden; }
   from { height: 8px;  opacity: 0.5; }
   to   { height: 42px; opacity: 1;   }
 }
+/* 자동 재시작 대기 중 — 파형 느리게 맥동 */
+.voice-wave-bar.paused {
+  animation-duration: 2s !important;
+  opacity: 0.5;
+  height: 12px !important;
+}
 .voice-listening-label {
   font-size: 13px;
   font-weight: 600;
@@ -4118,6 +4124,35 @@ body.modal-open { overflow: hidden; }
   cursor: pointer;
   margin-top: 8px;
 }
+/* 브리오 게이지 바 */
+.brio-gauge-section {
+  width: 100%;
+  max-width: 320px;
+}
+.brio-gauge-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 6px;
+}
+.brio-gauge-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--color-surface-variant);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.brio-gauge-bar-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--color-primary);
+}
+.brio-timer-bar {
+  background: linear-gradient(90deg, var(--color-primary) 0%, #ffd700 100%);
+}
+
 .brio-charge-manual-btn {
   width: 100%;
   max-width: 320px;

@@ -5,6 +5,9 @@ import { trackEngagement } from '../hooks/useAchievements'
 import { getLangLocale } from '../utils/helpers'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
+// 묵음 감지 후 자동 재시작 최대 횟수 — 이 이상이면 완전 종료
+const MAX_AUTO_RESTARTS = 5
+
 export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice, brioBalance, brioDailyLimit }) {
   const textareaRef = useRef(null)
   const webRecognitionRef = useRef(null)
@@ -14,11 +17,14 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   const [isRetrying, setIsRetrying] = useState(false)
   const [micError, setMicError] = useState('')
   const [partialText, setPartialText] = useState('')
+  const [isContinuing, setIsContinuing] = useState(false) // 자동 재시작 중 표시
 
   // native 리스너 핸들 & 최신 partial 텍스트 ref
   const partialListenerRef = useRef(null)
   const stateListenerRef = useRef(null)
   const pendingPartialRef = useRef('')
+  const autoRestartCountRef = useRef(0)
+  const restartTimerRef = useRef(null)
 
   const isNative = Capacitor.isNativePlatform()
   const langCode = getLangLocale(lang)
@@ -32,14 +38,17 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
     stateListenerRef.current = null
   }, [])
 
-  const stopMic = useCallback(async () => {
+  const stopMic = useCallback(async (commitPending = true) => {
+    clearTimeout(restartTimerRef.current)
     isListeningRef.current = false
+    autoRestartCountRef.current = 0
     if (isNative) {
-      // 마지막 partial 결과를 최종 텍스트로 커밋
-      const final = pendingPartialRef.current
-      pendingPartialRef.current = ''
-      if (final) {
-        setSmartText(prev => prev ? prev + ' ' + final : final)
+      if (commitPending) {
+        const final = pendingPartialRef.current
+        pendingPartialRef.current = ''
+        if (final) setSmartText(prev => prev ? prev + ' ' + final : final)
+      } else {
+        pendingPartialRef.current = ''
       }
       await SpeechRecognition.stop().catch(() => {})
       await cleanupNativeListeners()
@@ -48,6 +57,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
       webRecognitionRef.current = null
     }
     setIsListening(false)
+    setIsContinuing(false)
     setPartialText('')
   }, [isNative, cleanupNativeListeners, setSmartText])
 
@@ -59,6 +69,56 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
 
   const headerRef = useRef(null)
   const { overlayRef, modalRef, swipeHandlers } = useSwipeToDismiss(handleClose, { handleRef: headerRef })
+
+  // 네이티브 리스너 등록 + start() 호출 (재시작 시에도 동일하게 사용)
+  const startNativeSession = useCallback(async () => {
+    await cleanupNativeListeners()
+
+    partialListenerRef.current = await SpeechRecognition.addListener('partialResults', (data) => {
+      if (data.matches?.length > 0) {
+        const text = data.matches[0]
+        pendingPartialRef.current = text
+        setPartialText(text)
+      }
+    })
+
+    stateListenerRef.current = await SpeechRecognition.addListener('listeningState', async (data) => {
+      if (data.status === 'stopped') {
+        // partial 텍스트 누적 저장
+        const partial = pendingPartialRef.current
+        pendingPartialRef.current = ''
+        if (partial) setSmartText(prev => prev ? prev + ' ' + partial : partial)
+        setPartialText('')
+        await cleanupNativeListeners()
+
+        // 사용자가 완료 버튼으로 중지한 게 아니면 자동 재시작
+        if (isListeningRef.current && autoRestartCountRef.current < MAX_AUTO_RESTARTS) {
+          autoRestartCountRef.current += 1
+          setIsContinuing(true)
+          // 400ms 후 재시작 — Android SpeechRecognizer 세션 간 간격 필요
+          restartTimerRef.current = setTimeout(async () => {
+            if (isListeningRef.current) {
+              setIsContinuing(false)
+              await startNativeSession()
+            }
+          }, 400)
+        } else {
+          // 최대 재시작 초과 or 사용자 중지 → 완전 종료
+          isListeningRef.current = false
+          autoRestartCountRef.current = 0
+          setIsListening(false)
+          setIsContinuing(false)
+        }
+      }
+    })
+
+    await SpeechRecognition.start({
+      language: langCode,
+      maxResults: 1,
+      partialResults: true,
+      popup: false,
+    })
+  }, [langCode, cleanupNativeListeners, setSmartText])
 
   const startMic = async (retryCount = 0) => {
     setMicError('')
@@ -72,47 +132,15 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           trackEngagement('voiceUsed')
           trackEngagement('voiceTasks', true)
           await SpeechRecognition.requestPermissions().catch(() => {})
+          autoRestartCountRef.current = 0
         }
-
-        await cleanupNativeListeners()
-
-        // partialResults 리스너 — 음성 인식 결과 실시간 수신
-        // partialResults: true 일 때 start()는 즉시 리턴하므로
-        // 실제 결과는 반드시 이 리스너로만 받아야 함
-        partialListenerRef.current = await SpeechRecognition.addListener('partialResults', (data) => {
-          if (data.matches?.length > 0) {
-            const text = data.matches[0]
-            pendingPartialRef.current = text
-            setPartialText(text)
-          }
-        })
-
-        // listeningState 리스너 — 자연 종료(묵음 감지) 처리
-        stateListenerRef.current = await SpeechRecognition.addListener('listeningState', (data) => {
-          if (data.status === 'stopped') {
-            const final = pendingPartialRef.current
-            pendingPartialRef.current = ''
-            if (final) {
-              setSmartText(prev => prev ? prev + ' ' + final : final)
-            }
-            isListeningRef.current = false
-            setIsListening(false)
-            setPartialText('')
-            cleanupNativeListeners()
-          }
-        })
 
         isListeningRef.current = true
         setIsListening(true)
 
-        // partialResults: true → start()는 즉시 리턴 (결과 없음)
-        // 결과는 위 addListener('partialResults')로 수신
-        await SpeechRecognition.start({
-          language: langCode,
-          maxResults: 1,
-          partialResults: true,
-          popup: false,
-        })
+        // partialResults: true → start()는 즉시 리턴
+        // 결과는 addListener('partialResults')로 수신
+        await startNativeSession()
 
       } catch (e) {
         const rawMsg = String(e?.message || e || 'unknown')
@@ -120,7 +148,6 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         const msg = rawMsg.toLowerCase()
         const isNoMatch = msg.includes('no match') || msg.includes('didn\'t understand') || msg.includes('no speech')
         if (isNoMatch && retryCount < 2) {
-          // 최대 2회 자동 재시도 (Samsung SpeechRecognizer 간헐적 실패 대응)
           retryingRef.current = true
           setIsRetrying(true)
         } else if (msg.includes('permission') || msg.includes('denied')) {
@@ -145,7 +172,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
       if (!WebSpeech) return
       const recognition = new WebSpeech()
       recognition.lang = langCode
-      recognition.continuous = false
+      recognition.continuous = true // 웹: continuous 모드로 길게 대기
       recognition.interimResults = true
       recognition.onresult = (e) => {
         const interim = Array.from(e.results).map(r => r[0].transcript).join('')
@@ -183,6 +210,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   // 언마운트 시 마이크 강제 정지 (안전망)
   useEffect(() => {
     return () => {
+      clearTimeout(restartTimerRef.current)
       if (isNative) {
         SpeechRecognition.stop().catch(() => {})
         cleanupNativeListeners()
@@ -226,11 +254,13 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
               <>
                 <div className="voice-waveform">
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={i} className="voice-wave-bar" style={{ animationDelay: `${i * 0.1}s` }} />
+                    <div key={i} className={`voice-wave-bar${isContinuing ? ' paused' : ''}`} style={{ animationDelay: `${i * 0.1}s` }} />
                   ))}
                 </div>
                 <div className="voice-listening-label">
-                  {lang === 'ko' ? '듣는 중...' : lang === 'ja' ? '聞いています...' : lang === 'zh' ? '正在听...' : 'Listening...'}
+                  {isContinuing
+                    ? (lang === 'ko' ? '계속 듣는 중...' : lang === 'ja' ? '続けて聞いています...' : lang === 'zh' ? '继续听...' : 'Still listening...')
+                    : (lang === 'ko' ? '듣는 중...' : lang === 'ja' ? '聞いています...' : lang === 'zh' ? '正在听...' : 'Listening...')}
                 </div>
               </>
             )}
