@@ -3100,20 +3100,16 @@ body.modal-open { overflow: hidden; }
   text-align: center;
   width: min(320px, 88vw);
   transform: scale(0.7) translateY(20px);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.5s ease;
-  box-shadow: 0 0 0 rgba(255,215,0,0), 0 8px 32px rgba(0,0,0,0.3);
-  /* overflow: hidden 제거 — will-change:transform 스태킹 컨텍스트와 ::after z-index:-1 조합 시 깜빡임 유발 */
+  /* box-shadow transition 제거 — Android WebView에서 box-shadow는 GPU 비합성(software repaint)
+     → 매 프레임 rasterize 발생 → 깜빡임. transform만 transition */
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   will-change: transform;
 }
 .ach-unlock-card.visible {
   transform: scale(1) translateY(0);
-  /* box-shadow 전환으로 glow 표현 — GPU 레이어 분리 없이 합성 가능 */
-  box-shadow: 0 0 40px rgba(255,215,0,0.45), 0 20px 60px rgba(0,0,0,0.5);
-  animation: ach-glow-pulse 2.5s ease-in-out 0.8s infinite;
-}
-@keyframes ach-glow-pulse {
-  0%, 100% { box-shadow: 0 0 30px rgba(255,215,0,0.35), 0 20px 60px rgba(0,0,0,0.5); }
-  50%       { box-shadow: 0 0 55px rgba(255,215,0,0.65), 0 20px 60px rgba(0,0,0,0.5); }
+  /* 정적 glow — animation 없음. GPU compositing 영향 없음 */
+  box-shadow: 0 0 40px rgba(255,215,0,0.5), 0 20px 60px rgba(0,0,0,0.5);
 }
 .ach-particles {
   position: absolute;

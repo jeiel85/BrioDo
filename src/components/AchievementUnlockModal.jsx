@@ -35,10 +35,12 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
     if (achievement) {
       setLocalAchievement(achievement)
 
-      // rAF: 초기 visible=false 상태가 브라우저에 한 프레임 페인트된 후 transition 시작
-      // → 마운트 직후 setVisible(true) 동기 호출 시 transition이 생략되는 문제 방지
+      // double-rAF: 첫 rAF는 레이아웃 계산 프레임, 두 번째 rAF에서 paint 완료 후 transition 시작
+      // Android WebView는 single rAF만으로는 초기 paint 보장 불충분
       rafRef.current = requestAnimationFrame(() => {
-        setVisible(true)
+        rafRef.current = requestAnimationFrame(() => {
+          setVisible(true)
+        })
       })
 
       confetti({
