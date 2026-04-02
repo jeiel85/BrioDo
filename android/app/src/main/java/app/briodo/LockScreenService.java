@@ -102,27 +102,21 @@ public class LockScreenService extends Service {
     /**
      * 화면 켜짐 → 잠금화면 Activity 실행
      *
-     * 전략: setFullScreenIntent 알림 (1차) + startActivity() 병행 (2차)
+     * 전략: setFullScreenIntent 알림 (1차, 항상) + startActivity() 병행 (2차)
      *
-     * setFullScreenIntent 우선 이유:
-     *   startActivity()는 키가드가 이미 해제된 경우(신뢰할 수 있는 장소 등)
-     *   백그라운드 Activity 시작 제한에 의해 차단될 수 있음 — 예외 없이 성공처럼 반환.
-     *   setFullScreenIntent 알림은 Android 시스템이 직접 처리하므로
-     *   잠금 상태에서 Activity를 안정적으로 표시할 수 있음.
+     * Android 14 공식 문서:
+     *   "USE_FULL_SCREEN_INTENT 권한 보유 앱은 잠금 해제 상태에서도
+     *    setFullScreenIntent로 전체 화면 Activity를 표시할 수 있음."
+     *   → 신뢰할 수 있는 장소(자동 해제) 포함, 항상 전체 화면 표시.
      *
-     * 키가드 잠금 여부 사전 확인:
-     *   isKeyguardLocked()=false → 이미 잠금 해제됨 → 잠금화면 표시 불필요, 즉시 종료.
-     *   (신뢰할 수 있는 장소에서 화면 켜질 때는 이미 해제되어 있음)
+     * isKeyguardLocked() 체크를 하지 않는 이유:
+     *   사용자가 잠금화면 위젯을 활성화했다면 어떤 상황에서도 표시돼야 함.
+     *   trusted place, 자동 해제, 기타 상황 모두 포함.
      */
     private void launchLockScreen(Context ctx) {
-        // ── 사전 체크: 키가드가 실제로 잠겨 있는지 확인 ──
         KeyguardManager km = (KeyguardManager) ctx.getSystemService(Context.KEYGUARD_SERVICE);
         boolean keyguardLocked = km != null && km.isKeyguardLocked();
-        Log.d(TAG, "isKeyguardLocked=" + keyguardLocked);
-        if (!keyguardLocked) {
-            Log.d(TAG, "Keyguard not locked — skip lock screen");
-            return;
-        }
+        Log.d(TAG, "isKeyguardLocked=" + keyguardLocked + " (info only, not used as gate)");
 
         Intent activityIntent = new Intent(ctx, MainActivity.class);
         activityIntent.putExtra("briodo_lock_screen", true);
@@ -146,7 +140,9 @@ public class LockScreenService extends Service {
         }
 
         if (hasFullScreenPermission) {
-            // ── 1차: setFullScreenIntent 알림 (잠금화면 위 Activity 표시 — Android 공식 방식) ──
+            // ── 1차: setFullScreenIntent 알림 ──
+            // Android 14+: USE_FULL_SCREEN_INTENT 권한 → 잠금/해제 무관하게 전체 화면 표시
+            // Android 13-: 잠금 상태 → 전체 화면, 해제 상태 → 헤즈업 알림
             PendingIntent fullScreenPI = PendingIntent.getActivity(
                 ctx, 2, activityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
@@ -165,7 +161,9 @@ public class LockScreenService extends Service {
                 .build());
             Log.d(TAG, "fullScreenIntent notification posted");
 
-            // ── 2차: startActivity() 병행 시도 (즉시 실행 보조 수단) ──
+            // ── 2차: startActivity() 병행 시도 ──
+            // 잠금 상태: USE_FULL_SCREEN_INTENT 면제로 즉시 실행 가능
+            // 해제 상태(신뢰 장소): 차단될 수 있으나 setFullScreenIntent가 대신 처리
             try {
                 ctx.startActivity(activityIntent);
                 Log.d(TAG, "startActivity succeeded");
@@ -173,7 +171,7 @@ public class LockScreenService extends Service {
                 Log.w(TAG, "startActivity failed: " + e.getMessage());
             }
         } else {
-            // 권한 없음: 탭 가능한 폴백 알림 (무음)
+            // USE_FULL_SCREEN_INTENT 권한 없음: 탭 가능한 폴백 알림
             PendingIntent tapPI = PendingIntent.getActivity(
                 ctx, 1, activityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
@@ -181,7 +179,7 @@ public class LockScreenService extends Service {
 
             nm.notify(NOTIF_ID_LAUNCH, new NotificationCompat.Builder(ctx, CHANNEL_ID_LAUNCH)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentTitle("BrioDo")
+                .setContentTitle("BrioDo 잠금화면")
                 .setContentText("탭하여 잠금화면 열기")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -189,7 +187,7 @@ public class LockScreenService extends Service {
                 .setAutoCancel(true)
                 .setSilent(true)
                 .build());
-            Log.d(TAG, "fallback tap notification posted");
+            Log.d(TAG, "fallback tap notification posted (no USE_FULL_SCREEN_INTENT)");
         }
     }
 
