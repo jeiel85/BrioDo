@@ -4,6 +4,73 @@
 
 ---
 
+## 2026-04-02 — 잠금화면 ADB 테스트 완료 + 안정화 수정 (#83) (세션 27 cont.2)
+
+**세션 목표:** 빌드 후 실기기(Galaxy S24) ADB 테스트로 동작 확인 및 추가 안정화
+
+### 발견된 추가 문제들
+
+1. **즉시 닫힘 버그**: 잠금화면 뷰가 뜬 뒤 바로 메인 뷰로 전환
+   - 원인: `checkLockScreen()`이 `isKeyguardLocked()=false` 반환 시 `setIsLockScreen(false)` 호출
+   - Samsung One UI는 화면 켜짐 직후에도 `isKeyguardLocked()=false` 반환 (신뢰 불가)
+   - **수정**: `checkLockScreen()`에서 `setIsLockScreen(false)` 경로 완전 제거
+
+2. **홈→복귀 시 재발사 버그**: 홈 화면으로 나갔다 돌아올 때마다 잠금화면이 다시 표시
+   - 원인: `onPause()` 기반 플래그로 인텐트 extra가 영구 보존되어 재처리
+   - **수정**: `intent.removeExtra("briodo_lock_screen")` — 처리 즉시 제거 (1회성)
+   - 별도 `lockScreenEventFired` 플래그 필요 없어짐
+
+3. **`appStateChange` 미발사**: Capacitor `appStateChange`는 STOPPED→STARTED에만 발사
+   - 화면 OFF 시 앱은 PAUSED 상태로만 전환 (STOPPED까지 가지 않음)
+   - 화면 켜기(PAUSED→RESUMED)에서 `appStateChange` 미발사 → 이벤트 전달 불가
+   - **수정**: `MainActivity.onResume()` 오버라이드로 대체 (BridgeActivity WebView 재개 후 발사 보장)
+
+4. **`onResume()` 접근자 오류**: `protected → public` 변경 필요 (컴파일 오류 수정)
+
+### 수정 내용
+
+**`MainActivity.java`:**
+- `protected onResume()` → `public onResume()` (BridgeActivity 오버라이드 접근자 수정)
+- `super.onResume()` 호출 후 인텐트 extra 확인 (WebView 재개 후 이벤트 발사 보장)
+- `intent.removeExtra("briodo_lock_screen")` — 1회성 처리
+
+**`LockScreenPlugin.java`:**
+- `notifyKeyguardDismissed()` 추가 → `keyguardDismissed` 이벤트 발사
+- `wasLaunchedForLockScreen()` — `pendingShow` 1회 소비 플래그
+
+**`App.jsx`:**
+- `checkLockScreen()`: `isKeyguardLocked()=true`일 때만 `setIsLockScreen(true)`, false는 무시
+- `keyguardDismissed` 이벤트 리스너 → `setIsLockScreen(false)` (PIN/생체인증 해제 시)
+- `wasLaunchedForLockScreen()` 마운트 시 호출 (onCreate 경로 보장)
+
+### ADB 테스트 결과 (Galaxy S24 R3CWC0KB53Z, 무선 192.168.45.149:5555)
+
+**Test 1 — 잠금 → 화면 켜기:**
+```
+canUseFullScreenIntent=true
+startActivity succeeded
+onNewIntent: briodo_lock_screen=true
+onResume: firing lockScreenShow
+plugin=ok
+isKeyguardLocked=false  ← Samsung 신뢰할 수 없는 값 (무시됨)
+```
+→ **잠금화면 위젯 정상 표시** ✅ (시계, 날씨, 할 일, 버튼, "앱 열기")
+
+**Test 2 — 홈 → 앱 복귀:**
+```
+onNewIntent: briodo_lock_screen=false  ← 재발사 없음 ✅
+```
+→ **잠금화면 재표시 없음** ✅ (1회성 패턴 동작 확인)
+
+**신뢰할 수 있는 장소 동작:**
+- 화면 켜기 후 ~1.3초 내 `ACTION_USER_PRESENT` 자동 발사
+- `notifyKeyguardDismissed()` → `setIsLockScreen(false)` → 잠금화면 자동 닫힘 (정상 동작)
+
+### 잔여 검증 항목
+- 신뢰할 수 있는 장소 비활성화 후 PIN/생체인증 해제 → `keyguardDismissed` 동작 확인 필요
+
+---
+
 ## 2026-04-02 — 잠금화면 인텐트 extra 처리 + 진단 로그 추가 (#83) (세션 27 cont.)
 
 **세션 목표:** startActivity() 성공 여부와 무관하게 LockScreenView를 안정적으로 표시
