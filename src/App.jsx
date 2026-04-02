@@ -195,6 +195,18 @@ function App() {
           }, 500)
         }
       } catch (_) {}
+
+      // ── Step 4: SYSTEM_ALERT_WINDOW 권한 확인 ──
+      // 신뢰할 수 있는 장소 등 잠금 해제 상태에서도 잠금화면 위젯 표시에 필요
+      // ("다른 앱 위에 표시" 권한)
+      try {
+        const overlayRes = await LockScreenNative?.canDrawOverlays()
+        if (overlayRes && overlayRes.value === false) {
+          setTimeout(() => {
+            LockScreenNative?.openDrawOverlaysSettings().catch(() => {})
+          }, 1500)
+        }
+      } catch (_) {}
     } else {
       // 잠금화면 비활성화: 서비스 종료 + 알림 제거
       LockScreenNative?.stopLockScreenService().catch(() => {})
