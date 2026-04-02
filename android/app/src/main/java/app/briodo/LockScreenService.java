@@ -57,10 +57,14 @@ public class LockScreenService extends Service {
                         ctx.getSystemService(Context.NOTIFICATION_SERVICE);
                     if (nm != null) nm.cancel(NOTIF_ID_LAUNCH);
                 } else if (Intent.ACTION_USER_PRESENT.equals(action)) {
-                    // 완전 잠금해제 시 폴백 알림 정리
+                    // 완전 잠금해제 시 폴백 알림 정리 + React에 잠금화면 닫기 지시
                     NotificationManager nm = (NotificationManager)
                         ctx.getSystemService(Context.NOTIFICATION_SERVICE);
                     if (nm != null) nm.cancel(NOTIF_ID_LAUNCH);
+                    Log.d(TAG, "ACTION_USER_PRESENT: keyguard dismissed");
+                    if (LockScreenPlugin.instance != null) {
+                        LockScreenPlugin.instance.notifyKeyguardDismissed();
+                    }
                 }
             }
         };

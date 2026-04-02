@@ -283,7 +283,9 @@ function App() {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
     try {
       const { locked } = await LockScreenNative.isLocked()
-      setIsLockScreen(locked)
+      // isKeyguardLocked()=false는 Samsung One UI에서 즉시 반환되어 신뢰할 수 없음.
+      // 잠금화면 닫기는 사용자 액션(onOpen) 또는 keyguardDismissed 이벤트로만 처리.
+      if (locked) setIsLockScreen(true)
     } catch(e) {}
   }
 
@@ -433,6 +435,11 @@ function App() {
       const lockScreenSub = LockScreenNative?.addListener('lockScreenShow', () => {
         setIsLockScreen(true)
       })
+      // 사용자가 키가드 해제(PIN/생체인증) 시 잠금화면 뷰 닫기
+      // checkLockScreen()의 isKeyguardLocked()는 Samsung에서 신뢰할 수 없으므로 이 이벤트로 처리
+      const keyguardSub = LockScreenNative?.addListener('keyguardDismissed', () => {
+        setIsLockScreen(false)
+      })
       // lockScreenEnabled가 true이면 서비스가 실행 중인지 보장
       // (권한이 이미 있을 때만 — 없으면 사용자가 다시 토글해서 권한 요청 유도)
       if (localStorage.getItem('lockScreenEnabled') === 'true') {
@@ -448,6 +455,7 @@ function App() {
         backListener.then(l => l.remove())
         resumeListener.then(l => l.remove())
         lockScreenSub?.then(l => l.remove())
+        keyguardSub?.then(l => l.remove())
       }
     }
   }, [])

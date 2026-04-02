@@ -45,6 +45,14 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    @Override
+    public void onPause() {
+        super.onPause();
+        // 화면이 꺼지거나 다른 앱으로 전환될 때 플래그 초기화
+        // → 다음 화면 켜짐(onResume) 시 서비스 인텐트가 있으면 재발사 가능
+        lockScreenEventFired = false;
+    }
+
     /**
      * onResume은 PAUSED→RESUMED 시 항상 호출됨.
      * Capacitor의 appStateChange(STOPPED→STARTED 기반)와 달리 화면 켜짐 시에도 확실히 호출됨.
