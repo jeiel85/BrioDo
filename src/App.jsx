@@ -8,6 +8,7 @@ import { addSyncQueue, saveLocalTodo } from './db'
 import { syncEventToGoogle } from './calendar'
 import { formatTime, matchesRecurrence } from './utils/helpers'
 import { useAchievements, trackEngagement } from './hooks/useAchievements'
+import { LocalNotifications } from '@capacitor/local-notifications'
 import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
 import { initAdMob } from './hooks/useAdMob'
 import { fetchWeather } from './hooks/useWeather'
@@ -167,16 +168,31 @@ function App() {
     setLockScreenEnabled(val)
     localStorage.setItem('lockScreenEnabled', String(val))
     if (val) {
-      // 잠금화면 활성화: 포어그라운드 서비스 시작
+      // ── Step 1: POST_NOTIFICATIONS 권한 확인/요청 (Android 13+) ──
+      // 이 권한이 없으면 startForeground 알림이 차단돼 서비스가 정상 동작 불가
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { display } = await LocalNotifications.requestPermissions()
+          if (display !== 'granted') {
+            // 권한 거부 → 토글 원래대로 되돌리고 종료
+            setLockScreenEnabled(false)
+            localStorage.setItem('lockScreenEnabled', 'false')
+            return
+          }
+        } catch (_) {}
+      }
+
+      // ── Step 2: 포어그라운드 서비스 시작 ──
       LockScreenNative?.startLockScreenService().catch(() => {})
-      // Android 14+: USE_FULL_SCREEN_INTENT 권한 확인 → 없으면 설정으로 안내
+
+      // ── Step 3: USE_FULL_SCREEN_INTENT 권한 확인 (Android 14+) ──
+      // 없으면 설정 화면으로 안내 (화면 켜짐 시 자동 실행에 필요)
       try {
         const res = await LockScreenNative?.canUseFullScreenIntent()
         if (res && res.value === false) {
-          // 0.3초 후 설정 화면으로 이동 (UI 전환 후)
           setTimeout(() => {
             LockScreenNative?.openFullScreenIntentSettings().catch(() => {})
-          }, 300)
+          }, 500)
         }
       } catch (_) {}
     } else {
@@ -409,8 +425,15 @@ function App() {
       // 앱 최초 실행 시 잠금화면 체크
       checkLockScreen()
       // lockScreenEnabled가 true이면 서비스가 실행 중인지 보장
+      // (권한이 이미 있을 때만 — 없으면 사용자가 다시 토글해서 권한 요청 유도)
       if (localStorage.getItem('lockScreenEnabled') === 'true') {
-        LockScreenNative?.startLockScreenService().catch(() => {})
+        LocalNotifications.checkPermissions().then(({ display }) => {
+          if (display === 'granted') {
+            LockScreenNative?.startLockScreenService().catch(() => {})
+          }
+        }).catch(() => {
+          LockScreenNative?.startLockScreenService().catch(() => {})
+        })
       }
       return () => {
         backListener.then(l => l.remove())
