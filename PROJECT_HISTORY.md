@@ -4,6 +4,44 @@
 
 ---
 
+## 2026-04-02 — 잠금화면 인텐트 extra 처리 + 진단 로그 추가 (#83) (세션 27 cont.)
+
+**세션 목표:** startActivity() 성공 여부와 무관하게 LockScreenView를 안정적으로 표시
+
+### 문제
+
+`briodo_lock_screen=true` 인텐트 extra가 전혀 사용되지 않고 있었음.
+React는 오직 `isKeyguardLocked()` 결과에만 의존 → Samsung One UI에서 알림 탭 시
+unlock 후 앱이 열리는 경우 `isKeyguardLocked()=false` → 메인 뷰 표시 (세션 26에서 확인)
+
+### 수정 내용
+
+**`MainActivity.java`:**
+- `onNewIntent()` 오버라이드 추가
+- `setIntent(intent)` 호출로 최신 인텐트 유지
+- `briodo_lock_screen=true` 감지 시 LockScreenPlugin.notifyLockScreenShow() 호출
+
+**`LockScreenPlugin.java`:**
+- `notifyLockScreenShow()`: `notifyListeners("lockScreenShow")` 발사 (onNewIntent 경로)
+- `wasLaunchedForLockScreen()`: 현재 인텐트의 extra 확인 (onCreate 경로)
+
+**`App.jsx`:**
+- 마운트 시 `wasLaunchedForLockScreen()` → true면 즉시 `setIsLockScreen(true)` (onCreate 경로)
+- `lockScreenShow` 이벤트 리스너 등록 → `setIsLockScreen(true)` (onNewIntent 경로)
+
+**`LockScreenService.java`:**
+- `canUseFullScreenIntent()` 값과 `startActivity()` 성공/실패를 logcat에 기록 (진단용)
+
+### 기대 동작
+
+| 경로 | 이전 | 이후 |
+|------|------|------|
+| startActivity() 성공, 앱 꺼진 상태 | isKeyguardLocked() 의존 | wasLaunchedForLockScreen() 추가 보장 |
+| startActivity() 성공, 앱 실행 중 | isKeyguardLocked() 의존 | lockScreenShow 이벤트로 즉시 표시 |
+| 알림 탭 (Samsung unlock 후 진입) | isKeyguardLocked()=false → 메인 뷰 ❌ | onNewIntent → lockScreenShow → 잠금화면 ✓ |
+
+---
+
 ## 2026-04-02 — 잠금화면 launchLockScreen() 로직 역전 버그 수정 (#83) (세션 27)
 
 **세션 목표:** `launchLockScreen()` 권한 분기 로직 역전 버그 수정 + 알림 단일화

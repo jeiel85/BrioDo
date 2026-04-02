@@ -422,8 +422,17 @@ function App() {
           setSelectedDate(today)
         }
       })
-      // 앱 최초 실행 시 잠금화면 체크
+      // 앱 최초 실행 시 잠금화면 체크 (isKeyguardLocked 기반)
       checkLockScreen()
+      // onCreate 경로: 서비스가 startActivity()로 앱을 열었을 때 인텐트 extra 직접 확인
+      // isKeyguardLocked() 타이밍과 무관하게 잠금화면 뷰를 보장
+      LockScreenNative?.wasLaunchedForLockScreen()
+        .then(({ value }) => { if (value) setIsLockScreen(true) })
+        .catch(() => {})
+      // onNewIntent 경로: 앱 실행 중 서비스가 다시 startActivity()했을 때 이벤트 수신
+      const lockScreenSub = LockScreenNative?.addListener('lockScreenShow', () => {
+        setIsLockScreen(true)
+      })
       // lockScreenEnabled가 true이면 서비스가 실행 중인지 보장
       // (권한이 이미 있을 때만 — 없으면 사용자가 다시 토글해서 권한 요청 유도)
       if (localStorage.getItem('lockScreenEnabled') === 'true') {
@@ -438,6 +447,7 @@ function App() {
       return () => {
         backListener.then(l => l.remove())
         resumeListener.then(l => l.remove())
+        lockScreenSub?.then(l => l.remove())
       }
     }
   }, [])

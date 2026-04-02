@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
@@ -26,6 +27,8 @@ import androidx.core.app.NotificationCompat;
  *    → showWhenLocked + turnScreenOn 덕분에 시스템 잠금화면 위에 BrioDo 즉시 렌더
  */
 public class LockScreenService extends Service {
+
+    private static final String TAG = "BrioDo.LockScreen";
 
     static final String CHANNEL_ID_SILENT = "briodo_lockscreen_silent";
     static final String CHANNEL_ID_LAUNCH  = "briodo_lockscreen_launch";
@@ -118,16 +121,22 @@ public class LockScreenService extends Service {
         // 권한 없으면 → 폴백 알림
         boolean canStartDirect;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            canStartDirect = nm != null && nm.canUseFullScreenIntent();
+            boolean hasPermission = nm != null && nm.canUseFullScreenIntent();
+            Log.d(TAG, "canUseFullScreenIntent=" + hasPermission);
+            canStartDirect = hasPermission;
         } else {
-            canStartDirect = true; // Android 13 이하: Foreground Service에서 항상 가능
+            Log.d(TAG, "Android < 14: startActivity direct");
+            canStartDirect = true;
         }
 
         if (canStartDirect) {
             try {
                 ctx.startActivity(activityIntent);
+                Log.d(TAG, "startActivity succeeded");
                 return; // 성공 → 알림 불필요
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                Log.w(TAG, "startActivity failed: " + e.getMessage());
+            }
         }
 
         // 폴백: 권한 없을 때 탭 가능한 알림 (무음)
