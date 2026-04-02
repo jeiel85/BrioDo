@@ -1,5 +1,7 @@
 package app.briodo;
 
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -57,6 +59,11 @@ public class MainActivity extends BridgeActivity {
             } catch (Exception e) {
                 android.util.Log.w("BrioDo.LockScreen", "onResume error: " + e.getMessage());
             }
+            // setFullScreenIntent 알림 취소 (Activity가 이미 표시됐으므로 알림 불필요)
+            try {
+                NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                if (nm != null) nm.cancel(LockScreenService.NOTIF_ID_LAUNCH);
+            } catch (Exception ignored) {}
         }
     }
 }
