@@ -17,58 +17,50 @@ import androidx.core.app.NotificationCompat;
 /**
  * LockScreenService
  *
- * 잠금화면 활성화 시 포어그라운드 서비스로 동작.
- * ACTION_SCREEN_ON 브로드캐스트를 수신해 잠금 상태이면
- * 높은 우선순위 알림을 발행 → 사용자 탭 시 BrioDo가 잠금화면 위에 표시됨.
+ * 잠금화면 기능 활성화 시 상시 실행되는 Foreground Service.
  *
- * showWhenLocked=true (MainActivity) 덕분에 잠금 상태에서 앱을 열면
- * 시스템 잠금화면 위에 BrioDo 잠금화면 뷰가 렌더됨.
+ * - 알림: 상시 무음 알림 (IMPORTANCE_MIN) — 서비스 생존용, 방해 없음
+ * - ACTION_SCREEN_ON 수신 시 MainActivity를 직접 실행
+ *   → showWhenLocked=true + turnScreenOn=true 덕분에
+ *     시스템 잠금화면 위에 BrioDo 잠금화면 뷰가 즉시 렌더됨
+ * - ACTION_SCREEN_OFF 수신 시 별도 처리 없음 (앱은 백그라운드로)
  */
 public class LockScreenService extends Service {
 
-    static final String CHANNEL_ID   = "briodo_lockscreen_ch";
-    static final String CHANNEL_NAME = "BrioDo 잠금화면";
-    static final int    NOTIF_ID     = 9001;
+    static final String CHANNEL_ID_SILENT = "briodo_lockscreen_silent";
+    static final String CHANNEL_NAME      = "BrioDo 잠금화면";
+    static final int    NOTIF_ID          = 9001;
 
     private BroadcastReceiver screenReceiver;
-
-    // ── 라이프사이클 ──────────────────────────────────────────────
 
     @Override
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
 
+        // 상시 무음 알림으로 포어그라운드 서비스 유지
+        startForeground(NOTIF_ID, buildSilentNotification());
+
         screenReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context ctx, Intent intent) {
-                String action = intent.getAction();
-                if (Intent.ACTION_SCREEN_ON.equals(action)) {
-                    // 화면 켜짐 → 알림 갱신 (heads-up 또는 full-screen intent 발동)
-                    postNotification(true);
-                } else if (Intent.ACTION_USER_PRESENT.equals(action)) {
-                    // 키가드 해제됨(잠금 해제) → 상태 알림으로 전환
-                    postNotification(false);
+                if (Intent.ACTION_SCREEN_ON.equals(intent.getAction())) {
+                    launchLockScreen(ctx);
                 }
             }
         };
 
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_USER_PRESENT);
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(screenReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
             registerReceiver(screenReceiver, filter);
         }
-
-        // 서비스 시작 즉시 포어그라운드로 승격 (ANR 방지)
-        postNotification(false);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // 시스템에 의해 강제 종료된 경우 자동 재시작
+        // 시스템에 의해 강제 종료 시 자동 재시작
         return START_STICKY;
     }
 
@@ -83,61 +75,55 @@ public class LockScreenService extends Service {
     @Override
     public IBinder onBind(Intent intent) { return null; }
 
-    // ── 알림 ────────────────────────────────────────────────────
-
     /**
-     * @param isScreenOn true: 화면 켜짐(heads-up/full-screen), false: 일반 상태 알림
+     * 화면 켜짐 → MainActivity 직접 실행
+     * showWhenLocked=true + turnScreenOn=true (AndroidManifest/MainActivity)로
+     * 시스템 잠금화면 위에 BrioDo가 즉시 표시됨.
+     * JS appStateChange → checkLockScreen() → setIsLockScreen(true) → 잠금화면 뷰 렌더.
      */
-    private void postNotification(boolean isScreenOn) {
-        // BrioDo 앱 열기 인텐트 (잠금화면 모드 플래그 포함)
-        Intent openIntent = new Intent(this, MainActivity.class);
-        openIntent.putExtra("briodo_lock_screen", true);
-        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    private void launchLockScreen(Context ctx) {
+        Intent intent = new Intent(ctx, MainActivity.class);
+        intent.putExtra("briodo_lock_screen", true);
+        intent.setFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK |
+            Intent.FLAG_ACTIVITY_SINGLE_TOP |
+            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        );
+        ctx.startActivity(intent);
+    }
 
+    /** 상시 무음 알림 — 서비스 생존용, 사용자에게 방해 없음 */
+    private Notification buildSilentNotification() {
+        // 앱 열기 인텐트 (알림 탭 시)
+        Intent openIntent = new Intent(this, MainActivity.class);
+        openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pendingOpen = PendingIntent.getActivity(
             this, 0, openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+        return new NotificationCompat.Builder(this, CHANNEL_ID_SILENT)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("BrioDo")
-            .setContentText(isScreenOn
-                ? "탭하여 할 일 확인하기"
-                : "잠금화면 활성화됨")
+            .setContentText("잠금화면 활성화됨")
             .setOngoing(true)
-            .setPriority(isScreenOn
-                ? NotificationCompat.PRIORITY_MAX
-                : NotificationCompat.PRIORITY_LOW)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_MIN)   // 최저 우선순위 — 상태바 아이콘도 숨김
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET) // 잠금화면에서 내용 숨김
             .setContentIntent(pendingOpen)
-            .setAutoCancel(false);
-
-        // Android 10+(Q) 이상: 화면 켜짐 시 full-screen intent 시도
-        // USE_FULL_SCREEN_INTENT 권한 없으면 일반 heads-up으로 폴백됨
-        if (isScreenOn && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            builder.setFullScreenIntent(pendingOpen, true);
-            builder.setCategory(NotificationCompat.CATEGORY_ALARM);
-        }
-
-        Notification notification = builder.build();
-        startForeground(NOTIF_ID, notification);
-
-        // 채널에도 직접 업데이트 (heads-up 재트리거)
-        if (isScreenOn) {
-            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-            if (nm != null) nm.notify(NOTIF_ID, notification);
-        }
+            .setAutoCancel(false)
+            .setSilent(true)
+            .build();
     }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID, CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_HIGH
+                CHANNEL_ID_SILENT,
+                CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_MIN  // 소리·진동·상태바 아이콘 없음
             );
-            channel.setDescription("BrioDo 잠금화면 오버레이");
-            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            channel.setDescription("BrioDo 잠금화면 서비스 (백그라운드 유지용)");
+            channel.setShowBadge(false);
             channel.enableVibration(false);
             channel.setSound(null, null);
 

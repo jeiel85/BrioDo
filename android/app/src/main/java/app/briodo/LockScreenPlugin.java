@@ -48,22 +48,6 @@ public class LockScreenPlugin extends Plugin {
         call.resolve();
     }
 
-    /**
-     * USE_FULL_SCREEN_INTENT 권한 확인 (Android 14+)
-     * — 미허용 시 JS에서 사용자에게 권한 안내 필요
-     */
-    @PluginMethod
-    public void checkFullScreenIntentPermission(PluginCall call) {
-        JSObject ret = new JSObject();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) { // API 34
-            NotificationManager nm = (NotificationManager) getContext().getSystemService(Context.NOTIFICATION_SERVICE);
-            ret.put("granted", nm != null && nm.canUseFullScreenIntent());
-        } else {
-            ret.put("granted", true);
-        }
-        call.resolve(ret);
-    }
-
     // ── 잠금 상태 확인 ───────────────────────────────────────────
 
     @PluginMethod
