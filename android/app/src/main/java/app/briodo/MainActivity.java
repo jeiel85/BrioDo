@@ -33,9 +33,16 @@ public class MainActivity extends BridgeActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent); // getIntent()가 최신 인텐트를 반환하도록 갱신
-        if (intent != null && intent.getBooleanExtra("briodo_lock_screen", false)) {
-            LockScreenPlugin plugin = (LockScreenPlugin) getBridge().getPlugin("LockScreen").getInstance();
-            if (plugin != null) plugin.notifyLockScreenShow();
+        boolean forLockScreen = intent != null && intent.getBooleanExtra("briodo_lock_screen", false);
+        android.util.Log.d("BrioDo.LockScreen", "onNewIntent: briodo_lock_screen=" + forLockScreen);
+        if (forLockScreen) {
+            try {
+                LockScreenPlugin plugin = (LockScreenPlugin) getBridge().getPlugin("LockScreen").getInstance();
+                android.util.Log.d("BrioDo.LockScreen", "plugin=" + (plugin != null ? "ok" : "null"));
+                if (plugin != null) plugin.notifyLockScreenShow();
+            } catch (Exception e) {
+                android.util.Log.w("BrioDo.LockScreen", "onNewIntent plugin error: " + e.getMessage());
+            }
         }
     }
 }
