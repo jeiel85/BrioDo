@@ -4,6 +4,50 @@
 
 ---
 
+## 2026-04-02 — 잠금화면 setFullScreenIntent 방식으로 전환 (#83) (세션 26)
+
+**세션 목표:** 서비스 알림 미표시 + 잠금화면 미진입 2가지 문제 동시 해결
+
+### 이전 구현의 문제
+
+1. **알림 미표시**: `IMPORTANCE_MIN` 은 의도적으로 알림 쉐이드에서 완전 숨김 (상태바 아이콘도 없음) → 사용자가 서비스 동작 확인 불가
+2. **잠금화면 미진입**: Android 12+ 에서 백그라운드 Service 에서 직접 `startActivity()` 호출 시 **잠금 상태에서 차단** (ActivityNotFoundException 없이 무음 차단됨)
+
+### 해결 방법: setFullScreenIntent 알림 (알람 앱 표준 방식)
+
+- `IMPORTANCE_HIGH` + `setFullScreenIntent(pendingIntent, true)` 조합
+- Android 시스템이 화면 켜짐 시 알림을 자동으로 Activity 실행으로 처리
+- 이것이 Android가 공식 허용하는 "백그라운드에서 잠금화면 위 Activity 실행" 방법
+
+### 알림 채널 구조 변경
+
+| 채널 | Importance | 용도 |
+|------|-----------|------|
+| `CHANNEL_ID_SILENT` | LOW | 상주 알림 — 서비스 동작 확인 가능, 무음, 진동 없음 |
+| `CHANNEL_ID_LAUNCH` | HIGH | 화면 켜짐 시 자동 실행 트리거, autoCancel=true, 무음 |
+
+### 수정 내용 (세션 26)
+
+**`LockScreenService.java`:**
+- 알림 채널 2개로 분리 (`CHANNEL_ID_SILENT` / `CHANNEL_ID_LAUNCH`)
+- 상주 알림: `IMPORTANCE_LOW` → 쉐이드에 표시, 무음
+- `launchLockScreen()`: `startActivity()` 제거 → `setFullScreenIntent` 알림 방식으로 전환
+- `ACTION_SCREEN_OFF` 수신 시 실행 알림(NOTIF_ID_LAUNCH) 취소 (중복 방지)
+- Android 14+: `canUseFullScreenIntent()` 미허용 시 `startActivity()` 폴백 유지
+
+**`LockScreenPlugin.java`:**
+- `canUseFullScreenIntent()`: USE_FULL_SCREEN_INTENT 권한 보유 여부 (Android 14+)
+- `openFullScreenIntentSettings()`: 권한 설정 화면으로 직접 이동
+
+**`AndroidManifest.xml`:**
+- `USE_FULL_SCREEN_INTENT` 권한 추가
+
+**`App.jsx`:**
+- `setLockScreenEnabledPersisted()`: async 로 변경, 활성화 시 `canUseFullScreenIntent()` 체크
+- 권한 미허용이면 0.3초 후 설정 화면으로 자동 안내
+
+---
+
 ## 2026-04-02 — 잠금화면 서비스 구조 재설계 (#83) (세션 25)
 
 **세션 목표:** 잠금화면 설정 후 화면을 켜도 안 뜨는 근본 원인 해결
