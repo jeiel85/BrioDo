@@ -1,6 +1,7 @@
 package app.briodo;
 
 import android.app.Notification;
+import android.app.KeyguardManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -101,16 +102,28 @@ public class LockScreenService extends Service {
     /**
      * 화면 켜짐 → 잠금화면 Activity 실행
      *
-     * Android 14+ (API 34+):
-     *   USE_FULL_SCREEN_INTENT 권한이 있으면 Foreground Service에서 startActivity() 직접 호출 가능.
-     *   (백그라운드 Activity 시작 제한 면제 조건 — Android 공식 문서)
-     *   → 권한 있을 때: startActivity() 직접 호출 (알림 불필요, 즉시 실행)
-     *   → 권한 없을 때: 탭 가능한 폴백 알림 post
+     * 전략: setFullScreenIntent 알림 (1차) + startActivity() 병행 (2차)
      *
-     * Android 13 이하:
-     *   Foreground Service에서 startActivity() 직접 호출 가능.
+     * setFullScreenIntent 우선 이유:
+     *   startActivity()는 키가드가 이미 해제된 경우(신뢰할 수 있는 장소 등)
+     *   백그라운드 Activity 시작 제한에 의해 차단될 수 있음 — 예외 없이 성공처럼 반환.
+     *   setFullScreenIntent 알림은 Android 시스템이 직접 처리하므로
+     *   잠금 상태에서 Activity를 안정적으로 표시할 수 있음.
+     *
+     * 키가드 잠금 여부 사전 확인:
+     *   isKeyguardLocked()=false → 이미 잠금 해제됨 → 잠금화면 표시 불필요, 즉시 종료.
+     *   (신뢰할 수 있는 장소에서 화면 켜질 때는 이미 해제되어 있음)
      */
     private void launchLockScreen(Context ctx) {
+        // ── 사전 체크: 키가드가 실제로 잠겨 있는지 확인 ──
+        KeyguardManager km = (KeyguardManager) ctx.getSystemService(Context.KEYGUARD_SERVICE);
+        boolean keyguardLocked = km != null && km.isKeyguardLocked();
+        Log.d(TAG, "isKeyguardLocked=" + keyguardLocked);
+        if (!keyguardLocked) {
+            Log.d(TAG, "Keyguard not locked — skip lock screen");
+            return;
+        }
+
         Intent activityIntent = new Intent(ctx, MainActivity.class);
         activityIntent.putExtra("briodo_lock_screen", true);
         activityIntent.setFlags(
@@ -120,46 +133,64 @@ public class LockScreenService extends Service {
         );
 
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
 
-        // Android 14+: USE_FULL_SCREEN_INTENT 권한 있으면 startActivity() 직접 호출
-        // 권한 없으면 → 폴백 알림
-        boolean canStartDirect;
+        // USE_FULL_SCREEN_INTENT 권한 확인 (Android 14+)
+        boolean hasFullScreenPermission;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            boolean hasPermission = nm != null && nm.canUseFullScreenIntent();
-            Log.d(TAG, "canUseFullScreenIntent=" + hasPermission);
-            canStartDirect = hasPermission;
+            hasFullScreenPermission = nm.canUseFullScreenIntent();
+            Log.d(TAG, "canUseFullScreenIntent=" + hasFullScreenPermission);
         } else {
-            Log.d(TAG, "Android < 14: startActivity direct");
-            canStartDirect = true;
+            hasFullScreenPermission = true;
+            Log.d(TAG, "Android < 14: fullScreenIntent available");
         }
 
-        if (canStartDirect) {
+        if (hasFullScreenPermission) {
+            // ── 1차: setFullScreenIntent 알림 (잠금화면 위 Activity 표시 — Android 공식 방식) ──
+            PendingIntent fullScreenPI = PendingIntent.getActivity(
+                ctx, 2, activityIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            nm.notify(NOTIF_ID_LAUNCH, new NotificationCompat.Builder(ctx, CHANNEL_ID_LAUNCH)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("BrioDo")
+                .setContentText("잠금화면")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setFullScreenIntent(fullScreenPI, true)
+                .setContentIntent(fullScreenPI)
+                .setAutoCancel(true)
+                .setSilent(true)
+                .build());
+            Log.d(TAG, "fullScreenIntent notification posted");
+
+            // ── 2차: startActivity() 병행 시도 (즉시 실행 보조 수단) ──
             try {
                 ctx.startActivity(activityIntent);
                 Log.d(TAG, "startActivity succeeded");
-                return; // 성공 → 알림 불필요
             } catch (Exception e) {
                 Log.w(TAG, "startActivity failed: " + e.getMessage());
             }
+        } else {
+            // 권한 없음: 탭 가능한 폴백 알림 (무음)
+            PendingIntent tapPI = PendingIntent.getActivity(
+                ctx, 1, activityIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            nm.notify(NOTIF_ID_LAUNCH, new NotificationCompat.Builder(ctx, CHANNEL_ID_LAUNCH)
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setContentTitle("BrioDo")
+                .setContentText("탭하여 잠금화면 열기")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setContentIntent(tapPI)
+                .setAutoCancel(true)
+                .setSilent(true)
+                .build());
+            Log.d(TAG, "fallback tap notification posted");
         }
-
-        // 폴백: 권한 없을 때 탭 가능한 알림 (무음)
-        if (nm == null) return;
-        PendingIntent tapPI = PendingIntent.getActivity(
-            ctx, 1, activityIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        nm.notify(NOTIF_ID_LAUNCH, new NotificationCompat.Builder(ctx, CHANNEL_ID_LAUNCH)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("BrioDo")
-            .setContentText("탭하여 잠금화면 열기")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(tapPI)
-            .setAutoCancel(true)
-            .setSilent(true)
-            .build());
     }
 
     /** 상주 알림 (IMPORTANCE_LOW) — 무음, 잠금화면에서도 보임, 탭 시 잠금화면 진입 */
