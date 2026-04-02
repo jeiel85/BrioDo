@@ -4,6 +4,59 @@
 
 ---
 
+## 2026-04-03 — SYSTEM_ALERT_WINDOW 오버레이로 신뢰 장소 문제 완전 해결 (#83) (세션 28)
+
+**세션 목표:** 신뢰할 수 있는 장소(자동 잠금 해제) 환경에서도 잠금화면 위젯 표시
+
+### 문제
+
+Android 12+에서 기기 잠금이 해제된 상태(신뢰할 수 있는 장소)에서는
+백그라운드 앱의 `startActivity()` 호출이 시스템에 의해 차단됨.
+`setFullScreenIntent`도 해제 상태에서는 헤즈업 알림으로만 표시됨.
+
+### 해결 방법: SYSTEM_ALERT_WINDOW + 투명 오버레이
+
+`SYSTEM_ALERT_WINDOW` 권한으로 `WindowManager`에 1×1 투명 오버레이 창을 추가하면
+앱이 "화면에 표시되는 창 보유" 상태가 되어 백그라운드 Activity 시작 제한 면제 조건 충족.
+
+### 수정 내용
+
+**`AndroidManifest.xml`:**
+- `SYSTEM_ALERT_WINDOW` 권한 추가
+
+**`LockScreenPlugin.java`:**
+- `canDrawOverlays()`: `Settings.canDrawOverlays()` 결과 반환
+- `openDrawOverlaysSettings()`: "다른 앱 위에 표시" 설정 화면으로 이동
+
+**`LockScreenService.java`:**
+- `launchViaOverlay()` 추가: 1×1 투명 `TYPE_APPLICATION_OVERLAY` 창 → `startActivity()` → 2초 후 창 제거
+- `launchLockScreen()` 3단계 우선순위:
+  1. `canDrawOverlays=true` → `launchViaOverlay()` + (잠금 시) fullScreenIntent 보조
+  2. `canUseFullScreenIntent=true` → `setFullScreenIntent` + `startActivity()` 병행
+  3. 없음 → 탭 가능한 폴백 알림
+
+**`App.jsx`:**
+- 잠금화면 활성화 Step 4: `canDrawOverlays()` 확인 → false면 설정 화면 자동 안내
+
+### ADB 테스트 결과 (Galaxy S24, 신뢰 장소 활성화)
+
+3사이클 연속 안정 동작:
+```
+canDrawOverlays=true
+overlay added
+overlay+startActivity succeeded
+onNewIntent: briodo_lock_screen=true
+onResume: firing lockScreenShow → 잠금화면 표시 ✅
+overlay removed (2초 후 정리)
+```
+
+홈→복귀 재발사 없음:
+```
+onNewIntent: briodo_lock_screen=false ✅
+```
+
+---
+
 ## 2026-04-02 — 잠금화면 ADB 테스트 완료 + 안정화 수정 (#83) (세션 27 cont.2)
 
 **세션 목표:** 빌드 후 실기기(Galaxy S24) ADB 테스트로 동작 확인 및 추가 안정화
