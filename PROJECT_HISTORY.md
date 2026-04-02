@@ -4,6 +4,40 @@
 
 ---
 
+## 2026-04-02 — 잠금화면 launchLockScreen() 로직 역전 버그 수정 (#83) (세션 27)
+
+**세션 목표:** `launchLockScreen()` 권한 분기 로직 역전 버그 수정 + 알림 단일화
+
+### 근본 원인 (세션 26에서 진단, 이번 세션에서 수정)
+
+세션 26에서 `setFullScreenIntent` 방식으로 전환했으나 **권한 분기가 역전**되어 있었음:
+
+```java
+// 잘못된 이전 코드:
+if (!nm.canUseFullScreenIntent()) {    // 권한 없을 때
+    startActivity();                    // → 차단됨 (Android 14+ 백그라운드 제한)
+}
+nm.notify(NOTIF_ID_LAUNCH, notification);  // 권한 있을 때 → 알림 post
+// 문제: 화면 ON 후 알림 post → 자동실행 안됨, heads-up만 표시
+```
+
+Android 공식 문서: `USE_FULL_SCREEN_INTENT` 권한 보유 시 Foreground Service에서 `startActivity()` 직접 호출 가능 (백그라운드 Activity 시작 제한 면제).
+
+### 수정 내용 (세션 27)
+
+**`LockScreenService.java`:**
+- `launchLockScreen()` 완전 재작성:
+  - 권한 있을 때 (`canUseFullScreenIntent()=true`) → `startActivity()` 직접 호출 (즉시 실행, 알림 없음)
+  - 권한 없을 때 → 폴백: "탭하여 잠금화면 열기" 알림 post (무음)
+  - Android 13 이하: 항상 `startActivity()` 직접 호출
+- `ACTION_USER_PRESENT` 수신 → 폴백 알림(NOTIF_ID_LAUNCH) 취소 (잠금해제 시 정리)
+- 상주 알림 개선:
+  - `VISIBILITY_SECRET` → `VISIBILITY_PUBLIC` (잠금화면에서 보임)
+  - 텍스트: "잠금화면 활성화됨" → "화면 켜짐 시 자동 실행됩니다"
+  - 탭 인텐트에 `briodo_lock_screen=true` 추가 (탭 시 잠금화면 뷰 진입)
+
+---
+
 ## 2026-04-02 — 잠금화면 setFullScreenIntent 방식으로 전환 (#83) (세션 26)
 
 **세션 목표:** 서비스 알림 미표시 + 잠금화면 미진입 2가지 문제 동시 해결
