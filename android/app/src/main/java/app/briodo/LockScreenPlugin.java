@@ -56,6 +56,7 @@ public class LockScreenPlugin extends Plugin {
     public void isLocked(PluginCall call) {
         KeyguardManager km = (KeyguardManager) getContext().getSystemService(Context.KEYGUARD_SERVICE);
         boolean locked = km != null && km.isKeyguardLocked();
+        android.util.Log.d("BrioDo.LockScreen", "isKeyguardLocked=" + locked);
         JSObject ret = new JSObject();
         ret.put("locked", locked);
         call.resolve(ret);
