@@ -164,6 +164,7 @@ function App() {
   const [lockScreenEnabled, setLockScreenEnabled] = useState(
     () => localStorage.getItem('lockScreenEnabled') === 'true'
   )
+  const [overlayPermGranted, setOverlayPermGranted] = useState(true) // 낙관적 기본값
   const setLockScreenEnabledPersisted = async (val) => {
     setLockScreenEnabled(val)
     localStorage.setItem('lockScreenEnabled', String(val))
@@ -428,12 +429,19 @@ function App() {
         }
       })
       // 앱 포그라운드 복귀 시 잠금화면 감지 + 오늘 탭으로 리셋
+      // + SYSTEM_ALERT_WINDOW 권한 재확인 (사용자가 설정 화면에서 허용/거부 후 돌아왔을 때)
       const resumeListener = CapApp.addListener('appStateChange', ({ isActive }) => {
         if (isActive) {
           checkLockScreen()
           setViewMode('date')
           const today = new Date().toISOString().slice(0, 10)
           setSelectedDate(today)
+          // 잠금화면 활성화 상태면 overlay 권한 재확인
+          if (LockScreenNative && localStorage.getItem('lockScreenEnabled') === 'true') {
+            LockScreenNative.canDrawOverlays().then(({ value }) => {
+              setOverlayPermGranted(value)
+            }).catch(() => {})
+          }
         }
       })
       // 앱 최초 실행 시 잠금화면 체크 (isKeyguardLocked 기반)
@@ -453,7 +461,7 @@ function App() {
         setIsLockScreen(false)
       })
       // lockScreenEnabled가 true이면 서비스가 실행 중인지 보장
-      // (권한이 이미 있을 때만 — 없으면 사용자가 다시 토글해서 권한 요청 유도)
+      // + SYSTEM_ALERT_WINDOW 권한 미부여 시 설정 화면 자동 안내
       if (localStorage.getItem('lockScreenEnabled') === 'true') {
         LocalNotifications.checkPermissions().then(({ display }) => {
           if (display === 'granted') {
@@ -462,6 +470,19 @@ function App() {
         }).catch(() => {
           LockScreenNative?.startLockScreenService().catch(() => {})
         })
+        // 앱 시작 시마다 SYSTEM_ALERT_WINDOW 권한 확인
+        // (이전에 권한 없이 활성화된 사용자도 자동 안내)
+        if (LockScreenNative) {
+          LockScreenNative.canDrawOverlays().then(({ value }) => {
+            setOverlayPermGranted(value)
+            if (!value) {
+              // 약간 지연 후 설정 화면으로 안내 (앱 초기 로드 완료 후)
+              setTimeout(() => {
+                LockScreenNative.openDrawOverlaysSettings().catch(() => {})
+              }, 2000)
+            }
+          }).catch(() => {})
+        }
       }
       return () => {
         backListener.then(l => l.remove())
@@ -997,6 +1018,8 @@ function App() {
           lockScreenShowCompleted={lockScreenShowCompleted} setLockScreenShowCompleted={setLockScreenShowCompletedPersisted}
           lockScreenFontScale={lockScreenFontScale} setLockScreenFontScale={setLockScreenFontScalePersisted}
           lockScreenButtons={lockScreenButtons} setLockScreenButtons={setLockScreenButtonsPersisted}
+          overlayPermGranted={overlayPermGranted}
+          onGrantOverlayPerm={() => LockScreenNative?.openDrawOverlaysSettings().catch(() => {})}
           calendarSyncEnabled={calendarSyncEnabled} setCalendarSyncEnabled={setCalendarSyncEnabledPersisted}
           weatherEnabled={weatherEnabled} setWeatherEnabled={setWeatherEnabledPersisted}
           weatherLocation={weatherLocation} setWeatherLocation={setWeatherLocationPersisted}
