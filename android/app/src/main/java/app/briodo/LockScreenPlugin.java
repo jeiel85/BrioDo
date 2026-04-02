@@ -26,11 +26,23 @@ public class LockScreenPlugin extends Plugin {
     /** 서비스에서 Capacitor 이벤트를 발사하기 위한 정적 참조 */
     static LockScreenPlugin instance;
 
+    /**
+     * fresh start(앱 최초 실행) 시 wasLaunchedForLockScreen()을 위한 1회성 플래그.
+     * onResume()에서 notifyListeners()가 실패할 수 있으므로(WebView 미준비) 별도 보존.
+     */
+    private static volatile boolean pendingShow = false;
+
     private boolean torchOn = false;
 
     @Override
     public void load() {
         instance = this;
+        // fresh start: onCreate 시점에 인텐트 extra 확인 (onResume 전이므로 extra 아직 존재)
+        android.content.Intent intent = getActivity().getIntent();
+        if (intent != null && intent.getBooleanExtra("briodo_lock_screen", false)) {
+            pendingShow = true;
+            android.util.Log.d("BrioDo.LockScreen", "load: pendingShow=true (fresh start)");
+        }
     }
 
     // ── 잠금화면 서비스 제어 ─────────────────────────────────────
@@ -177,9 +189,10 @@ public class LockScreenPlugin extends Plugin {
 
     /**
      * onResume()에서 briodo_lock_screen=true 인텐트 수신 시 호출.
-     * 앱이 이미 실행 중일 때 React에 즉시 잠금화면 표시를 지시한다.
+     * pendingShow 플래그도 함께 세팅해 wasLaunchedForLockScreen() 폴백을 보장한다.
      */
     public void notifyLockScreenShow() {
+        pendingShow = true;
         notifyListeners("lockScreenShow", new JSObject());
     }
 
@@ -192,13 +205,15 @@ public class LockScreenPlugin extends Plugin {
     }
 
     /**
-     * 앱이 처음 시작될 때(onCreate) JS에서 호출.
-     * 현재 인텐트에 briodo_lock_screen=true가 있으면 잠금화면으로 진입해야 함을 알림.
+     * 앱 최초 실행(fresh start) 시 JS에서 호출 — 1회 소비 후 false 반환.
+     * onResume()의 notifyListeners()가 WebView 미준비로 실패했을 경우의 폴백.
+     * pendingShow는 load() 또는 notifyLockScreenShow()에서 세팅됨.
      */
     @PluginMethod
     public void wasLaunchedForLockScreen(PluginCall call) {
-        android.content.Intent intent = getActivity().getIntent();
-        boolean value = intent != null && intent.getBooleanExtra("briodo_lock_screen", false);
+        boolean value = pendingShow;
+        pendingShow = false; // 1회 소비
+        android.util.Log.d("BrioDo.LockScreen", "wasLaunchedForLockScreen: " + value);
         JSObject ret = new JSObject();
         ret.put("value", value);
         call.resolve(ret);
