@@ -51,7 +51,7 @@ public class MainActivity extends BridgeActivity {
      * super.onResume()이 WebView를 재개한 뒤에 notifyListeners를 호출해야 이벤트가 전달됨.
      */
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume(); // BridgeActivity.onResume() → WebView 재개됨
         if (!lockScreenEventFired) {
             Intent intent = getIntent();
