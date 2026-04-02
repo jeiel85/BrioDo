@@ -7,9 +7,11 @@ import android.content.Intent;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.view.KeyEvent;
 
 import com.getcapacitor.JSObject;
@@ -159,6 +161,46 @@ public class LockScreenPlugin extends Plugin {
             call.resolve();
         } catch (Exception e) {
             call.reject("Stopwatch not available: " + e.getMessage());
+        }
+    }
+
+    // ── 잠금화면 자동 실행 권한 (Android 14+) ──────────────────────
+
+    /**
+     * USE_FULL_SCREEN_INTENT 권한 보유 여부 확인
+     * Android 14 미만은 항상 true (별도 권한 불필요)
+     */
+    @PluginMethod
+    public void canUseFullScreenIntent(PluginCall call) {
+        JSObject ret = new JSObject();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            NotificationManager nm = (NotificationManager)
+                getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            ret.put("value", nm != null && nm.canUseFullScreenIntent());
+        } else {
+            ret.put("value", true);
+        }
+        call.resolve(ret);
+    }
+
+    /**
+     * USE_FULL_SCREEN_INTENT 권한 설정 화면으로 이동
+     * Android 14+에서 사용자가 권한을 허용할 수 있도록 안내
+     */
+    @PluginMethod
+    public void openFullScreenIntentSettings(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT);
+            intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                getContext().startActivity(intent);
+                call.resolve();
+            } catch (Exception e) {
+                call.reject("Cannot open settings: " + e.getMessage());
+            }
+        } else {
+            call.resolve(); // Android 14 미만은 권한 불필요
         }
     }
 }

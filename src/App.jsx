@@ -163,12 +163,22 @@ function App() {
   const [lockScreenEnabled, setLockScreenEnabled] = useState(
     () => localStorage.getItem('lockScreenEnabled') === 'true'
   )
-  const setLockScreenEnabledPersisted = (val) => {
+  const setLockScreenEnabledPersisted = async (val) => {
     setLockScreenEnabled(val)
     localStorage.setItem('lockScreenEnabled', String(val))
     if (val) {
-      // 잠금화면 활성화: 포어그라운드 서비스 시작 (화면 켤 때 알림으로 BrioDo 진입)
+      // 잠금화면 활성화: 포어그라운드 서비스 시작
       LockScreenNative?.startLockScreenService().catch(() => {})
+      // Android 14+: USE_FULL_SCREEN_INTENT 권한 확인 → 없으면 설정으로 안내
+      try {
+        const res = await LockScreenNative?.canUseFullScreenIntent()
+        if (res && res.value === false) {
+          // 0.3초 후 설정 화면으로 이동 (UI 전환 후)
+          setTimeout(() => {
+            LockScreenNative?.openFullScreenIntentSettings().catch(() => {})
+          }, 300)
+        }
+      } catch (_) {}
     } else {
       // 잠금화면 비활성화: 서비스 종료 + 알림 제거
       LockScreenNative?.stopLockScreenService().catch(() => {})
