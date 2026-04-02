@@ -43,6 +43,8 @@ export function SettingsModal({
   lockScreenShowCompleted, setLockScreenShowCompleted,
   lockScreenFontScale, setLockScreenFontScale,
   lockScreenButtons, setLockScreenButtons,
+  overlayPermGranted,
+  onGrantOverlayPerm,
   calendarSyncEnabled, setCalendarSyncEnabled,
   weatherEnabled, setWeatherEnabled,
   weatherLocation, setWeatherLocation,
@@ -339,6 +341,46 @@ export function SettingsModal({
           </p>
           {lockScreenEnabled && (
             <>
+              {/* SYSTEM_ALERT_WINDOW 권한 경고 배너 */}
+              {!overlayPermGranted && (
+                <div style={{
+                  background: 'rgba(255, 193, 7, 0.15)',
+                  border: '1px solid rgba(255, 193, 7, 0.6)',
+                  borderRadius: '10px',
+                  padding: '10px 12px',
+                  marginBottom: '14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}>
+                  <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+                  <div style={{ flex: 1, fontSize: '11px', color: 'var(--color-on-surface-variant)', lineHeight: '1.4' }}>
+                    {L(
+                      "신뢰할 수 있는 장소에서도 표시하려면 '다른 앱 위에 표시' 권한이 필요합니다.",
+                      "'Display over other apps' permission is required to show on trusted place unlock.",
+                      "信頼できる場所でも表示するには「他のアプリの上に重ねて描画」権限が必要です。",
+                      "在受信任地点显示需要"在其他应用上层显示"权限。"
+                    )}
+                  </div>
+                  <button
+                    onClick={onGrantOverlayPerm}
+                    style={{
+                      background: 'var(--color-primary)',
+                      color: 'var(--color-on-primary)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '5px 10px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {L('허용', 'Allow', '許可', '允许')}
+                  </button>
+                </div>
+              )}
               {/* 퀵버튼 선택 (최대 6개) */}
               <h3 style={{ marginBottom: '4px' }}>
                 {L('빠른 버튼 선택', 'Quick Buttons', 'クイックボタン', '快捷按钮')}
