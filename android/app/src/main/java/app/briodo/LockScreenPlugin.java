@@ -164,6 +164,29 @@ public class LockScreenPlugin extends Plugin {
         }
     }
 
+    // ── React 잠금화면 뷰 트리거 ───────────────────────────────────
+
+    /**
+     * onNewIntent()에서 briodo_lock_screen=true 인텐트 수신 시 호출.
+     * 앱이 이미 실행 중일 때 React에 즉시 잠금화면 표시를 지시한다.
+     */
+    public void notifyLockScreenShow() {
+        notifyListeners("lockScreenShow", new JSObject());
+    }
+
+    /**
+     * 앱이 처음 시작될 때(onCreate) JS에서 호출.
+     * 현재 인텐트에 briodo_lock_screen=true가 있으면 잠금화면으로 진입해야 함을 알림.
+     */
+    @PluginMethod
+    public void wasLaunchedForLockScreen(PluginCall call) {
+        android.content.Intent intent = getActivity().getIntent();
+        boolean value = intent != null && intent.getBooleanExtra("briodo_lock_screen", false);
+        JSObject ret = new JSObject();
+        ret.put("value", value);
+        call.resolve(ret);
+    }
+
     // ── 잠금화면 자동 실행 권한 (Android 14+) ──────────────────────
 
     /**

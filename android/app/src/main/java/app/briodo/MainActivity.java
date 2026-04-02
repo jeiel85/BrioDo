@@ -1,5 +1,6 @@
 package app.briodo;
 
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
@@ -22,5 +23,19 @@ public class MainActivity extends BridgeActivity {
         }
         // Capacitor 6의 BridgeWebChromeClient가 onPermissionRequest를 이미 처리함
         // (request.grant(request.getResources())) — 별도 override 불필요
+    }
+
+    /**
+     * 앱이 이미 실행 중일 때 서비스가 startActivity()로 이 Activity를 다시 열 경우 호출됨.
+     * briodo_lock_screen=true 인텐트를 감지해 React에 잠금화면 표시를 지시한다.
+     */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent); // getIntent()가 최신 인텐트를 반환하도록 갱신
+        if (intent != null && intent.getBooleanExtra("briodo_lock_screen", false)) {
+            LockScreenPlugin plugin = getBridge().getPlugin("LockScreen").getInstance();
+            if (plugin != null) plugin.notifyLockScreenShow();
+        }
     }
 }
