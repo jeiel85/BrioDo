@@ -23,7 +23,15 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 @CapacitorPlugin(name = "LockScreen")
 public class LockScreenPlugin extends Plugin {
 
+    /** 서비스에서 Capacitor 이벤트를 발사하기 위한 정적 참조 */
+    static LockScreenPlugin instance;
+
     private boolean torchOn = false;
+
+    @Override
+    public void load() {
+        instance = this;
+    }
 
     // ── 잠금화면 서비스 제어 ─────────────────────────────────────
 
@@ -168,11 +176,19 @@ public class LockScreenPlugin extends Plugin {
     // ── React 잠금화면 뷰 트리거 ───────────────────────────────────
 
     /**
-     * onNewIntent()에서 briodo_lock_screen=true 인텐트 수신 시 호출.
+     * onResume()에서 briodo_lock_screen=true 인텐트 수신 시 호출.
      * 앱이 이미 실행 중일 때 React에 즉시 잠금화면 표시를 지시한다.
      */
     public void notifyLockScreenShow() {
         notifyListeners("lockScreenShow", new JSObject());
+    }
+
+    /**
+     * 사용자가 키가드를 해제(PIN/생체인증 등)했을 때 서비스에서 호출.
+     * React가 잠금화면 뷰를 닫도록 지시한다.
+     */
+    public void notifyKeyguardDismissed() {
+        notifyListeners("keyguardDismissed", new JSObject());
     }
 
     /**
