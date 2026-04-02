@@ -258,4 +258,42 @@ public class LockScreenPlugin extends Plugin {
             call.resolve(); // Android 14 미만은 권한 불필요
         }
     }
+
+    // ── SYSTEM_ALERT_WINDOW (다른 앱 위에 표시) 권한 ─────────────────
+
+    /**
+     * SYSTEM_ALERT_WINDOW 권한 보유 여부 확인
+     * Android 6 미만은 항상 true
+     */
+    @PluginMethod
+    public void canDrawOverlays(PluginCall call) {
+        JSObject ret = new JSObject();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            ret.put("value", Settings.canDrawOverlays(getContext()));
+        } else {
+            ret.put("value", true);
+        }
+        call.resolve(ret);
+    }
+
+    /**
+     * SYSTEM_ALERT_WINDOW 권한 설정 화면으로 이동
+     * 신뢰할 수 있는 장소 등 잠금 해제 상태에서도 잠금화면 위젯 표시에 필요
+     */
+    @PluginMethod
+    public void openDrawOverlaysSettings(PluginCall call) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+            intent.setData(Uri.parse("package:" + getContext().getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            try {
+                getContext().startActivity(intent);
+                call.resolve();
+            } catch (Exception e) {
+                call.reject("Cannot open settings: " + e.getMessage());
+            }
+        } else {
+            call.resolve();
+        }
+    }
 }

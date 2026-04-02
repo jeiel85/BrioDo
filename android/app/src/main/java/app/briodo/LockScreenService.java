@@ -10,9 +10,16 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.PixelFormat;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowManager;
 
 import androidx.core.app.NotificationCompat;
 
@@ -102,21 +109,22 @@ public class LockScreenService extends Service {
     /**
      * 화면 켜짐 → 잠금화면 Activity 실행
      *
-     * 전략: setFullScreenIntent 알림 (1차, 항상) + startActivity() 병행 (2차)
+     * 우선순위:
+     *   1. SYSTEM_ALERT_WINDOW 권한 있음
+     *      → launchViaOverlay(): 1×1 투명 오버레이로 백그라운드 Activity 시작 제한 우회
+     *        (잠금 상태/해제 상태/신뢰 장소 모든 상황에서 동작)
+     *      + setFullScreenIntent 알림 병행 (잠금 상태 보조)
      *
-     * Android 14 공식 문서:
-     *   "USE_FULL_SCREEN_INTENT 권한 보유 앱은 잠금 해제 상태에서도
-     *    setFullScreenIntent로 전체 화면 Activity를 표시할 수 있음."
-     *   → 신뢰할 수 있는 장소(자동 해제) 포함, 항상 전체 화면 표시.
+     *   2. SYSTEM_ALERT_WINDOW 없음 + USE_FULL_SCREEN_INTENT 있음
+     *      → setFullScreenIntent 알림: 잠금 상태에서 전체 화면 표시
+     *        해제 상태(신뢰 장소)에서는 헤즈업 알림만 표시
      *
-     * isKeyguardLocked() 체크를 하지 않는 이유:
-     *   사용자가 잠금화면 위젯을 활성화했다면 어떤 상황에서도 표시돼야 함.
-     *   trusted place, 자동 해제, 기타 상황 모두 포함.
+     *   3. 둘 다 없음 → 탭 가능한 폴백 알림
      */
     private void launchLockScreen(Context ctx) {
         KeyguardManager km = (KeyguardManager) ctx.getSystemService(Context.KEYGUARD_SERVICE);
         boolean keyguardLocked = km != null && km.isKeyguardLocked();
-        Log.d(TAG, "isKeyguardLocked=" + keyguardLocked + " (info only, not used as gate)");
+        Log.d(TAG, "isKeyguardLocked=" + keyguardLocked);
 
         Intent activityIntent = new Intent(ctx, MainActivity.class);
         activityIntent.putExtra("briodo_lock_screen", true);
@@ -133,21 +141,48 @@ public class LockScreenService extends Service {
         boolean hasFullScreenPermission;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             hasFullScreenPermission = nm.canUseFullScreenIntent();
-            Log.d(TAG, "canUseFullScreenIntent=" + hasFullScreenPermission);
         } else {
             hasFullScreenPermission = true;
-            Log.d(TAG, "Android < 14: fullScreenIntent available");
         }
+        Log.d(TAG, "canUseFullScreenIntent=" + hasFullScreenPermission);
 
-        if (hasFullScreenPermission) {
-            // ── 1차: setFullScreenIntent 알림 ──
-            // Android 14+: USE_FULL_SCREEN_INTENT 권한 → 잠금/해제 무관하게 전체 화면 표시
-            // Android 13-: 잠금 상태 → 전체 화면, 해제 상태 → 헤즈업 알림
+        // SYSTEM_ALERT_WINDOW 권한 확인
+        boolean hasOverlayPermission = Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+            || Settings.canDrawOverlays(ctx);
+        Log.d(TAG, "canDrawOverlays=" + hasOverlayPermission);
+
+        if (hasOverlayPermission) {
+            // ── 최우선: 오버레이 방식 ──
+            // 1×1 투명 오버레이 창 → 백그라운드 Activity 시작 제한 우회
+            // 잠금/해제/신뢰 장소 무관하게 동작
+            launchViaOverlay(ctx, activityIntent);
+
+            // 잠금 상태에서는 setFullScreenIntent도 병행 (더 빠른 응답을 위한 보조)
+            if (hasFullScreenPermission && keyguardLocked) {
+                PendingIntent fullScreenPI = PendingIntent.getActivity(
+                    ctx, 2, activityIntent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+                );
+                nm.notify(NOTIF_ID_LAUNCH, new NotificationCompat.Builder(ctx, CHANNEL_ID_LAUNCH)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle("BrioDo")
+                    .setContentText("잠금화면")
+                    .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setFullScreenIntent(fullScreenPI, true)
+                    .setContentIntent(fullScreenPI)
+                    .setAutoCancel(true)
+                    .setSilent(true)
+                    .build());
+                Log.d(TAG, "fullScreenIntent notification posted (supplementary)");
+            }
+        } else if (hasFullScreenPermission) {
+            // ── 2순위: setFullScreenIntent 알림 ──
+            // 잠금 상태 → 전체 화면 / 해제 상태(신뢰 장소) → 헤즈업 알림
             PendingIntent fullScreenPI = PendingIntent.getActivity(
                 ctx, 2, activityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-
             nm.notify(NOTIF_ID_LAUNCH, new NotificationCompat.Builder(ctx, CHANNEL_ID_LAUNCH)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("BrioDo")
@@ -161,9 +196,6 @@ public class LockScreenService extends Service {
                 .build());
             Log.d(TAG, "fullScreenIntent notification posted");
 
-            // ── 2차: startActivity() 병행 시도 ──
-            // 잠금 상태: USE_FULL_SCREEN_INTENT 면제로 즉시 실행 가능
-            // 해제 상태(신뢰 장소): 차단될 수 있으나 setFullScreenIntent가 대신 처리
             try {
                 ctx.startActivity(activityIntent);
                 Log.d(TAG, "startActivity succeeded");
@@ -171,12 +203,11 @@ public class LockScreenService extends Service {
                 Log.w(TAG, "startActivity failed: " + e.getMessage());
             }
         } else {
-            // USE_FULL_SCREEN_INTENT 권한 없음: 탭 가능한 폴백 알림
+            // ── 3순위 폴백: 탭 가능한 알림 ──
             PendingIntent tapPI = PendingIntent.getActivity(
                 ctx, 1, activityIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-
             nm.notify(NOTIF_ID_LAUNCH, new NotificationCompat.Builder(ctx, CHANNEL_ID_LAUNCH)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle("BrioDo 잠금화면")
@@ -187,8 +218,51 @@ public class LockScreenService extends Service {
                 .setAutoCancel(true)
                 .setSilent(true)
                 .build());
-            Log.d(TAG, "fallback tap notification posted (no USE_FULL_SCREEN_INTENT)");
+            Log.d(TAG, "fallback tap notification posted");
         }
+    }
+
+    /**
+     * SYSTEM_ALERT_WINDOW 오버레이를 통한 Activity 시작
+     *
+     * 1×1 투명 TYPE_APPLICATION_OVERLAY 창을 WindowManager에 추가한 뒤
+     * startActivity()를 호출한다. 앱이 "화면에 표시되는 창을 보유"한 상태가 되어
+     * Android 백그라운드 Activity 시작 제한의 면제 조건을 충족한다.
+     * (신뢰할 수 있는 장소, 자동 잠금 해제 등 모든 상황에서 동작)
+     */
+    private void launchViaOverlay(Context ctx, Intent activityIntent) {
+        WindowManager wm = (WindowManager) ctx.getSystemService(Context.WINDOW_SERVICE);
+        if (wm == null) {
+            Log.w(TAG, "launchViaOverlay: WindowManager null");
+            return;
+        }
+
+        View overlay = new View(ctx);
+        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+            1, 1,                                          // 1×1 픽셀 (보이지 않음)
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
+            PixelFormat.TRANSPARENT
+        );
+        params.gravity = Gravity.TOP | Gravity.START;
+
+        try {
+            wm.addView(overlay, params);
+            Log.d(TAG, "overlay added");
+            ctx.startActivity(activityIntent);
+            Log.d(TAG, "overlay+startActivity succeeded");
+        } catch (Exception e) {
+            Log.w(TAG, "overlay+startActivity failed: " + e.getMessage());
+        }
+
+        // Activity 전환 후 오버레이 제거 (2초 후)
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            try {
+                wm.removeView(overlay);
+                Log.d(TAG, "overlay removed");
+            } catch (Exception ignored) {}
+        }, 2000);
     }
 
     /** 상주 알림 (IMPORTANCE_LOW) — 무음, 잠금화면에서도 보임, 탭 시 잠금화면 진입 */
