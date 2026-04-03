@@ -75,7 +75,7 @@ public class MainActivity extends BridgeActivity {
                 StatusBarNotificationPlugin plugin = (StatusBarNotificationPlugin)
                     getBridge().getPlugin("StatusBarNotification").getInstance();
                 if (plugin != null) {
-                    plugin.notifyListeners("openSmartInput", new com.getcapacitor.JSObject());
+                    plugin.notifyOpenSmartInput();
                 }
             } catch (Exception e) {
                 android.util.Log.w("BrioDo.StatusBar", "onResume error: " + e.getMessage());
