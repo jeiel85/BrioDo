@@ -419,7 +419,7 @@ export function SettingsModal({
                       "신뢰할 수 있는 장소에서도 표시하려면 '다른 앱 위에 표시' 권한이 필요합니다.",
                       "'Display over other apps' permission is required to show on trusted place unlock.",
                       "信頼できる場所でも表示するには「他のアプリの上に重ねて描画」権限が必要です。",
-                      "在受信任地点显示需要"在其他应用上层显示"权限。"
+                      '在受信任地点显示需要「在其他应用上层显示」权限。'
                     )}
                   </div>
                   <button
