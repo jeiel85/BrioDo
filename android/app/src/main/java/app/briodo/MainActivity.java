@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(LockScreenPlugin.class);
+        registerPlugin(StatusBarNotificationPlugin.class);
         super.onCreate(savedInstanceState);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
@@ -64,6 +65,21 @@ public class MainActivity extends BridgeActivity {
                 NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
                 if (nm != null) nm.cancel(LockScreenService.NOTIF_ID_LAUNCH);
             } catch (Exception ignored) {}
+        }
+
+        // 상태바 알림 ➕ 버튼 → SmartInputModal 열기 이벤트
+        if (intent != null && intent.getBooleanExtra(StatusBarNotificationService.EXTRA_OPEN_INPUT, false)) {
+            intent.removeExtra(StatusBarNotificationService.EXTRA_OPEN_INPUT);
+            android.util.Log.d("BrioDo.StatusBar", "onResume: firing openSmartInput");
+            try {
+                StatusBarNotificationPlugin plugin = (StatusBarNotificationPlugin)
+                    getBridge().getPlugin("StatusBarNotification").getInstance();
+                if (plugin != null) {
+                    plugin.notifyListeners("openSmartInput", new com.getcapacitor.JSObject());
+                }
+            } catch (Exception e) {
+                android.util.Log.w("BrioDo.StatusBar", "onResume error: " + e.getMessage());
+            }
         }
     }
 }

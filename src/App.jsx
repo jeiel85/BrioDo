@@ -37,6 +37,7 @@ import { BrioChargeModal } from './components/BrioChargeModal'
 import './index.css'
 
 const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScreen') : null
+const StatusBarNotifNative = Capacitor.isNativePlatform() ? registerPlugin('StatusBarNotification') : null
 
 const APP_VERSION = '1.0.0'
 
@@ -291,6 +292,50 @@ function App() {
     })
     return () => { cancelled = true }
   }, [weatherEnabled, weatherLocation, lang])
+
+  // ── 상태바 상주 알림 설정 ─────────────────────────────────────────────────
+  const [statusBarNotifEnabled, setStatusBarNotifEnabled] = useState(
+    () => localStorage.getItem('briodo-statusBarNotifEnabled') !== 'false'
+  )
+  const [statusBarTapAction, setStatusBarTapAction] = useState(
+    () => localStorage.getItem('briodo-statusBarTapAction') || 'app'
+  )
+
+  const setStatusBarNotifEnabledPersisted = (val) => {
+    setStatusBarNotifEnabled(val)
+    localStorage.setItem('briodo-statusBarNotifEnabled', String(val))
+    if (val) {
+      StatusBarNotifNative?.start({ tapAction: statusBarTapAction }).catch(() => {})
+    } else {
+      StatusBarNotifNative?.stop().catch(() => {})
+    }
+  }
+
+  const setStatusBarTapActionPersisted = (val) => {
+    setStatusBarTapAction(val)
+    localStorage.setItem('briodo-statusBarTapAction', val)
+    if (statusBarNotifEnabled) {
+      StatusBarNotifNative?.setTapAction({ tapAction: val }).catch(() => {})
+    }
+  }
+
+  // 앱 시작 시 알림 서비스 시작
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    if (localStorage.getItem('briodo-statusBarNotifEnabled') === 'false') return
+    StatusBarNotifNative?.start({
+      tapAction: localStorage.getItem('briodo-statusBarTapAction') || 'app'
+    }).catch(() => {})
+  }, [])
+
+  // 상태바 알림 ➕ 버튼 → SmartInputModal 열기
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const handler = StatusBarNotifNative?.addListener?.('openSmartInput', () => {
+      setShowSmartModal(true)
+    })
+    return () => { handler?.remove?.() }
+  }, [])
 
   const checkLockScreen = async () => {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
@@ -1024,6 +1069,8 @@ function App() {
           weatherEnabled={weatherEnabled} setWeatherEnabled={setWeatherEnabledPersisted}
           weatherLocation={weatherLocation} setWeatherLocation={setWeatherLocationPersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
+          statusBarNotifEnabled={statusBarNotifEnabled} setStatusBarNotifEnabled={setStatusBarNotifEnabledPersisted}
+          statusBarTapAction={statusBarTapAction} setStatusBarTapAction={setStatusBarTapActionPersisted}
           setShowSettings={setShowSettings}
           appVersion={APP_VERSION}
         />
