@@ -310,14 +310,27 @@ export function SettingsModal({
               <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: '8px', lineHeight: '1.4' }}>
                 {L('비워두면 IP 기반으로 자동 감지합니다. 도시명 입력 시 해당 지역 날씨 표시 (예: Seoul, Tokyo).', 'Leave blank for automatic IP-based location. Enter a city name for a specific location (e.g., Seoul, Tokyo).', '空欄にするとIPで自動検出します。都市名を入力すると該当地域の天気を表示 (例: Seoul, Tokyo).', '留空则自动基于IP检测。输入城市名显示该地区天气 (例: Seoul, Tokyo).')}
               </p>
-              <input
-                type="text"
-                className="settings-text-input"
-                value={weatherLocation}
-                onChange={e => setWeatherLocation(e.target.value)}
-                placeholder={lang === 'ko' ? '도시명 (비우면 자동 감지)' : lang === 'ja' ? '都市名（空欄で自動）' : lang === 'zh' ? '城市名（留空自动）' : 'City name (blank = auto)'}
-                style={{ width: '100%', boxSizing: 'border-box' }}
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type="text"
+                  className="settings-text-input"
+                  value={weatherLocation}
+                  onChange={e => setWeatherLocation(e.target.value)}
+                  placeholder={lang === 'ko' ? '도시명 (비우면 자동 감지)' : lang === 'ja' ? '都市名（空欄で自動）' : lang === 'zh' ? '城市名（留空自动）' : 'City name (blank = auto)'}
+                  style={{ width: '100%', boxSizing: 'border-box', paddingRight: weatherLocation ? '36px' : undefined }}
+                />
+                {weatherLocation && (
+                  <button
+                    onClick={() => setWeatherLocation('')}
+                    style={{
+                      position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      color: 'var(--color-on-surface-variant)', fontSize: '16px', lineHeight: 1, padding: '2px',
+                    }}
+                    aria-label="clear"
+                  >✕</button>
+                )}
+              </div>
               <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginTop: '6px', lineHeight: '1.4' }}>
                 {lang === 'ko'
                   ? '💡 한국어 지역명을 표시하려면 직접 입력하세요. 예: 광명시, 서울, 부산'

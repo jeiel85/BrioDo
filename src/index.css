@@ -412,10 +412,11 @@ body {
 }
 
 /* ─── Onboarding ─── */
+/* ─── Onboarding — 브랜드 고정 컬러 (CSS 변수 의존 없음, 테마 무관) ─── */
 .onboarding-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.72);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -425,7 +426,7 @@ body {
 .onboarding-modal {
   width: 100%;
   max-width: 480px;
-  background: var(--color-surface-container-lowest);
+  background: #161d2e;
   border-radius: 28px 28px 0 0;
   padding: 24px 24px 40px;
   animation: slideUp 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -440,16 +441,16 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--color-outline-variant);
+  background: rgba(255, 255, 255, 0.25);
   transition: all 0.2s;
 }
 .onboarding-dot.active {
   width: 22px;
   border-radius: 4px;
-  background: var(--color-primary);
+  background: #5c9aff;
 }
 .onboarding-dot.done {
-  background: var(--color-primary);
+  background: #5c9aff;
   opacity: 0.4;
 }
 .onboarding-screen {
@@ -466,13 +467,13 @@ body {
   font-family: Manrope, sans-serif;
   font-weight: 800;
   font-size: 22px;
-  color: var(--color-on-surface);
+  color: #eef0ff;
   text-align: center;
   margin: 0 0 10px;
 }
 .onboarding-subtitle {
   font-size: 14px;
-  color: var(--color-on-surface-variant);
+  color: #9EA3B8;
   text-align: center;
   line-height: 1.6;
   margin: 0 0 20px;
@@ -491,18 +492,18 @@ body {
   gap: 6px;
   padding: 14px 8px;
   border-radius: 16px;
-  border: 2px solid var(--color-outline-variant);
-  background: var(--color-surface-container);
-  color: var(--color-on-surface);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  color: #eef0ff;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
 }
 .onboarding-lang-btn.active {
-  border-color: var(--color-primary);
-  background: var(--color-primary-container);
-  color: var(--color-on-primary-container);
+  border-color: #5c9aff;
+  background: rgba(92, 154, 255, 0.2);
+  color: #fff;
 }
 .onboarding-demo-list {
   width: 100%;
@@ -512,7 +513,7 @@ body {
   margin-bottom: 24px;
 }
 .onboarding-demo-item {
-  background: var(--color-surface-container);
+  background: rgba(255, 255, 255, 0.07);
   border-radius: 12px;
   padding: 12px 14px;
   display: flex;
@@ -521,18 +522,18 @@ body {
 }
 .onboarding-demo-input {
   font-size: 13px;
-  color: var(--color-on-surface-variant);
+  color: #9EA3B8;
   font-style: italic;
 }
 .onboarding-demo-arrow {
   font-size: 12px;
-  color: var(--color-primary);
+  color: #5c9aff;
   font-weight: 700;
 }
 .onboarding-demo-output {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-on-surface);
+  color: #eef0ff;
 }
 .onboarding-feature-list {
   width: 100%;
@@ -542,12 +543,12 @@ body {
   margin-bottom: 24px;
 }
 .onboarding-feature-row {
-  background: var(--color-surface-container);
+  background: rgba(255, 255, 255, 0.07);
   border-radius: 12px;
   padding: 12px 16px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--color-on-surface);
+  color: #eef0ff;
 }
 .onboarding-actions {
   width: 100%;
@@ -561,7 +562,7 @@ body {
   padding: 15px;
   border-radius: 14px;
   border: none;
-  background: var(--color-primary);
+  background: #5c9aff;
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -581,7 +582,7 @@ body {
   border-radius: 14px;
   border: none;
   background: none;
-  color: var(--color-on-surface-variant);
+  color: #9EA3B8;
   font-size: 14px;
   cursor: pointer;
   font-family: inherit;
@@ -4190,7 +4191,7 @@ body.modal-open { overflow: hidden; }
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--color-surface-variant);
+  background: rgba(255, 255, 255, 0.07);
   border-radius: 14px;
   padding: 14px 16px;
 }
@@ -4205,16 +4206,16 @@ body.modal-open { overflow: hidden; }
 .onboarding-perm-name {
   font-size: 15px;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: #eef0ff;
 }
 .onboarding-perm-desc {
   font-size: 12px;
-  color: var(--color-text-secondary);
+  color: #9EA3B8;
   margin-top: 2px;
 }
 .onboarding-perm-btn {
   padding: 6px 14px;
-  background: var(--color-primary);
+  background: #5c9aff;
   color: white;
   border: none;
   border-radius: 20px;
