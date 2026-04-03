@@ -49,6 +49,9 @@ export function SettingsModal({
   weatherEnabled, setWeatherEnabled,
   weatherLocation, setWeatherLocation,
   onPreviewLockScreen,
+  // 상태바 알림
+  statusBarNotifEnabled, setStatusBarNotifEnabled,
+  statusBarTapAction, setStatusBarTapAction,
   setShowSettings,
   appVersion,
 }) {
@@ -328,7 +331,64 @@ export function SettingsModal({
           )}
         </div>
 
+        {/* ─── 상태바 상주 알림 ─── */}
         <div className="settings-section">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <h3 style={{ margin: 0 }}>{L('📌 상태바 알림', '📌 Status Bar Notification', '📌 ステータスバー通知', '📌 状态栏通知')}</h3>
+            <label className="settings-toggle">
+              <input type="checkbox" checked={statusBarNotifEnabled} onChange={e => setStatusBarNotifEnabled(e.target.checked)} />
+              <span className="settings-toggle-track" />
+            </label>
+          </div>
+          <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: statusBarNotifEnabled ? '14px' : 0, lineHeight: '1.4' }}>
+            {L(
+              '상태바에 상주 알림을 표시합니다. 손전등 버튼과 일정 추가 버튼을 바로 사용할 수 있어요.',
+              'Shows a persistent notification in the status bar with a flashlight button and quick schedule add.',
+              'ステータスバーに常駐通知を表示します。懐中電灯ボタンとスケジュール追加ボタンをすぐに使えます。',
+              '在状态栏显示常驻通知，可直接使用手电筒和添加日程按钮。'
+            )}
+          </p>
+          {statusBarNotifEnabled && (
+            <>
+              <h3 style={{ marginBottom: '6px' }}>
+                {L('알림 탭 동작', 'Tap Action', 'タップ動作', '点击动作')}
+              </h3>
+              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', lineHeight: '1.4' }}>
+                {L(
+                  '알림 또는 [➕ 일정 추가] 버튼을 눌렀을 때의 동작을 선택하세요.',
+                  'Choose what happens when you tap the notification or [➕ Add Schedule].',
+                  '通知または「➕ スケジュール追加」ボタンをタップしたときの動作を選択してください。',
+                  '选择点击通知或「➕ 添加日程」按钮时的动作。'
+                )}
+              </p>
+              <div className="font-size-selector" style={{ marginBottom: '6px' }}>
+                <button
+                  className={statusBarTapAction === 'app' ? 'active' : ''}
+                  onClick={() => setStatusBarTapAction('app')}
+                >
+                  <span>🏠</span>
+                  <span style={{ fontSize: '11px' }}>{L('메인 화면', 'Main Screen', 'メイン画面', '主界面')}</span>
+                </button>
+                <button
+                  className={statusBarTapAction === 'input' ? 'active' : ''}
+                  onClick={() => setStatusBarTapAction('input')}
+                >
+                  <span>✏️</span>
+                  <span style={{ fontSize: '11px' }}>{L('입력 팝업', 'Input Popup', '入力ポップアップ', '输入弹窗')}</span>
+                </button>
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginTop: '6px', lineHeight: '1.4' }}>
+                {statusBarTapAction === 'input'
+                  ? L('앱이 열리면서 AI 일정 입력창이 바로 표시됩니다.', 'Opens the app with the AI schedule input popup.', 'アプリが開き、AIスケジュール入力画面がすぐに表示されます。', '打开应用并直接显示AI日程输入弹窗。')
+                  : L('앱이 열리면서 오늘의 메인 화면을 표시합니다.', 'Opens the app to the main screen.', 'アプリが開き、メイン画面が表示されます。', '打开应用并显示主界面。')
+                }
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* ─── 잠금화면 위젯 (숨김 — 레거시) ─── */}
+        <div className="settings-section" style={{ display: 'none' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <h3 style={{ margin: 0 }}>{L('잠금화면 위젯', 'Lock Screen Widget', 'ロック画面ウィジェット', '锁屏小部件')}</h3>
             <label className="settings-toggle">

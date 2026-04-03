@@ -4,6 +4,47 @@
 
 ---
 
+## 2026-04-03 — 상태바 상주 알림 도입 (#86) (세션 29)
+
+**세션 목표:** 잠금화면 위젯(#83)에서 상태바 상주 알림 방식으로 전환
+
+### 배경
+
+- `SYSTEM_ALERT_WINDOW` 권한: 사용자 수동 설정 필요 → UX 마찰
+- OEM(삼성 One UI 등) 및 Android 버전별 동작 불일치
+- Play Store 심사 시 특수 권한 정당화 필요
+- **상태바 상주 알림**: 별도 특수 권한 없이 잠금화면에도 자동 노출, 훨씬 단순
+
+### 구현 내용
+
+| 파일 | 변경 |
+|------|------|
+| `StatusBarNotificationService.java` | 포어그라운드 서비스 신규 생성 |
+| `NotificationActionReceiver.java` | 손전등·일정추가 버튼 BroadcastReceiver |
+| `StatusBarNotificationPlugin.java` | Capacitor 플러그인 (JS ↔ 서비스) |
+| `AndroidManifest.xml` | 서비스·리시버 등록, `FLASHLIGHT` 권한 추가 |
+| `MainActivity.java` | 새 플러그인 등록, `EXTRA_OPEN_INPUT` extra 처리 |
+| `src/App.jsx` | 알림 서비스 시작/중지, `openSmartInput` 이벤트 리스너 |
+| `src/components/SettingsModal.jsx` | 상태바 알림 설정 섹션 추가, 잠금화면 섹션 숨김 |
+
+### 알림 구성
+
+- **본문:** "오늘도 활기차게, 해내세요! ✨"
+- **액션 1:** 🔦 손전등 (토글)
+- **액션 2:** ➕ 일정 추가
+
+### 설정 옵션
+
+- 상태바 알림 ON/OFF 토글 (기본: ON)
+- 탭 동작: **메인 화면** (기본) / **입력 팝업** (SmartInputModal)
+
+### 잠금화면 위젯 (#83)
+
+- SettingsModal에서 `display: none`으로 숨김 처리 (코드 유지)
+- `LockScreenService.java`, `LockScreenPlugin.java` 코드는 그대로 보존
+
+---
+
 ## 2026-04-03 — SYSTEM_ALERT_WINDOW 오버레이로 신뢰 장소 문제 완전 해결 (#83) (세션 28)
 
 **세션 목표:** 신뢰할 수 있는 장소(자동 잠금 해제) 환경에서도 잠금화면 위젯 표시
