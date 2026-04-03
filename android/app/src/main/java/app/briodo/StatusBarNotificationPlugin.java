@@ -89,12 +89,12 @@ public class StatusBarNotificationPlugin extends Plugin {
          .apply();
     }
 
-    /**
-     * 현재 실행 중인 StatusBarNotificationService 인스턴스를 반환.
-     * Android에는 직접 참조를 얻는 표준 API가 없으므로 정적 참조 패턴 사용.
-     */
+    /** MainActivity에서 호출 — JS로 openSmartInput 이벤트 발사 */
+    public void notifyOpenSmartInput() {
+        notifyListeners("openSmartInput", new JSObject());
+    }
+
     private StatusBarNotificationService getRunningService() {
-        // StatusBarNotificationService.instance 정적 필드로 참조
         return StatusBarNotificationService.instance;
     }
 }
