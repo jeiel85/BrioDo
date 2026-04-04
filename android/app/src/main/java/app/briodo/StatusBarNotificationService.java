@@ -117,7 +117,7 @@ public class StatusBarNotificationService extends Service {
         );
 
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("BrioDo")
             .setContentText("오늘도 활기차게, 해내세요! ✨")
             .setContentIntent(tapPi)
