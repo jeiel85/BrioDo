@@ -24,6 +24,8 @@ public class StatusBarNotificationService extends Service {
     // BroadcastReceiver 액션
     static final String ACTION_TOGGLE_FLASHLIGHT = "app.briodo.ACTION_TOGGLE_FLASHLIGHT";
     static final String ACTION_ADD_SCHEDULE      = "app.briodo.ACTION_ADD_SCHEDULE";
+    // Android 14+: setOngoing(true)도 스와이프 제거 가능 → 제거 감지 후 즉시 복원
+    static final String ACTION_NOTIF_DISMISSED   = "app.briodo.ACTION_NOTIF_DISMISSED";
 
     // 일정 추가 탭 동작 — MainActivity로 전달하는 extra
     static final String EXTRA_OPEN_INPUT = "briodo_open_input";
@@ -106,12 +108,21 @@ public class StatusBarNotificationService extends Service {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        // Android 14+: 사용자가 알림을 스와이프로 제거할 경우 즉시 서비스 재시작 → 알림 복원
+        Intent dismissIntent = new Intent(this, NotificationActionReceiver.class);
+        dismissIntent.setAction(ACTION_NOTIF_DISMISSED);
+        PendingIntent dismissPi = PendingIntent.getBroadcast(
+            this, 3, dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
         return new NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle("BrioDo")
             .setContentText("오늘도 활기차게, 해내세요! ✨")
             .setContentIntent(tapPi)
-            .setOngoing(true)           // 사용자가 스와이프로 제거 불가
+            .setDeleteIntent(dismissPi) // 스와이프 제거 시 복원 트리거
+            .setOngoing(true)           // Android 13 이하: 스와이프 제거 불가
             .setSilent(true)            // 소리·진동 없음
             .setShowWhen(false)         // 시간 숨김
             .setPriority(NotificationCompat.PRIORITY_LOW)
