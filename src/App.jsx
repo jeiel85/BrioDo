@@ -111,12 +111,12 @@ function App() {
   const [smartText, setSmartText] = useState('')
   const [smartReminderOffset, setSmartReminderOffset] = useState(null)
 
-  // 앱 시작 시 브리오 0 → 자동 수동 전환
+  // 브리오 소진 시 자동 수동 전환 (앱 시작 + 브리오 변경 시 모두 반응)
   useEffect(() => {
-    if (!hasBrio() && (localStorage.getItem('inputMode') || 'smart') === 'smart') {
+    if (!hasBrio() && inputMode === 'smart') {
       setInputModePersisted('manual')
     }
-  }, [])
+  }, [brioBalance])
 
   // 알림 채널 초기화 및 앱 사용 빈도 트래킹 (앱 시작 시 1회)
   useEffect(() => {
