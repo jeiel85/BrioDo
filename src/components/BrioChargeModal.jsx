@@ -2,7 +2,7 @@ import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 import { trackEngagement } from '../hooks/useAchievements'
 import { useRef, useState } from 'react'
 import { showRewardedAd } from '../hooks/useAdMob'
-import { MAX_BRIO_OVERFLOW } from '../hooks/useBrio'
+import { MAX_BRIO } from '../hooks/useBrio'
 
 /**
  * 브리오 충전 모달
@@ -45,7 +45,8 @@ export function BrioChargeModal({ onClose, onCharge, balance, maxBrio = 10, next
   const nextChargeLabel = formatNextCharge(nextChargeMs, lang)
 
   // 잔량 게이지 색상 — 부족하면 빨강, 충분하면 주황, 가득 차면 초록
-  const balancePct = Math.min(balance / MAX_BRIO_OVERFLOW * 100, 100)
+  // 게이지는 자동 충전 상한(MAX_BRIO=10) 기준 — 수동 충전으로 초과 보유 시 100% 표시
+  const balancePct = Math.min(balance / MAX_BRIO * 100, 100)
   const balanceColor = balance <= 2 ? 'var(--color-error)' : balance < maxBrio ? 'var(--color-primary)' : '#4caf50'
 
   // 다음 자동 충전 진행률 (0~1) → 가득 찼으면 표시 안 함
