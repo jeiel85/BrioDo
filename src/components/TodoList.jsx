@@ -9,7 +9,7 @@ const PRIORITY_LABELS = {
 }
 
 export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, showAllIncomplete, todayStr, openEditModal, toggleComplete, toggleSubtaskComplete, deleteTodo }) {
-  const [showCompleted, setShowCompleted] = useState(false)
+  const [showCompleted, setShowCompleted] = useState(true)
   const [expandedSubtasks, setExpandedSubtasks] = useState(new Set())
 
   const pLabels = PRIORITY_LABELS[lang] || PRIORITY_LABELS.en
@@ -45,6 +45,17 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
             {viewMode === 'all' && <span className="todo-date-badge">{todo.date.slice(5)}</span>}
             {formatTime(todo.time, t.noTime) && (
               <span className="todo-time">{formatTime(todo.time, t.noTime)}</span>
+            )}
+            {deleteTodo && (
+              <button
+                className="todo-delete-btn"
+                onClick={(e) => { e.stopPropagation(); deleteTodo(e, todo.id) }}
+                aria-label={lang === 'ko' ? '삭제' : 'Delete'}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              </button>
             )}
           </div>
         </div>

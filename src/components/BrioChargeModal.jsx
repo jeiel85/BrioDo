@@ -53,11 +53,21 @@ export function BrioChargeModal({ onClose, onCharge, balance, maxBrio = 10, next
   const timerPct = Math.min(chargeProgress * 100, 100)
 
   const t = {
-    title:      lang === 'ko' ? '⚡ 브리오가 부족해요' : lang === 'ja' ? '⚡ ブリオが足りません' : lang === 'zh' ? '⚡ 能量不足' : '⚡ Out of Brio',
-    body:       lang === 'ko' ? '브리오는 AI·음성·캘린더 등 고급 기능을 사용할 때 소모되며, 2시간마다 1개씩 자동으로 채워집니다.'
-              : lang === 'ja' ? 'ブリオはAI・音声・カレンダーなどの高度な機能を使うときに消費され、2時間ごとに1つ自動補充されます。'
-              : lang === 'zh' ? 'Brio在使用AI、语音、日历等高级功能时消耗，每2小时自动补充1个。'
-              : 'Brio is used for AI, voice, and calendar features. It auto-recharges 1 per 2 hours.',
+    title:      balance <= 0
+      ? (lang === 'ko' ? '⚡ 브리오가 부족해요' : lang === 'ja' ? '⚡ ブリオが足りません' : lang === 'zh' ? '⚡ 能量不足' : '⚡ Out of Brio')
+      : (lang === 'ko' ? '⚡ 브리오' : lang === 'ja' ? '⚡ ブリオ' : lang === 'zh' ? '⚡ Brio能量' : '⚡ Brio'),
+    what:       lang === 'ko' ? '브리오(Brio)란?'
+              : lang === 'ja' ? 'ブリオとは？'
+              : lang === 'zh' ? '什么是Brio？'
+              : 'What is Brio?',
+    whatDesc:   lang === 'ko' ? 'BrioDo의 활력 에너지예요. AI 스마트 입력(⚡2), 음성 인식, 캘린더 동기화 등 고급 기능을 쓸 때 소모돼요.'
+              : lang === 'ja' ? 'BrioDo の活力エネルギーです。AIスマート入力(⚡2)・音声認識・カレンダー同期などの高度な機能を使うときに消費されます。'
+              : lang === 'zh' ? 'BrioDo的活力能量。使用AI智能输入(⚡2)、语音识别、日历同步等高级功能时消耗。'
+              : 'The energy powering BrioDo\'s smart features. Used when you use AI smart input (⚡2), voice input, or calendar sync.',
+    body:       lang === 'ko' ? '2시간마다 1개씩 자동으로 충전되고, 광고를 보면 즉시 5개를 충전할 수 있어요.'
+              : lang === 'ja' ? '2時間ごとに1つ自動補充され、広告を見れば即座に5つチャージできます。'
+              : lang === 'zh' ? '每2小时自动补充1个，看广告可立即充值5个。'
+              : 'Auto-recharges 1 every 2 hours. Watch an ad to instantly get 5 more.',
     ad:         lang === 'ko' ? '광고 보고 ⚡5 즉시 충전' : lang === 'ja' ? '広告を見て ⚡5 即時チャージ' : lang === 'zh' ? '看广告立即充值 ⚡5' : 'Watch Ad — get ⚡5 now',
     close:      lang === 'ko' ? '나중에' : lang === 'ja' ? 'あとで' : lang === 'zh' ? '稍后' : 'Later',
     balanceLabel: lang === 'ko' ? '현재 잔량' : lang === 'ja' ? '現在残量' : lang === 'zh' ? '当前余量' : 'Balance',
@@ -75,7 +85,11 @@ export function BrioChargeModal({ onClose, onCharge, balance, maxBrio = 10, next
         <div className="brio-charge-content">
           <div className="brio-charge-icon">⚡</div>
           <h3 className="brio-charge-title">{t.title}</h3>
-          <p className="brio-charge-body">{t.body}</p>
+          <div className="brio-what-section">
+            <p className="brio-what-label">{t.what}</p>
+            <p className="brio-charge-body">{t.whatDesc}</p>
+          </div>
+          <p className="brio-charge-body" style={{ marginTop: '8px' }}>{t.body}</p>
 
           {/* 잔량 게이지 */}
           <div className="brio-gauge-section">

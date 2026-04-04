@@ -81,6 +81,20 @@ export function useCalendarNav(lang) {
     return viewMonth.toLocaleDateString(locale, { year: 'numeric', month: 'long' })
   }, [viewMonth, locale])
 
+  const prevWeek = () => {
+    const base = new Date(selectedDate + 'T00:00:00')
+    base.setDate(base.getDate() - 7)
+    setSelectedDateState(getLocalDateString(base))
+    setViewMonth(base)
+  }
+
+  const nextWeek = () => {
+    const base = new Date(selectedDate + 'T00:00:00')
+    base.setDate(base.getDate() + 7)
+    setSelectedDateState(getLocalDateString(base))
+    setViewMonth(base)
+  }
+
   const prevMonth = () => {
     setViewMonth(prev => {
       const d = new Date(prev)
@@ -112,6 +126,8 @@ export function useCalendarNav(lang) {
     currentWeekDates,
     monthGridDates,
     weekdayNames,
+    prevWeek,
+    nextWeek,
     prevMonth,
     nextMonth,
     goToMonth,
