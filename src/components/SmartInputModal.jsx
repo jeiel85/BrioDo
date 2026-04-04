@@ -267,9 +267,14 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
             {partialText && (
               <div className="voice-partial-text">{partialText}</div>
             )}
-            <button className="voice-stop-btn" onClick={e => { e.stopPropagation(); toggleMic() }}>
-              {lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'Done'}
-            </button>
+            <div className="voice-stop-row">
+              <button className="voice-cancel-btn" onClick={e => { e.stopPropagation(); handleClose() }}>
+                {lang === 'ko' ? '취소' : lang === 'ja' ? 'キャンセル' : lang === 'zh' ? '取消' : 'Cancel'}
+              </button>
+              <button className="voice-stop-btn" onClick={e => { e.stopPropagation(); stopMic() }}>
+                {lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'Done'}
+              </button>
+            </div>
           </div>
         ) : (
           <>

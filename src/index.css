@@ -1954,6 +1954,11 @@ body.modal-open { overflow: hidden; }
   min-height: 20px;
   font-style: italic;
 }
+.voice-stop-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
 .voice-stop-btn {
   background: var(--color-primary);
   color: var(--color-on-primary);
@@ -1963,7 +1968,16 @@ body.modal-open { overflow: hidden; }
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 4px;
+}
+.voice-cancel-btn {
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  border: 1px solid var(--color-outline);
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 /* ─── Settings Modal ─── */
