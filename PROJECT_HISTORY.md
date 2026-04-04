@@ -1088,3 +1088,59 @@ Android에서 잠금화면 위에 앱을 자동으로 띄우는 유일한 신뢰
 - 메타 업적 (X47~X50, E13, E14): `unlockedPublicCount/unlockedSecretCount` 기반 2패스 계산
 
 *최종 업데이트: 2026-03-27 (세션 18 — 업적 시스템 200개 확장, 브리오 보상 연동)*
+
+---
+
+## 세션 31 — 2026-04-03: Play Store 비공개 테스트(Alpha) 제출
+
+### 변경 내용
+- **브리오 소진 → 입력 모드 자동 전환 버그 수정** (`App.jsx`)
+  - 원인: `useEffect(() => {...}, [])` — 앱 시작 시 1회만 실행
+  - 수정: deps를 `[brioBalance]`로 변경, 조건을 `inputMode === 'smart'`로 명확화
+  - FAB 버튼 아이콘도 즉시 수동 모드(✏️)로 전환됨
+- **versionCode 1 → 2** (`android/app/build.gradle`)
+  - Play Store 기존 업로드(versionCode 1) 충돌 해결
+- **Play Store Alpha 비공개 테스트 제출**
+  - AAB 빌드(`bundleRelease`) 및 Alpha 트랙 업로드
+  - 앱 콘텐츠 선언 완료 (광고, 타겟 연령, 데이터 보안 등)
+  - 권한 선언 오류 2개 해결:
+    - `FOREGROUND_SERVICE_SPECIAL_USE`: YouTube Shorts 데모 영상 링크 + 설명 제출
+    - `USE_FULL_SCREEN_INTENT`: "기타(레거시)" 선택으로 해결
+  - Google 검토 제출 완료 (검토 기간 최대 7일)
+- **AdMob 동작 확인**
+  - `isTesting: import.meta.env.DEV` — 디버그 빌드에서만 테스트 광고 강제
+  - 릴리즈 빌드에서는 실제 광고 ID로 정상 노출
+
+### 주요 발견
+- Play Console OAuth 검토, 본인 인증은 이미 이전 세션에서 제출됨
+- Alpha 옵트인 링크: `https://play.google.com/apps/testing/app.briodo`
+
+---
+
+## 세션 32 — 2026-04-04: 테스터 모집 + 배포 채널 정비
+
+### 변경 내용
+- **비공개 테스트 테스터 이메일 목록 12개 확보**
+  - 기존 "테스터들" 목록(3명) → 12명으로 확대
+  - 본인 Gmail 계정 7개 + 와이프 + 지인 3명 추가
+  - 프로덕션 신청 요건: 12명 옵트인 + 14일 실행 대기 중
+- **README.md 업데이트**
+  - Google Play 배지 추가 (상단 shields.io)
+  - "다운로드" 섹션 신설 — Play Store 우선, APK 직접 링크 보조
+  - 향후 계획에서 Play Store 출시 항목 ✅ 체크
+- **docs/index.html (GitHub Pages) 업데이트**
+  - 히어로 버튼: "Google Play에서 받기" 메인 + "APK 직접 다운로드" 보조로 변경
+  - 링크 섹션에 Google Play 다운로드 항목 추가
+- **GitHub Release v1.0.0 정비**
+  - 릴리즈 노트에 Play Store 링크 추가
+  - `app-release.apk` → versionCode 2 최신 빌드(5.4MB)로 교체
+- **앱 스크린샷 촬영** (ADB 무선 연결: 192.168.45.149:5555)
+  - `docs/screenshots/` 에 3장 저장
+  - 오늘 탭, AI 스마트 입력(음성인식 중), 컬렉션/통계 화면
+
+### 현재 상태
+- Play Store Alpha: Google 검토 중 (최대 7일)
+- 테스터 12명 등록 완료 → 옵트인 + 14일 카운트다운 진행 중
+- 프로덕션 신청 가능 시점: 14일 후
+
+*최종 업데이트: 2026-04-04 (세션 32 — 테스터 모집, Play Store 배포 채널 정비)*
