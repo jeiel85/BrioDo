@@ -16,8 +16,6 @@ import androidx.core.content.ContextCompat;
  */
 public class NotificationActionReceiver extends BroadcastReceiver {
 
-    private static boolean torchOn = false;
-
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
@@ -49,10 +47,14 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         if (cm == null) return;
         try {
             String camId = cm.getCameraIdList()[0];
-            torchOn = !torchOn;
-            cm.setTorchMode(camId, torchOn);
+            StatusBarNotificationService.torchOn = !StatusBarNotificationService.torchOn;
+            cm.setTorchMode(camId, StatusBarNotificationService.torchOn);
+            // 버튼 라벨 갱신 (켜기 ↔ 끄기)
+            if (StatusBarNotificationService.instance != null) {
+                StatusBarNotificationService.instance.refresh();
+            }
         } catch (CameraAccessException e) {
-            torchOn = false;
+            StatusBarNotificationService.torchOn = false;
         }
     }
 

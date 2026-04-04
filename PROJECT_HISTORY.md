@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-04-04 — 상태바 알림 개선 (#87, #88) (세션 30)
+
+### #88 — 스마트 입력 음성 완료/취소 버튼 (닫힘)
+- 음성 수신 중 화면에 **취소** (입력 없이 모달 닫기) · **완료** (녹음 중단 후 텍스트 유지) 버튼 추가
+- 이전 세션 커밋(`119f954`)으로 이미 처리 완료 → 이번 세션에서 이슈 닫음
+
+### #87 — 알림 바 개선 (3가지)
+
+| 항목 | 내용 |
+|------|------|
+| 손전등 토글 버튼 | `torchOn` 상태를 `StatusBarNotificationService`로 이동, 토글 후 알림 즉시 갱신 → 버튼 라벨 "🔦 켜기 / 끄기" |
+| 알림 내용 옵션화 | 고정 문구 / 오늘 남은 할일 수 / 날씨 — JS에서 `updateContent({text})` 플러그인 호출로 실시간 반영 |
+| 확장 표시 (펼쳐진 형태) | `BigTextStyle` 적용 → 액션 버튼이 기본 확장 뷰에서 바로 노출됨 |
+
+#### 변경 파일
+- `android/.../StatusBarNotificationService.java` — `torchOn`, `notifContentText` 정적 필드 추가, BigTextStyle, 버튼 라벨 동적화
+- `android/.../NotificationActionReceiver.java` — 토글 후 `instance.refresh()` 호출
+- `android/.../StatusBarNotificationPlugin.java` — `updateContent()` PluginMethod 추가
+- `src/App.jsx` — `statusBarContentStyle` 상태 + `updateContent` 이펙트 (todos/weather/lang 의존)
+- `src/components/SettingsModal.jsx` — 알림 내용 3-옵션 선택 UI 추가
+
+---
+
 ## 2026-04-03 — 출시 전 버그 수정 (세션 29 cont.)
 
 ### 수정 내용

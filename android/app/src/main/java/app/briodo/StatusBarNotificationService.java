@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.IBinder;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat.BigTextStyle;
 
 /**
  * 상태바 상주 알림 포어그라운드 서비스.
@@ -36,6 +37,12 @@ public class StatusBarNotificationService extends Service {
     static final String PREF_TAP_ACTION   = "tap_action";
     static final String TAP_ACTION_INPUT  = "input";   // SmartInputModal 열기
     static final String TAP_ACTION_APP    = "app";     // 메인 화면 열기 (기본)
+
+    /** 손전등 현재 상태 (NotificationActionReceiver와 공유) */
+    static boolean torchOn = false;
+
+    /** 알림 본문 텍스트 — JS updateContent() 로 갱신, null 이면 기본값 사용 */
+    static String notifContentText = null;
 
     /** Plugin에서 서비스 인스턴스를 참조하기 위한 정적 필드 */
     static StatusBarNotificationService instance;
@@ -116,17 +123,24 @@ public class StatusBarNotificationService extends Service {
             PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        String content = (notifContentText != null && !notifContentText.isEmpty())
+            ? notifContentText : "오늘도 활기차게, 해내세요! ✨";
+
+        String torchLabel = torchOn ? "🔦 끄기" : "🔦 켜기";
+
         return new NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle("BrioDo")
-            .setContentText("오늘도 활기차게, 해내세요! ✨")
+            .setContentText(content)
+            // BigTextStyle → 알림이 기본 확장 상태로 표시되어 액션 버튼이 바로 노출됨
+            .setStyle(new BigTextStyle().bigText(content))
             .setContentIntent(tapPi)
             .setDeleteIntent(dismissPi) // 스와이프 제거 시 복원 트리거
             .setOngoing(true)           // Android 13 이하: 스와이프 제거 불가
             .setSilent(true)            // 소리·진동 없음
             .setShowWhen(false)         // 시간 숨김
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(0, "🔦 손전등", torchPi)
+            .addAction(0, torchLabel, torchPi)
             .addAction(0, "➕ 일정 추가", addPi)
             .build();
     }

@@ -300,6 +300,10 @@ function App() {
   const [statusBarTapAction, setStatusBarTapAction] = useState(
     () => localStorage.getItem('briodo-statusBarTapAction') || 'app'
   )
+  // 알림 내용 표시 방식: 'fixed' | 'tasks' | 'weather'
+  const [statusBarContentStyle, setStatusBarContentStyle] = useState(
+    () => localStorage.getItem('briodo-statusBarContentStyle') || 'fixed'
+  )
 
   const setStatusBarNotifEnabledPersisted = (val) => {
     setStatusBarNotifEnabled(val)
@@ -319,6 +323,11 @@ function App() {
     }
   }
 
+  const setStatusBarContentStylePersisted = (val) => {
+    setStatusBarContentStyle(val)
+    localStorage.setItem('briodo-statusBarContentStyle', val)
+  }
+
   // 앱 시작 시 알림 서비스 시작
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
@@ -336,6 +345,23 @@ function App() {
     })
     return () => { handler?.remove?.() }
   }, [])
+
+  // 알림 내용 표시 방식에 따라 본문 텍스트 갱신
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !statusBarNotifEnabled) return
+    let text = null // null → 서비스 기본값("오늘도 활기차게, 해내세요! ✨")
+    if (statusBarContentStyle === 'tasks') {
+      const today = new Date().toISOString().slice(0, 10)
+      const remaining = todos.filter(t => t.date === today && !t.completed).length
+      text = lang === 'ko' ? `오늘 남은 할일 ${remaining}개` : `${remaining} tasks left today`
+    } else if (statusBarContentStyle === 'weather') {
+      if (weatherData) {
+        const area = weatherData.area ? ` · ${weatherData.area}` : ''
+        text = `${weatherData.icon} ${weatherData.tempC}° (${weatherData.highC}°/${weatherData.lowC}°)${area}`
+      }
+    }
+    StatusBarNotifNative?.updateContent({ text: text ?? '' }).catch(() => {})
+  }, [statusBarContentStyle, statusBarNotifEnabled, todos, weatherData, lang])
 
   const checkLockScreen = async () => {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
@@ -1071,6 +1097,7 @@ function App() {
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           statusBarNotifEnabled={statusBarNotifEnabled} setStatusBarNotifEnabled={setStatusBarNotifEnabledPersisted}
           statusBarTapAction={statusBarTapAction} setStatusBarTapAction={setStatusBarTapActionPersisted}
+          statusBarContentStyle={statusBarContentStyle} setStatusBarContentStyle={setStatusBarContentStylePersisted}
           setShowSettings={setShowSettings}
           appVersion={APP_VERSION}
         />
