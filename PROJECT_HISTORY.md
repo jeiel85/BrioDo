@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-04-04 — Play Store 비공개 테스트 Alpha 출시 (세션 31)
+
+### Play Store 제출 완료
+- **versionCode 2 / versionName 1.0.0** AAB 릴리즈 빌드 → 비공개 테스트 Alpha 트랙 업로드
+- 권한 선언 처리: `FOREGROUND_SERVICE_SPECIAL_USE` (기타 + 데모 영상 링크), `USE_FULL_SCREEN_INTENT` (기타) → 앱 콘텐츠 선언 완료
+- 버그 수정: 브리오 소진 시 자동 수동 전환 `useEffect` 버그 (deps `[]` → `[brioBalance]`, 조건 오류 수정)
+- Google 검토 중 (일반적으로 7일 이내 완료)
+
+### 다음 단계 (수동 필요)
+- 비공개 테스트 테스터 12명 이상 모집 (opt-in 링크 공유)
+- 14일 이상 테스트 실행 후 프로덕션 액세스 신청
+- Google OAuth 심사 제출 (Calendar 스코프)
+- Play Console 신원 인증 (신분증 제출)
+
+---
+
 ## 2026-04-04 — 상태바 알림 개선 (#87, #88) (세션 30)
 
 ### #88 — 스마트 입력 음성 완료/취소 버튼 (닫힘)
