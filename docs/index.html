@@ -55,6 +55,15 @@
       transition: transform 0.15s, box-shadow 0.15s;
     }
     .btn-download:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.22); }
+    .btn-download.secondary {
+      background: transparent;
+      color: #fff;
+      border: 2px solid rgba(255,255,255,0.6);
+      font-size: 0.88rem;
+      padding: 10px 22px;
+    }
+    .btn-download.secondary:hover { background: rgba(255,255,255,0.12); }
+    .hero-buttons { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
     /* Features */
     .section { max-width: 760px; margin: 0 auto; padding: 56px 24px; }
@@ -140,9 +149,15 @@
     <img src="icon-512.png" alt="BrioDo 아이콘" class="hero-icon" />
     <h1>BrioDo</h1>
     <p class="tagline">활기차게, 해내다. — AI와 함께하는 스마트 할 일 관리</p>
-    <a href="https://github.com/jeiel85/BrioDo/releases/latest" class="btn-download">
-      ⬇ Android APK 다운로드
-    </a>
+    <div class="hero-buttons">
+      <a href="https://play.google.com/store/apps/details?id=app.briodo" class="btn-download">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83 1.01-1.3 1.66-.78l14 8.5c.58.35.58 1.21 0 1.56l-14 8.5C4.01 21.8 3 21.33 3 20.5z"/></svg>
+        Google Play에서 받기
+      </a>
+      <a href="https://github.com/jeiel85/BrioDo/releases/latest" class="btn-download secondary">
+        ⬇ APK 직접 다운로드
+      </a>
+    </div>
   </section>
 
   <!-- App Purpose -->
@@ -193,7 +208,8 @@
   <div class="links-section">
     <h2>다운로드 및 링크</h2>
     <ul class="link-list">
-      <li><a href="https://github.com/jeiel85/BrioDo/releases/latest">최신 APK 다운로드</a></li>
+      <li><a href="https://play.google.com/store/apps/details?id=app.briodo">Google Play 다운로드</a></li>
+      <li><a href="https://github.com/jeiel85/BrioDo/releases/latest" class="secondary">APK 직접 다운로드</a></li>
       <li><a href="https://github.com/jeiel85/BrioDo" class="secondary">GitHub 저장소</a></li>
       <li><a href="https://jeiel85.github.io/BrioDo/privacy-policy.html" class="secondary">개인정보처리방침</a></li>
     </ul>
