@@ -37,7 +37,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            
+
             <!-- Firebase Auth Redirect Intent Filter -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -49,16 +49,12 @@
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-7262251786684458~9750978148"/>
+            android:value="ca-app-pub-7262251786684458~9750978148"
+        />
 
         <!-- 잠금화면 포어그라운드 서비스 (레거시 — 현재 비활성) -->
-        <service
-            android:name=".LockScreenService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="lock_screen_overlay" />
+        <service android:name=".LockScreenService" android:exported="false" android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="lock_screen_overlay" />
         </service>
 
         <!-- 상태바 상주 알림 서비스 -->
@@ -68,16 +64,16 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="status_bar_notification" />
+                android:value="status_bar_notification"
+            />
         </service>
 
         <!-- 상태바 알림 버튼 액션 수신기 -->
-        <receiver
-            android:name=".NotificationActionReceiver"
-            android:exported="false">
+        <receiver android:name=".NotificationActionReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="app.briodo.ACTION_TOGGLE_FLASHLIGHT" />
                 <action android:name="app.briodo.ACTION_ADD_SCHEDULE" />
+                <action android:name="app.briodo.ACTION_NOTIF_DISMISSED" />
             </intent-filter>
         </receiver>
 

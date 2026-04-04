@@ -7,6 +7,8 @@ import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
 
+import androidx.core.content.ContextCompat;
+
 /**
  * 상태바 상주 알림의 액션 버튼 처리.
  * - 🔦 손전등: 토글
@@ -28,6 +30,14 @@ public class NotificationActionReceiver extends BroadcastReceiver {
 
             case StatusBarNotificationService.ACTION_ADD_SCHEDULE:
                 openForAddSchedule(context);
+                break;
+
+            case StatusBarNotificationService.ACTION_NOTIF_DISMISSED:
+                // Android 14+/ONE UI 8.0: 스와이프로 제거된 알림 즉시 복원
+                ContextCompat.startForegroundService(
+                    context,
+                    new Intent(context, StatusBarNotificationService.class)
+                );
                 break;
         }
     }
