@@ -74,9 +74,11 @@ function App() {
   }
 
   const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode, lang })
-  const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
+  const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevWeek, nextWeek, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
+  const [allViewPeriod, setAllViewPeriod] = useState(() => localStorage.getItem('briodo-allViewPeriod') || 'all')
+  const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -89,6 +91,12 @@ function App() {
     localStorage.setItem('briodo-viewMode', viewMode)
     if (viewMode === 'lists') trackEngagement('collectionVisited')
   }, [viewMode])
+
+  const switchTab = (mode) => {
+    setViewMode(mode)
+    setIsSearchOpen(false)
+    setSearchQuery('')
+  }
 
   // 입력 모드: 'smart' | 'manual' (기본값: manual — 로그인 전에는 항상 manual)
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'manual')
@@ -826,12 +834,28 @@ function App() {
       const dtB = new Date(`${b.date} ${b.time?.includes(':') ? b.time : '00:00'}`)
       return dtA - dtB
     }
+    const today = new Date(todayStr + 'T00:00:00')
+    const periodEnd = (() => {
+      if (allViewPeriod === 'all') return null
+      const d = new Date(todayStr + 'T23:59:59')
+      if (allViewPeriod === 'week') d.setDate(today.getDate() + 6)
+      else if (allViewPeriod === 'month') d.setMonth(today.getMonth() + 1)
+      else if (allViewPeriod === 'quarter') d.setMonth(today.getMonth() + 3)
+      else if (allViewPeriod === 'half') d.setMonth(today.getMonth() + 6)
+      else if (allViewPeriod === 'year') d.setFullYear(today.getFullYear() + 1)
+      return d
+    })()
     const base = todos
       .filter(t => !t.recurrence?.type || t.recurrence.type === 'none')
       .filter(t => !selectedTag || t.tags?.includes(selectedTag))
+      .filter(t => {
+        if (!periodEnd) return true
+        const d = new Date(t.date + 'T00:00:00')
+        return d >= today && d <= periodEnd
+      })
       .sort(sortByDate)
     return { incomplete: base.filter(t => !t.completed), completed: base.filter(t => t.completed) }
-  }, [todos, selectedTag])
+  }, [todos, selectedTag, allViewPeriod, todayStr])
   const allIncompleteTodos = allTodosSorted.incomplete
   const allCompletedTodos = allTodosSorted.completed
 
@@ -904,6 +928,7 @@ function App() {
         tagExpanded={tagExpanded} setTagExpanded={setTagExpanded}
         selectedDate={selectedDate}
         calendarExpanded={calendarExpanded} setCalendarExpanded={setCalendarExpanded}
+        prevWeek={prevWeek} nextWeek={nextWeek}
         viewMonth={viewMonth}
         viewMonthLabel={viewMonthLabel}
         currentWeekDates={currentWeekDates}
@@ -912,7 +937,15 @@ function App() {
         prevMonth={prevMonth} nextMonth={nextMonth} goToMonth={goToMonth}
         setShowSettings={setShowSettings}
         searchQuery={searchQuery} setSearchQuery={(q) => { setSearchQuery(q); if (q.trim()) trackEngagement('searchUsed'); }}
-        isSearchOpen={isSearchOpen} setIsSearchOpen={setIsSearchOpen}
+        isSearchOpen={isSearchOpen} setIsSearchOpen={(open) => {
+          setIsSearchOpen(open)
+          if (open) {
+            // 검색 열 때 항상 할일(date) 탭으로 이동
+            setViewMode('date')
+          } else {
+            setSearchQuery('')
+          }
+        }}
         activeTodosCount={headerActiveTodosCount}
         completedTodosCount={headerCompletedTodosCount}
         weeklyPulse={weeklyPulse}
@@ -958,6 +991,23 @@ function App() {
           />
         )}
         {viewMode === 'all' && (
+          <>
+            <div className="all-period-filter">
+              {(['all', 'week', 'month', 'quarter', 'half', 'year']).map(p => (
+                <button
+                  key={p}
+                  className={`period-filter-btn${allViewPeriod === p ? ' active' : ''}`}
+                  onClick={() => setAllViewPeriodPersisted(p)}
+                >
+                  {p === 'all' ? (lang === 'ko' ? '전체' : lang === 'ja' ? 'すべて' : lang === 'zh' ? '全部' : 'All')
+                  : p === 'week' ? (lang === 'ko' ? '1주' : lang === 'ja' ? '1週' : lang === 'zh' ? '1周' : '1W')
+                  : p === 'month' ? (lang === 'ko' ? '1달' : lang === 'ja' ? '1ヶ月' : lang === 'zh' ? '1月' : '1M')
+                  : p === 'quarter' ? (lang === 'ko' ? '분기' : lang === 'ja' ? '四半期' : lang === 'zh' ? '季度' : '3M')
+                  : p === 'half' ? (lang === 'ko' ? '반기' : lang === 'ja' ? '半年' : lang === 'zh' ? '半年' : '6M')
+                  : (lang === 'ko' ? '1년' : lang === 'ja' ? '1年' : lang === 'zh' ? '1年' : '1Y')}
+                </button>
+              ))}
+            </div>
           <TodoList
             user={user} t={t} lang={lang}
             activeTodos={allIncompleteTodos}
@@ -970,6 +1020,7 @@ function App() {
             toggleSubtaskComplete={toggleSubtaskComplete}
             deleteTodo={deleteTodo}
           />
+          </>
         )}
         {viewMode === 'lists' && !searchQuery.trim() && (
           <CollectionsScreen
@@ -1027,7 +1078,7 @@ function App() {
 
       <BottomNav
         lang={lang} t={t}
-        viewMode={viewMode} setViewMode={setViewMode}
+        viewMode={viewMode} setViewMode={switchTab}
         todayStr={todayStr} setSelectedDate={setSelectedDate}
         showSettings={showSettings} setShowSettings={setShowSettings}
       />

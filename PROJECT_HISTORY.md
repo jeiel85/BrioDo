@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-04-05 — UX 개선 9종 (GitHub 이슈 #89~#97) (세션 33)
+
+### 이슈 대응 현황
+| 이슈 | 내용 | 상태 |
+|------|------|------|
+| #89 | SafeArea: `max(40px, ...)` → `calc(env(safe-area-inset-top, 24px) + 8px)` (S10 5G 과다 여백 수정) | ✅ 완료 |
+| #90 | 주간보기 좌/우 스와이프로 전주/다음주 이동 (`useCalendarNav` prevWeek/nextWeek 추가, Header touch 핸들러) | ✅ 완료 |
+| #91 | 완료됨 섹션 기본 펼침 상태 (`useState(false)` → `useState(true)`) | ✅ 완료 |
+| #92 | 할일 삭제 기능 추가 (카드 내 휴지통 버튼, `deleteTodo(e, id)` 연결) | ✅ 완료 |
+| #93 | 날씨 위젯 top-bar 이동 (검색 버튼 근처 `weather-top-chip`으로 재배치) | ✅ 완료 |
+| #94 | 브리오 충전 팝업 설명 추가 ("브리오란?" 섹션 추가, 기능별 비용 안내) | ✅ 완료 |
+| #95 | 검색 클릭 시 할일 탭 강제 이동 + 탭 변경 시 검색바 자동 닫힘 | ✅ 완료 |
+| #96 | 전체할일 기간 필터 (전체/1주/1달/분기/반기/1년) — `allViewPeriod` 상태 추가 | ✅ 완료 |
+| #97 | 설정 depth 구조 재편 | ⏭️ 다음 세션 |
+
+### 주요 변경 파일
+- `src/components/TodoList.jsx` — 삭제 버튼 추가, 완료됨 기본 펼침
+- `src/components/Header.jsx` — 날씨 top-bar 이동, 주간 스와이프, prevWeek/nextWeek props
+- `src/components/BrioChargeModal.jsx` — 브리오 개념 설명 섹션 추가
+- `src/hooks/useCalendarNav.js` — prevWeek/nextWeek 함수 추가
+- `src/App.jsx` — 검색→탭 강제이동, switchTab(), allViewPeriod 기간 필터
+- `src/index.css` — 삭제 버튼, 날씨 top chip, 기간 필터, SafeArea 수정 CSS
+
+---
+
 ## 2026-04-04 — Play Store 비공개 테스트 Alpha 출시 (세션 31)
 
 ### Play Store 제출 완료

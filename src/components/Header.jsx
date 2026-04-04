@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 export function Header({
   lang, t,
@@ -8,6 +8,7 @@ export function Header({
   allUsedTags, selectedTag, setSelectedTag, tagExpanded, setTagExpanded,
   selectedDate,
   calendarExpanded, setCalendarExpanded,
+  prevWeek, nextWeek,
   viewMonth, viewMonthLabel,
   currentWeekDates,
   monthGridDates,
@@ -48,6 +49,20 @@ export function Header({
     if (dayOfWeek === 0) return 'day-sunday'
     if (dayOfWeek === 6) return 'day-saturday'
     return ''
+  }
+
+  // 주간보기 스와이프 처리
+  const weekSwipeStartX = useRef(null)
+  const weekSwipeHandlers = {
+    onTouchStart: (e) => { weekSwipeStartX.current = e.touches[0].clientX },
+    onTouchEnd: (e) => {
+      if (weekSwipeStartX.current === null) return
+      const dx = e.changedTouches[0].clientX - weekSwipeStartX.current
+      weekSwipeStartX.current = null
+      if (Math.abs(dx) < 40) return
+      if (dx < 0) nextWeek?.()
+      else prevWeek?.()
+    }
   }
 
   const openMonthPicker = () => {
@@ -126,6 +141,12 @@ export function Header({
             <span className="curator-app-name">BrioDo</span>
           </div>
           <div className="curator-top-actions">
+            {weatherData && (
+              <div className="weather-top-chip">
+                <span className="weather-top-icon">{weatherData.icon}</span>
+                <span className="weather-top-temp">{weatherData.tempC}°</span>
+              </div>
+            )}
             {brioBalance != null && (
               <button className={`brio-header-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
                 <span className="brio-chip-icon">⚡</span>
@@ -165,19 +186,6 @@ export function Header({
             <div className="greeting-date" onClick={handleGoToToday}>{formattedHeaderDate}</div>
             <h1 className="greeting-title">{greeting}</h1>
             <p className="greeting-subtitle">{taskSubtitle}</p>
-            {weatherData && (
-              <div className="weather-chip">
-                <span className="weather-icon">{weatherData.icon}</span>
-                <span className="weather-temp">{weatherData.tempC}°</span>
-                <span className="weather-range">{weatherData.highC}° / {weatherData.lowC}°</span>
-                {weatherData.area && <span className="weather-location">{weatherData.area}</span>}
-              </div>
-            )}
-            {weatherLoading && !weatherData && (
-              <div className="weather-chip weather-loading">
-                <span style={{ fontSize: '12px', opacity: 0.5 }}>{lang === 'ko' ? '날씨 로딩 중...' : 'Loading weather...'}</span>
-              </div>
-            )}
           </div>
           <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
             <svg width="80" height="80" viewBox="0 0 80 80">
@@ -230,7 +238,7 @@ export function Header({
         {viewMode === 'date' && (
           <div className="date-nav-container">
             {!calendarExpanded ? (
-              <div className="week-strip">
+              <div className="week-strip" {...weekSwipeHandlers}>
                 <div className="week-strip-dates">
                   {currentWeekDates.map((date) => {
                     const act = pulseByDate[date.full] || { total: 0, completed: 0 }
