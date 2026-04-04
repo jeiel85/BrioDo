@@ -25,6 +25,11 @@
 - `src/App.jsx` — `statusBarContentStyle` 상태 + `updateContent` 이펙트 (todos/weather/lang 의존)
 - `src/components/SettingsModal.jsx` — 알림 내용 3-옵션 선택 UI 추가
 
+### 알림 탭 동작 고정 (후속 수정)
+- 알림 탭 → 항상 메인 화면으로 고정 (`isInputMode()` 제거)
+- ➕ 일정 추가 버튼 → 항상 SmartInputModal 오픈 (기존 동작 유지)
+- 탭 동작 선택 설정 UI 및 관련 state/props/localStorage 제거
+
 ---
 
 ## 2026-04-03 — 출시 전 버그 수정 (세션 29 cont.)
