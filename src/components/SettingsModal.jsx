@@ -52,6 +52,7 @@ export function SettingsModal({
   // 상태바 알림
   statusBarNotifEnabled, setStatusBarNotifEnabled,
   statusBarTapAction, setStatusBarTapAction,
+  statusBarContentStyle, setStatusBarContentStyle,
   setShowSettings,
   appVersion,
 }) {
@@ -396,6 +397,34 @@ export function SettingsModal({
                   : L('앱이 열리면서 오늘의 메인 화면을 표시합니다.', 'Opens the app to the main screen.', 'アプリが開き、メイン画面が表示されます。', '打开应用并显示主界面。')
                 }
               </p>
+
+              {/* 알림 내용 표시 방식 */}
+              <h3 style={{ marginBottom: '6px', marginTop: '14px' }}>
+                {L('알림 내용', 'Notification Text', '通知内容', '通知内容')}
+              </h3>
+              <div className="font-size-selector" style={{ marginBottom: '4px' }}>
+                <button
+                  className={statusBarContentStyle === 'fixed' ? 'active' : ''}
+                  onClick={() => setStatusBarContentStyle('fixed')}
+                >
+                  <span>📌</span>
+                  <span style={{ fontSize: '11px' }}>{L('고정 문구', 'Fixed', '固定', '固定')}</span>
+                </button>
+                <button
+                  className={statusBarContentStyle === 'tasks' ? 'active' : ''}
+                  onClick={() => setStatusBarContentStyle('tasks')}
+                >
+                  <span>✅</span>
+                  <span style={{ fontSize: '11px' }}>{L('남은 할일 수', 'Tasks Left', '残タスク', '剩余任务')}</span>
+                </button>
+                <button
+                  className={statusBarContentStyle === 'weather' ? 'active' : ''}
+                  onClick={() => setStatusBarContentStyle('weather')}
+                >
+                  <span>🌤</span>
+                  <span style={{ fontSize: '11px' }}>{L('날씨', 'Weather', '天気', '天气')}</span>
+                </button>
+              </div>
             </>
           )}
         </div>

@@ -89,6 +89,16 @@ public class StatusBarNotificationPlugin extends Plugin {
          .apply();
     }
 
+    // ── 알림 본문 텍스트 갱신 (JS → 서비스) ──────────────────────────────────
+    @PluginMethod
+    public void updateContent(PluginCall call) {
+        String text = call.getString("text", null);
+        StatusBarNotificationService.notifContentText = text;
+        StatusBarNotificationService svc = getRunningService();
+        if (svc != null) svc.refresh();
+        call.resolve();
+    }
+
     /** MainActivity에서 호출 — JS로 openSmartInput 이벤트 발사 */
     public void notifyOpenSmartInput() {
         notifyListeners("openSmartInput", new JSObject());
