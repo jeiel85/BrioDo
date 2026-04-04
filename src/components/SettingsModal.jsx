@@ -51,7 +51,6 @@ export function SettingsModal({
   onPreviewLockScreen,
   // 상태바 알림
   statusBarNotifEnabled, setStatusBarNotifEnabled,
-  statusBarTapAction, setStatusBarTapAction,
   statusBarContentStyle, setStatusBarContentStyle,
   setShowSettings,
   appVersion,
@@ -364,40 +363,6 @@ export function SettingsModal({
           </p>
           {statusBarNotifEnabled && (
             <>
-              <h3 style={{ marginBottom: '6px' }}>
-                {L('알림 탭 동작', 'Tap Action', 'タップ動作', '点击动作')}
-              </h3>
-              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginBottom: '10px', lineHeight: '1.4' }}>
-                {L(
-                  '알림 또는 [➕ 일정 추가] 버튼을 눌렀을 때의 동작을 선택하세요.',
-                  'Choose what happens when you tap the notification or [➕ Add Schedule].',
-                  '通知または「➕ スケジュール追加」ボタンをタップしたときの動作を選択してください。',
-                  '选择点击通知或「➕ 添加日程」按钮时的动作。'
-                )}
-              </p>
-              <div className="font-size-selector" style={{ marginBottom: '6px' }}>
-                <button
-                  className={statusBarTapAction === 'app' ? 'active' : ''}
-                  onClick={() => setStatusBarTapAction('app')}
-                >
-                  <span>🏠</span>
-                  <span style={{ fontSize: '11px' }}>{L('메인 화면', 'Main Screen', 'メイン画面', '主界面')}</span>
-                </button>
-                <button
-                  className={statusBarTapAction === 'input' ? 'active' : ''}
-                  onClick={() => setStatusBarTapAction('input')}
-                >
-                  <span>✏️</span>
-                  <span style={{ fontSize: '11px' }}>{L('입력 팝업', 'Input Popup', '入力ポップアップ', '输入弹窗')}</span>
-                </button>
-              </div>
-              <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginTop: '6px', lineHeight: '1.4' }}>
-                {statusBarTapAction === 'input'
-                  ? L('앱이 열리면서 AI 일정 입력창이 바로 표시됩니다.', 'Opens the app with the AI schedule input popup.', 'アプリが開き、AIスケジュール入力画面がすぐに表示されます。', '打开应用并直接显示AI日程输入弹窗。')
-                  : L('앱이 열리면서 오늘의 메인 화면을 표시합니다.', 'Opens the app to the main screen.', 'アプリが開き、メイン画面が表示されます。', '打开应用并显示主界面。')
-                }
-              </p>
-
               {/* 알림 내용 표시 방식 */}
               <h3 style={{ marginBottom: '6px', marginTop: '14px' }}>
                 {L('알림 내용', 'Notification Text', '通知内容', '通知内容')}

@@ -88,11 +88,9 @@ public class StatusBarNotificationService extends Service {
 
     // ── 알림 빌드 ─────────────────────────────────────────────────────────────
     Notification buildNotification() {
-        // 알림 탭 → 설정에 따라 메인 화면 or SmartInputModal
-        boolean openInput = isInputMode();
+        // 알림 탭 → 항상 메인 화면 (입력 팝업은 ➕ 일정 추가 버튼 전용)
         Intent tapIntent = new Intent(this, MainActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        if (openInput) tapIntent.putExtra(EXTRA_OPEN_INPUT, true);
 
         PendingIntent tapPi = PendingIntent.getActivity(
             this, 0, tapIntent,

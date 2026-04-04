@@ -297,9 +297,6 @@ function App() {
   const [statusBarNotifEnabled, setStatusBarNotifEnabled] = useState(
     () => localStorage.getItem('briodo-statusBarNotifEnabled') !== 'false'
   )
-  const [statusBarTapAction, setStatusBarTapAction] = useState(
-    () => localStorage.getItem('briodo-statusBarTapAction') || 'app'
-  )
   // 알림 내용 표시 방식: 'fixed' | 'tasks' | 'weather'
   const [statusBarContentStyle, setStatusBarContentStyle] = useState(
     () => localStorage.getItem('briodo-statusBarContentStyle') || 'fixed'
@@ -309,17 +306,9 @@ function App() {
     setStatusBarNotifEnabled(val)
     localStorage.setItem('briodo-statusBarNotifEnabled', String(val))
     if (val) {
-      StatusBarNotifNative?.start({ tapAction: statusBarTapAction }).catch(() => {})
+      StatusBarNotifNative?.start({}).catch(() => {})
     } else {
       StatusBarNotifNative?.stop().catch(() => {})
-    }
-  }
-
-  const setStatusBarTapActionPersisted = (val) => {
-    setStatusBarTapAction(val)
-    localStorage.setItem('briodo-statusBarTapAction', val)
-    if (statusBarNotifEnabled) {
-      StatusBarNotifNative?.setTapAction({ tapAction: val }).catch(() => {})
     }
   }
 
@@ -332,9 +321,7 @@ function App() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     if (localStorage.getItem('briodo-statusBarNotifEnabled') === 'false') return
-    StatusBarNotifNative?.start({
-      tapAction: localStorage.getItem('briodo-statusBarTapAction') || 'app'
-    }).catch(() => {})
+    StatusBarNotifNative?.start({}).catch(() => {})
   }, [])
 
   // 상태바 알림 ➕ 버튼 → SmartInputModal 열기
@@ -1096,7 +1083,6 @@ function App() {
           weatherLocation={weatherLocation} setWeatherLocation={setWeatherLocationPersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           statusBarNotifEnabled={statusBarNotifEnabled} setStatusBarNotifEnabled={setStatusBarNotifEnabledPersisted}
-          statusBarTapAction={statusBarTapAction} setStatusBarTapAction={setStatusBarTapActionPersisted}
           statusBarContentStyle={statusBarContentStyle} setStatusBarContentStyle={setStatusBarContentStylePersisted}
           setShowSettings={setShowSettings}
           appVersion={APP_VERSION}
