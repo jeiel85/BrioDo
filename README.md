@@ -5,6 +5,7 @@
 
 <br>
 
+[![Google Play](https://img.shields.io/badge/Google_Play-BrioDo-3DDC84?style=flat-square&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=app.briodo)
 ![Version](https://img.shields.io/badge/version-v1.0.0-blue?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-Android-3DDC84?style=flat-square&logo=android&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -185,7 +186,17 @@ Android: @codetrix-studio/capacitor-google-auth
 
 <br>
 
-## 설치 및 실행
+## 다운로드
+
+<a href="https://play.google.com/store/apps/details?id=app.briodo">
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 받기" height="60" />
+</a>
+
+또는 [GitHub Releases](https://github.com/jeiel85/BrioDo/releases/latest)에서 APK 직접 다운로드
+
+<br>
+
+## 설치 및 실행 (개발자용)
 
 ### 1. 환경 변수 설정
 
@@ -240,6 +251,7 @@ adb shell am start -n app.briodo/.MainActivity
 
 ## 향후 개발 예정
 
+- [x] Google Play Store 출시 (비공개 테스트 진행 중)
 - [ ] Android 홈 화면 위젯
 - [ ] iOS 지원
 - [ ] F-Droid 배포
