@@ -2535,6 +2535,18 @@ body.modal-open { overflow: hidden; }
 /* ═══════════════════════════════════════════════
    Collections Screen
    ═══════════════════════════════════════════════ */
+/* ─── 컬렉션 탭 섹션 구분 헤더 ─── */
+.coll-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  padding: 18px 0 8px;
+  margin: 0;
+}
+.coll-section-label:first-child { padding-top: 4px; }
+
 .collections-screen {
   padding: 8px 16px 100px;
   display: flex;

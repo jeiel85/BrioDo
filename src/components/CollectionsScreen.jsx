@@ -164,6 +164,7 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
       </div>
 
       {/* ── Stats 요약 섹션 ── */}
+      <p className="coll-section-label">📊 {t.progress}</p>
       <div className="insight-stats-section">
         <div className="insight-stats-numbers">
           <div className="insight-stat-card">
@@ -219,6 +220,9 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
 
       {/* TOP3 업적 */}
       {top3Achievements.length > 0 && (
+        <p className="coll-section-label">🏆 {t.achievements}</p>
+      )}
+      {top3Achievements.length > 0 && (
         <div className="top-achievements-row">
           {top3Achievements.map((ach, idx) => (
             <div key={ach.id} className={`top-ach-badge rank-${idx + 1}`}>
@@ -236,18 +240,21 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
         </button>
       )}
 
-      <div className="insight-divider" />
-
-      {/* ── 미완료 할일 (전체 할일 바로 하단, 태그 카드 UX 동일) ── */}
+      {/* ── 미완료 할일 ── */}
       {incompleteTodos.length > 0 && (
-        <div className="collections-grid">
-          {renderCollectionCard(incompleteTitle, incompleteTodos, { cls: 'coll-gray', emoji: '⏳' }, true)}
-        </div>
+        <>
+          <p className="coll-section-label">⏳ {incompleteTitle}</p>
+          <div className="collections-grid">
+            {renderCollectionCard(incompleteTitle, incompleteTodos, { cls: 'coll-gray', emoji: '⏳' }, true)}
+          </div>
+        </>
       )}
 
       {/* Tag Collections (상위 3개) */}
       {tags.length > 0 && (
-        <div className="collections-grid">
+        <>
+          <p className="coll-section-label">🏷️ {t.lists}</p>
+          <div className="collections-grid">
           {visibleTags.map(tag => renderCollectionCard(tag, byTag[tag], getAccent(tag)))}
           {hasMoreTags && (
             <div className="collection-card coll-more" onClick={() => setShowAllTagsModal(true)}>
@@ -263,14 +270,21 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
               </div>
             </div>
           )}
+          {uncategorized.length > 0 && (
+            renderCollectionCard(t.uncategorized, uncategorized, { cls: 'coll-gray', emoji: '📋' }, false, true)
+          )}
         </div>
+        </>
       )}
 
-      {/* Uncategorized */}
-      {uncategorized.length > 0 && (
-        <div className="collections-grid">
-          {renderCollectionCard(t.uncategorized, uncategorized, { cls: 'coll-gray', emoji: '📋' }, false, true)}
-        </div>
+      {/* 태그 없을 때 미분류만 있는 경우 */}
+      {tags.length === 0 && uncategorized.length > 0 && (
+        <>
+          <p className="coll-section-label">🏷️ {t.lists}</p>
+          <div className="collections-grid">
+            {renderCollectionCard(t.uncategorized, uncategorized, { cls: 'coll-gray', emoji: '📋' }, false, true)}
+          </div>
+        </>
       )}
 
       {/* Empty state */}
