@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-04-05 — 설정 depth 구조 + 컬렉션 섹션 헤더 (#97) (세션 34)
+
+### 변경 내용
+- **설정 화면 Android depth 구조 재편** (`SettingsModal.jsx` 729줄 리팩토링)
+  - 탭 UI → 메인 목록 + 서브스크린 2단계 depth
+  - 메인: icon·title·subtitle(현재 값 미리보기)·chevron 리스트
+  - 서브스크린: 뒤로가기(←) + 중앙 타이틀 헤더, 슬라이드인 애니메이션
+  - 스와이프 다운: 서브스크린 → 메인 복귀 / 메인 → 닫기
+  - '기본 보기' 설정을 알림 → 기능 서브스크린으로 재배치
+- **컬렉션 탭 영역별 섹션 헤더 추가** (`CollectionsScreen.jsx`)
+  - 📊 통계 / 🏆 업적 / ⏳ 미완료 / 🏷️ 컬렉션 구분 레이블
+  - 항목 없는 섹션은 헤더도 숨김
+  - 미분류 카드를 컬렉션 그리드에 통합
+  - insight-divider 제거 (섹션 헤더로 대체)
+
+### 주요 변경 파일
+- `src/components/SettingsModal.jsx` — 전체 리팩토링
+- `src/components/CollectionsScreen.jsx` — 섹션 헤더 삽입
+- `src/index.css` — `.settings-nav-*`, `.settings-back-btn`, `.coll-section-label` 추가
+
+---
+
 ## 2026-04-05 — UX 개선 9종 (GitHub 이슈 #89~#97) (세션 33)
 
 ### 이슈 대응 현황
