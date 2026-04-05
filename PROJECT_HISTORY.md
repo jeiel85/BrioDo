@@ -4,6 +4,17 @@
 
 ---
 
+## 2026-04-05 — SmartInputModal 음성 UX 버그 수정 (#98) (세션 35)
+
+### 변경 내용
+- **취소 버튼 동작 수정**: 음성 인식 중 취소 → 모달 전체 닫힘 → 음성만 중지 후 텍스트 입력 모드 전환으로 변경 (`stopMic(false)`)
+- **완료 버튼 반응성 개선**: `setIsListening(false)` 를 `await SpeechRecognition.stop()` 이전에 호출하여 UI 즉시 반응
+
+### 주요 변경 파일
+- `src/components/SmartInputModal.jsx` — `stopMic()` 순서 조정, `voice-cancel-btn` onClick 수정
+
+---
+
 ## 2026-04-05 — 설정 depth 구조 + 컬렉션 섹션 헤더 (#97) (세션 34)
 
 ### 변경 내용
