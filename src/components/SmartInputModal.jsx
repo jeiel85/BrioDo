@@ -42,6 +42,10 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
     clearTimeout(restartTimerRef.current)
     isListeningRef.current = false
     autoRestartCountRef.current = 0
+    // UI를 즉시 업데이트하여 버튼 반응성 보장
+    setIsListening(false)
+    setIsContinuing(false)
+    setPartialText('')
     if (isNative) {
       if (commitPending) {
         const final = pendingPartialRef.current
@@ -56,9 +60,6 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
       webRecognitionRef.current?.stop()
       webRecognitionRef.current = null
     }
-    setIsListening(false)
-    setIsContinuing(false)
-    setPartialText('')
   }, [isNative, cleanupNativeListeners, setSmartText])
 
   // mic을 먼저 정지하고 onClose 호출 — Android에서 세션 중첩 방지
@@ -268,7 +269,7 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
               <div className="voice-partial-text">{partialText}</div>
             )}
             <div className="voice-stop-row">
-              <button className="voice-cancel-btn" onClick={e => { e.stopPropagation(); handleClose() }}>
+              <button className="voice-cancel-btn" onClick={e => { e.stopPropagation(); stopMic(false) }}>
                 {lang === 'ko' ? '취소' : lang === 'ja' ? 'キャンセル' : lang === 'zh' ? '取消' : 'Cancel'}
               </button>
               <button className="voice-stop-btn" onClick={e => { e.stopPropagation(); stopMic() }}>
