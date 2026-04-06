@@ -51,6 +51,11 @@ export function Header({
     return ''
   }
 
+  // 주간보기 슬라이드 애니메이션
+  const [slideDir, setSlideDir] = useState(null)
+  const handlePrevWeek = () => { setSlideDir('prev'); prevWeek?.() }
+  const handleNextWeek = () => { setSlideDir('next'); nextWeek?.() }
+
   // 주간보기 스와이프 처리
   const weekSwipeStartX = useRef(null)
   const weekSwipeHandlers = {
@@ -60,8 +65,8 @@ export function Header({
       const dx = e.changedTouches[0].clientX - weekSwipeStartX.current
       weekSwipeStartX.current = null
       if (Math.abs(dx) < 40) return
-      if (dx < 0) nextWeek?.()
-      else prevWeek?.()
+      if (dx < 0) handleNextWeek()
+      else handlePrevWeek()
     }
   }
 
@@ -122,100 +127,151 @@ export function Header({
     ? Math.max(...currentWeekDates.map(d => pulseByDate[d.full]?.total || 0), 1)
     : 1
 
+  const isCompactMode = viewMode === 'date' || viewMode === 'all'
+
   return (
     <div className="header-wrapper">
       <header className="header">
 
-        {/* ─── Top Bar: 앱 브랜드 + 액션 버튼 ─── */}
-        <div className="curator-top-bar">
-          <div className="curator-brand">
-            {user?.photoURL ? (
-              <img className="curator-avatar" src={user.photoURL} alt="" referrerPolicy="no-referrer" />
-            ) : (
-              <div className="curator-avatar curator-avatar-default">
-                <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
-                </svg>
-              </div>
-            )}
-            <span className="curator-app-name">BrioDo</span>
-          </div>
-          <div className="curator-top-actions">
-            {weatherData && (
-              <div className="weather-top-chip">
-                <span className="weather-top-icon">{weatherData.icon}</span>
-                <span className="weather-top-temp">{weatherData.tempC}°</span>
-              </div>
-            )}
-            {brioBalance != null && (
-              <button className={`brio-header-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
-                <span className="brio-chip-icon">⚡</span>
-                <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
-                {brioStatus !== 'full' && nextChargeMs != null && (
-                  <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
-                )}
-              </button>
-            )}
-            <button
-              className={`curator-icon-btn ${isSearchOpen ? 'active' : ''}`}
-              onClick={() => { const next = !isSearchOpen; setIsSearchOpen(next); if (!next) setSearchQuery('') }}
-              aria-label={t.search}
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-              </svg>
-            </button>
-            <div className="notification-btn-wrap">
+        {isCompactMode ? (
+          /* ─── Compact Bar (date/all 뷰): 브랜드 제거, 날짜+액션만 ─── */
+          <div className="header-compact-bar">
+            <div className="header-compact-left">
+              {viewMode === 'date' ? (
+                <span className="header-compact-date" onClick={handleGoToToday}>{formattedHeaderDate}</span>
+              ) : (
+                <span className="header-compact-title">
+                  {lang === 'ko' ? '인박스' : lang === 'ja' ? 'インボックス' : lang === 'zh' ? '收件箱' : 'Inbox'}
+                </span>
+              )}
+            </div>
+            <div className="header-compact-actions">
+              {brioBalance != null && (
+                <button className={`brio-header-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
+                  <span className="brio-chip-icon">⚡</span>
+                  <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
+                  {brioStatus !== 'full' && nextChargeMs != null && (
+                    <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
+                  )}
+                </button>
+              )}
               <button
-                className={`curator-icon-btn ${notificationCount > 0 ? 'has-notification' : ''}`}
-                onClick={onNotificationTap}
-                aria-label={lang === 'ko' ? '알림' : 'Notifications'}
+                className={`curator-icon-btn ${isSearchOpen ? 'active' : ''}`}
+                onClick={() => { const next = !isSearchOpen; setIsSearchOpen(next); if (!next) setSearchQuery('') }}
+                aria-label={t.search}
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
+                  <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                 </svg>
               </button>
-              {notificationCount > 0 && <span className="notification-badge">{notificationCount}</span>}
+              <div className="notification-btn-wrap">
+                <button
+                  className={`curator-icon-btn ${notificationCount > 0 ? 'has-notification' : ''}`}
+                  onClick={onNotificationTap}
+                  aria-label={lang === 'ko' ? '알림' : 'Notifications'}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
+                  </svg>
+                </button>
+                {notificationCount > 0 && <span className="notification-badge">{notificationCount}</span>}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* ─── Top Bar: 앱 브랜드 + 액션 버튼 ─── */}
+            <div className="curator-top-bar">
+              <div className="curator-brand">
+                {user?.photoURL ? (
+                  <img className="curator-avatar" src={user.photoURL} alt="" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="curator-avatar curator-avatar-default">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+                    </svg>
+                  </div>
+                )}
+                <span className="curator-app-name">BrioDo</span>
+              </div>
+              <div className="curator-top-actions">
+                {weatherData && (
+                  <div className="weather-top-chip">
+                    <span className="weather-top-icon">{weatherData.icon}</span>
+                    <span className="weather-top-temp">{weatherData.tempC}°</span>
+                  </div>
+                )}
+                {brioBalance != null && (
+                  <button className={`brio-header-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
+                    <span className="brio-chip-icon">⚡</span>
+                    <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
+                    {brioStatus !== 'full' && nextChargeMs != null && (
+                      <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
+                    )}
+                  </button>
+                )}
+                <button
+                  className={`curator-icon-btn ${isSearchOpen ? 'active' : ''}`}
+                  onClick={() => { const next = !isSearchOpen; setIsSearchOpen(next); if (!next) setSearchQuery('') }}
+                  aria-label={t.search}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  </svg>
+                </button>
+                <div className="notification-btn-wrap">
+                  <button
+                    className={`curator-icon-btn ${notificationCount > 0 ? 'has-notification' : ''}`}
+                    onClick={onNotificationTap}
+                    aria-label={lang === 'ko' ? '알림' : 'Notifications'}
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                      <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
+                    </svg>
+                  </button>
+                  {notificationCount > 0 && <span className="notification-badge">{notificationCount}</span>}
+                </div>
+              </div>
+            </div>
 
-        {/* ─── Greeting + Momentum Orb ─── */}
-        <div className="curator-greeting">
-          <div className="greeting-text">
-            <div className="greeting-date" onClick={handleGoToToday}>{formattedHeaderDate}</div>
-            <h1 className="greeting-title">{greeting}</h1>
-            <p className="greeting-subtitle">{taskSubtitle}</p>
-          </div>
-          <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle
-                cx="40" cy="40" r="32"
-                fill="none"
-                stroke="var(--color-surface-container-high)"
-                strokeWidth="5"
-              />
-              <circle
-                cx="40" cy="40" r="32"
-                fill="none"
-                stroke="var(--color-primary)"
-                strokeWidth="5"
-                strokeDasharray={circum}
-                strokeDashoffset={dashOffset}
-                strokeLinecap="round"
-                style={{
-                  transform: 'rotate(-90deg)',
-                  transformOrigin: '40px 40px',
-                  transition: 'stroke-dashoffset 0.6s ease'
-                }}
-              />
-            </svg>
-            <div className="momentum-text">
-              <div className="momentum-pct">{pct}%</div>
-              <div className="momentum-label">{lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'Done'}</div>
+            {/* ─── Greeting + Momentum Orb ─── */}
+            <div className="curator-greeting">
+              <div className="greeting-text">
+                <div className="greeting-date" onClick={handleGoToToday}>{formattedHeaderDate}</div>
+                <h1 className="greeting-title">{greeting}</h1>
+                <p className="greeting-subtitle">{taskSubtitle}</p>
+              </div>
+              <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle
+                    cx="40" cy="40" r="32"
+                    fill="none"
+                    stroke="var(--color-surface-container-high)"
+                    strokeWidth="5"
+                  />
+                  <circle
+                    cx="40" cy="40" r="32"
+                    fill="none"
+                    stroke="var(--color-primary)"
+                    strokeWidth="5"
+                    strokeDasharray={circum}
+                    strokeDashoffset={dashOffset}
+                    strokeLinecap="round"
+                    style={{
+                      transform: 'rotate(-90deg)',
+                      transformOrigin: '40px 40px',
+                      transition: 'stroke-dashoffset 0.6s ease'
+                    }}
+                  />
+                </svg>
+                <div className="momentum-text">
+                  <div className="momentum-pct">{pct}%</div>
+                  <div className="momentum-label">{lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'Done'}</div>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
 
         {/* ─── Search Bar ─── */}
         {isSearchOpen && (
@@ -239,7 +295,10 @@ export function Header({
           <div className="date-nav-container">
             {!calendarExpanded ? (
               <div className="week-strip" {...weekSwipeHandlers}>
-                <div className="week-strip-dates">
+                <div
+                className={`week-strip-dates${slideDir === 'prev' ? ' slide-from-left' : slideDir === 'next' ? ' slide-from-right' : ''}`}
+                onAnimationEnd={() => setSlideDir(null)}
+              >
                   {currentWeekDates.map((date) => {
                     const act = pulseByDate[date.full] || { total: 0, completed: 0 }
                     const barH = act.total > 0 ? Math.max(3, Math.round((act.total / pulseMax) * 14)) : 2

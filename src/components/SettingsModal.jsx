@@ -65,9 +65,9 @@ export function SettingsModal({
   statusBarContentStyle, setStatusBarContentStyle,
   setShowSettings,
   appVersion,
+  screen, setScreen,
 }) {
   const L = (ko, en, ja, zh) => lang === 'ko' ? ko : lang === 'ja' ? (ja ?? en) : lang === 'zh' ? (zh ?? en) : en
-  const [screen, setScreen] = useState('main')
   const [licensesExpanded, setLicensesExpanded] = useState(false)
   const hasCalendarToken = !!localStorage.getItem('googleAccessToken')
 
