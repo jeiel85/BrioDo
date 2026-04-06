@@ -978,6 +978,8 @@ function App() {
         isCollapsed={headerCollapsed}
         allViewPeriod={allViewPeriod}
         setAllViewPeriodPersisted={setAllViewPeriodPersisted}
+        allTodosTotal={todos.length}
+        allTodosCompleted={todos.filter(t => t.completed).length}
       />
 
       {showNotificationsModal && (
