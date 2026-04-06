@@ -976,6 +976,8 @@ function App() {
         nextChargeMs={nextChargeMs}
         onBrioClick={() => setShowBrioChargeModal(true)}
         isCollapsed={headerCollapsed}
+        allViewPeriod={allViewPeriod}
+        setAllViewPeriodPersisted={setAllViewPeriodPersisted}
       />
 
       {showNotificationsModal && (
@@ -1014,7 +1016,7 @@ function App() {
         )}
         {viewMode === 'all' && (
           <>
-            <div className="all-period-filter">
+            {!headerCollapsed && <div className="all-period-filter">
               {(['all', 'week', 'month', 'quarter', 'half', 'year']).map(p => (
                 <button
                   key={p}
@@ -1029,7 +1031,7 @@ function App() {
                   : (lang === 'ko' ? '1년' : lang === 'ja' ? '1年' : lang === 'zh' ? '1年' : '1Y')}
                 </button>
               ))}
-            </div>
+            </div>}
           <TodoList
             user={user} t={t} lang={lang}
             activeTodos={allIncompleteTodos}
