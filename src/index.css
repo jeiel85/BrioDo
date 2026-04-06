@@ -328,16 +328,32 @@ body {
   min-width: 0;
 }
 
+.greeting-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
 .greeting-date {
   font-size: calc(12px * var(--font-scale));
   font-weight: 600;
   color: var(--color-primary);
-  margin-bottom: 4px;
   cursor: pointer;
   transition: opacity 0.2s;
 }
 
 .greeting-date:active { opacity: 0.6; }
+
+.greeting-weather-inline {
+  font-size: calc(11px * var(--font-scale));
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container);
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-weight: 500;
+}
 
 .greeting-title {
   font-family: 'Manrope', sans-serif;
@@ -353,7 +369,27 @@ body {
   font-size: calc(13px * var(--font-scale));
   color: var(--color-on-surface-variant);
   font-weight: 400;
+  margin-bottom: 8px;
 }
+
+/* 브리오 칩 — 그리팅 영역 하단 배치 */
+.brio-greeting-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  border: none;
+  font-size: calc(11px * var(--font-scale));
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.brio-greeting-chip:active { opacity: 0.75; }
+.brio-greeting-chip.brio-full  { background: var(--color-primary-container); color: var(--color-on-primary-container); }
+.brio-greeting-chip.brio-normal { background: var(--color-surface-container-high); color: var(--color-on-surface-variant); }
+.brio-greeting-chip.brio-low   { background: #fff3cd; color: #856404; }
+.brio-greeting-chip.brio-empty { background: var(--color-error-container, #fde8e8); color: var(--color-error, #c62828); }
 
 /* ─── Weather Chip (Header) ─── */
 .weather-chip {
@@ -2052,16 +2088,18 @@ body.modal-open { overflow: hidden; }
   cursor: pointer;
 }
 
-/* ─── Settings Modal ─── */
+/* ─── Settings — 전체화면 ─── */
 .settings-modal {
   width: 100%;
+  height: 100vh;
+  max-height: 100vh;
   background: var(--color-surface-container-lowest);
-  border-radius: 1.5rem 1.5rem 0 0;
-  animation: slideUp 0.3s ease;
-  max-height: 80vh;
+  border-radius: 0;
+  animation: slideUp 0.25s ease;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .settings-header {
@@ -4492,9 +4530,13 @@ body.modal-open { overflow: hidden; }
   pointer-events: none;
 }
 .header-wrapper.header-collapsed .header-compact-bar {
-  max-height: 150px;
+  max-height: 160px;
   opacity: 1;
   pointer-events: auto;
+}
+/* 접힌 상태에서 확장 태그 필터 숨김 (compact 바의 것만 표시) */
+.header-wrapper.header-collapsed .tag-filter-wrapper {
+  display: none;
 }
 .header-compact-top-row {
   display: flex;
@@ -4520,6 +4562,42 @@ body.modal-open { overflow: hidden; }
   font-weight: 700;
   color: var(--color-on-surface);
   font-family: Manrope, sans-serif;
+}
+/* 탭별 컴팩트 인디케이터 */
+.compact-tab-indicator {
+  flex-shrink: 0;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+}
+.compact-indicator-pct {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+.compact-indicator-badge {
+  background: var(--color-primary);
+  color: white;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  min-width: 20px;
+  text-align: center;
+}
+.compact-indicator-bar-wrap {
+  width: 56px;
+  height: 5px;
+  background: var(--color-surface-container-high);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.compact-indicator-bar-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 4px;
 }
 .compact-period-filter {
   display: flex;

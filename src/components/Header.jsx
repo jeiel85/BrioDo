@@ -31,6 +31,8 @@ export function Header({
   isCollapsed,
   allViewPeriod,
   setAllViewPeriodPersisted,
+  allTodosTotal,
+  allTodosCompleted,
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
@@ -89,6 +91,9 @@ export function Header({
   const circum = 2 * Math.PI * 32
   const dashOffset = circum * (1 - rate)
   const pct = Math.round(rate * 100)
+
+  // 전체 완료율 (컬렉션/통계 탭 인디케이터용)
+  const globalPct = allTodosTotal > 0 ? Math.round(allTodosCompleted / allTodosTotal * 100) : 0
 
   // 인삿말 & 서브타이틀 (viewMode별 분기)
   const firstName = user?.displayName?.split(' ')[0] || ''
@@ -152,7 +157,26 @@ export function Header({
                 onClick={viewMode === 'date' ? handleGoToToday : undefined}
               >{compactTitle}</span>
             </div>
+            {/* 탭별 정체성 인디케이터 */}
+            <div className="compact-tab-indicator">
+              {viewMode === 'date' && (
+                <span className="compact-indicator-pct">{pct}%</span>
+              )}
+              {viewMode === 'all' && allIncompleteTodosCount > 0 && (
+                <span className="compact-indicator-badge">{allIncompleteTodosCount}</span>
+              )}
+              {viewMode === 'lists' && allTodosTotal > 0 && (
+                <div className="compact-indicator-bar-wrap" title={`${globalPct}%`}>
+                  <div className="compact-indicator-bar-fill" style={{ width: `${globalPct}%` }} />
+                </div>
+              )}
+              {viewMode === 'progress' && allTodosTotal > 0 && (
+                <span className="compact-indicator-pct">{globalPct}%</span>
+              )}
+            </div>
           </div>
+
+          {/* 인박스: 기간 필터 */}
           {viewMode === 'all' && allViewPeriod != null && (
             <div className="compact-period-filter">
               {(['all', 'week', 'month', 'quarter', 'half', 'year']).map(p => (
@@ -171,6 +195,8 @@ export function Header({
               ))}
             </div>
           )}
+
+          {/* 오늘/인박스 탭: 태그 필터 (compact 전용) */}
           {(viewMode === 'all' || viewMode === 'date') && allUsedTags.length > 0 && (
             <div className="tag-filter-bar compact-tag-filter">
               <button className={!selectedTag ? 'active' : ''} onClick={() => setSelectedTag(null)}>
@@ -189,6 +215,7 @@ export function Header({
 
         {/* ─── Collapsible: 브랜드 바 + 인사말/오브 (스크롤 시 접힘) ─── */}
         <div className="header-collapsible">
+          {/* 상단 바: 아바타 + 앱이름 (좌) | 검색 + 알림 (우) */}
           <div className="curator-top-bar">
             <div className="curator-brand">
               {user?.photoURL ? (
@@ -203,21 +230,6 @@ export function Header({
               <span className="curator-app-name">BrioDo</span>
             </div>
             <div className="curator-top-actions">
-              {weatherData && (
-                <div className="weather-top-chip">
-                  <span className="weather-top-icon">{weatherData.icon}</span>
-                  <span className="weather-top-temp">{weatherData.tempC}°</span>
-                </div>
-              )}
-              {brioBalance != null && (
-                <button className={`brio-header-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
-                  <span className="brio-chip-icon">⚡</span>
-                  <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
-                  {brioStatus !== 'full' && nextChargeMs != null && (
-                    <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
-                  )}
-                </button>
-              )}
               <button
                 className={`curator-icon-btn ${isSearchOpen ? 'active' : ''}`}
                 onClick={() => { const next = !isSearchOpen; setIsSearchOpen(next); if (!next) setSearchQuery('') }}
@@ -242,11 +254,28 @@ export function Header({
             </div>
           </div>
 
+          {/* 인사말 + 오브 */}
           <div className="curator-greeting">
             <div className="greeting-text">
-              <div className="greeting-date" onClick={handleGoToToday}>{formattedHeaderDate}</div>
+              {/* 날짜 + 날씨 인라인 */}
+              <div className="greeting-date-row">
+                <span className="greeting-date" onClick={handleGoToToday}>{formattedHeaderDate}</span>
+                {weatherData && (
+                  <span className="greeting-weather-inline">{weatherData.icon} {weatherData.tempC}°</span>
+                )}
+              </div>
               <h1 className="greeting-title">{greeting}</h1>
               <p className="greeting-subtitle">{taskSubtitle}</p>
+              {/* 브리오 칩: 날씨/브리오를 그리팅 영역 하단에 배치 */}
+              {brioBalance != null && (
+                <button className={`brio-greeting-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
+                  <span className="brio-chip-icon">⚡</span>
+                  <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
+                  {brioStatus !== 'full' && nextChargeMs != null && (
+                    <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
+                  )}
+                </button>
+              )}
             </div>
             <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
               <svg width="80" height="80" viewBox="0 0 80 80">
@@ -383,8 +412,8 @@ export function Header({
           </div>
         )}
 
-        {/* ─── Tag Filter (date 뷰 전용) ─── */}
-        {viewMode === 'date' && <div className="tag-filter-wrapper">
+        {/* ─── Tag Filter (date/all 뷰, 확장 상태) — 접힌 상태에서는 CSS로 숨김 ─── */}
+        {(viewMode === 'date' || viewMode === 'all') && <div className="tag-filter-wrapper">
           <div className={`tag-filter-bar ${tagExpanded ? 'expanded' : ''}`}>
             <button className={!selectedTag ? 'active' : ''} onClick={() => setSelectedTag(null)}>
               {t.allTags}
