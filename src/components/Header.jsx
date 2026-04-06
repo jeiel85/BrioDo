@@ -29,6 +29,8 @@ export function Header({
   nextChargeMs,
   onBrioClick,
   isCollapsed,
+  allViewPeriod,
+  setAllViewPeriodPersisted,
 }) {
   const [showMonthPicker, setShowMonthPicker] = useState(false)
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
@@ -143,44 +145,46 @@ export function Header({
 
         {/* ─── Compact Bar: 스크롤 시 나타나는 슬림 바 ─── */}
         <div className="header-compact-bar">
-          <div className="header-compact-left">
-            <span
-              className={viewMode === 'date' ? 'header-compact-date' : 'header-compact-title'}
-              onClick={viewMode === 'date' ? handleGoToToday : undefined}
-            >{compactTitle}</span>
-          </div>
-          <div className="header-compact-actions">
-            {brioBalance != null && (
-              <button className={`brio-header-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
-                <span className="brio-chip-icon">⚡</span>
-                <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
-                {brioStatus !== 'full' && nextChargeMs != null && (
-                  <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
-                )}
-              </button>
-            )}
-            <button
-              className={`curator-icon-btn ${isSearchOpen ? 'active' : ''}`}
-              onClick={() => { const next = !isSearchOpen; setIsSearchOpen(next); if (!next) setSearchQuery('') }}
-              aria-label={t.search}
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-              </svg>
-            </button>
-            <div className="notification-btn-wrap">
-              <button
-                className={`curator-icon-btn ${notificationCount > 0 ? 'has-notification' : ''}`}
-                onClick={onNotificationTap}
-                aria-label={lang === 'ko' ? '알림' : 'Notifications'}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
-                </svg>
-              </button>
-              {notificationCount > 0 && <span className="notification-badge">{notificationCount}</span>}
+          <div className="header-compact-top-row">
+            <div className="header-compact-left">
+              <span
+                className={viewMode === 'date' ? 'header-compact-date' : 'header-compact-title'}
+                onClick={viewMode === 'date' ? handleGoToToday : undefined}
+              >{compactTitle}</span>
             </div>
           </div>
+          {viewMode === 'all' && allViewPeriod != null && (
+            <div className="compact-period-filter">
+              {(['all', 'week', 'month', 'quarter', 'half', 'year']).map(p => (
+                <button
+                  key={p}
+                  className={`period-filter-btn${allViewPeriod === p ? ' active' : ''}`}
+                  onClick={() => setAllViewPeriodPersisted(p)}
+                >
+                  {p === 'all' ? (lang === 'ko' ? '전체' : lang === 'ja' ? 'すべて' : lang === 'zh' ? '全部' : 'All')
+                  : p === 'week' ? (lang === 'ko' ? '1주' : lang === 'ja' ? '1週' : lang === 'zh' ? '1周' : '1W')
+                  : p === 'month' ? (lang === 'ko' ? '1달' : lang === 'ja' ? '1ヶ月' : lang === 'zh' ? '1月' : '1M')
+                  : p === 'quarter' ? (lang === 'ko' ? '분기' : lang === 'ja' ? '四半期' : lang === 'zh' ? '季度' : '3M')
+                  : p === 'half' ? (lang === 'ko' ? '반기' : lang === 'ja' ? '半年' : lang === 'zh' ? '半年' : '6M')
+                  : (lang === 'ko' ? '1년' : lang === 'ja' ? '1年' : lang === 'zh' ? '1年' : '1Y')}
+                </button>
+              ))}
+            </div>
+          )}
+          {(viewMode === 'all' || viewMode === 'date') && allUsedTags.length > 0 && (
+            <div className="tag-filter-bar compact-tag-filter">
+              <button className={!selectedTag ? 'active' : ''} onClick={() => setSelectedTag(null)}>
+                {t.allTags}
+              </button>
+              {allUsedTags.map(tag => (
+                <button
+                  key={tag}
+                  className={selectedTag === tag ? 'active' : ''}
+                  onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+                >#{tag}</button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* ─── Collapsible: 브랜드 바 + 인사말/오브 (스크롤 시 접힘) ─── */}
