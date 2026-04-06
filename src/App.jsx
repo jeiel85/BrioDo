@@ -78,6 +78,7 @@ function App() {
 
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
   const [allViewPeriod, setAllViewPeriod] = useState(() => localStorage.getItem('briodo-allViewPeriod') || 'all')
+  const [settingsScreen, setSettingsScreen] = useState('main')
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
@@ -462,15 +463,20 @@ function App() {
   }
 
   // 뒤로가기 처리 (Android)
-  const modalStateRef = useRef({ showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal })
+  const modalStateRef = useRef({ showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen })
   useEffect(() => {
-    modalStateRef.current = { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal }
-  }, [showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal])
+    modalStateRef.current = { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen }
+  }, [showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen])
+
+  // 설정 모달 닫힐 때 서브화면 리셋
+  useEffect(() => {
+    if (!showSettings) setSettingsScreen('main')
+  }, [showSettings])
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       const backListener = CapApp.addListener('backButton', () => {
-        const { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal } = modalStateRef.current
+        const { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen } = modalStateRef.current
         if (showInputModal) {
           resetForm()
         } else if (showSmartModal) {
@@ -478,7 +484,11 @@ function App() {
           setSmartText('')
           setSmartReminderOffset(null)
         } else if (showSettings) {
-          setShowSettings(false)
+          if (settingsScreen !== 'main') {
+            setSettingsScreen('main')
+          } else {
+            setShowSettings(false)
+          }
         } else if (showAchievementsModal) {
           setShowAchievementsModal(false)
         } else if (showNotificationsModal) {
@@ -850,8 +860,10 @@ function App() {
       .filter(t => !selectedTag || t.tags?.includes(selectedTag))
       .filter(t => {
         if (!periodEnd) return true
+        if (!t.date) return true
         const d = new Date(t.date + 'T00:00:00')
-        return d >= today && d <= periodEnd
+        if (isNaN(d.getTime())) return true
+        return d <= periodEnd
       })
       .sort(sortByDate)
     return { incomplete: base.filter(t => !t.completed), completed: base.filter(t => t.completed) }
@@ -1137,6 +1149,7 @@ function App() {
           statusBarContentStyle={statusBarContentStyle} setStatusBarContentStyle={setStatusBarContentStylePersisted}
           setShowSettings={setShowSettings}
           appVersion={APP_VERSION}
+          screen={settingsScreen} setScreen={setSettingsScreen}
         />
       )}
 
