@@ -79,6 +79,8 @@ function App() {
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
   const [allViewPeriod, setAllViewPeriod] = useState(() => localStorage.getItem('briodo-allViewPeriod') || 'all')
   const [settingsScreen, setSettingsScreen] = useState('main')
+  const [headerCollapsed, setHeaderCollapsed] = useState(false)
+  const todoListRef = useRef(null)
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
@@ -91,6 +93,9 @@ function App() {
   useEffect(() => {
     localStorage.setItem('briodo-viewMode', viewMode)
     if (viewMode === 'lists') trackEngagement('collectionVisited')
+    // 탭 전환 시 헤더 펼치기 + 스크롤 초기화
+    setHeaderCollapsed(false)
+    if (todoListRef.current) todoListRef.current.scrollTop = 0
   }, [viewMode])
 
   const switchTab = (mode) => {
@@ -970,6 +975,7 @@ function App() {
         maxBrio={maxBrio}
         nextChargeMs={nextChargeMs}
         onBrioClick={() => setShowBrioChargeModal(true)}
+        isCollapsed={headerCollapsed}
       />
 
       {showNotificationsModal && (
@@ -987,7 +993,11 @@ function App() {
         </div>
       )}
 
-      <div className="todo-list-section">
+      <div
+        className="todo-list-section"
+        ref={todoListRef}
+        onScroll={(e) => setHeaderCollapsed(e.currentTarget.scrollTop > 44)}
+      >
         {viewMode === 'date' && (
           <TodoList
             user={user} t={t} lang={lang}
