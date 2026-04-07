@@ -48,9 +48,9 @@ export async function deleteLocalTodo(id) {
 }
 
 // 오프라인 작업 큐
-export async function addSyncQueue(action, todoId, payload = null) {
+export async function addSyncQueue(action, todoId, metadata = {}) {
   const db = await initDB();
-  await db.put(STORE_SYNC_QUEUE, { action, todoId, payload, timestamp: Date.now() });
+  await db.put(STORE_SYNC_QUEUE, { action, todoId, ...metadata, timestamp: Date.now() });
 }
 
 export async function getSyncQueue() {
