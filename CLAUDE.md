@@ -7,7 +7,7 @@
 
 - **패키지 ID:** `app.briodo`
 - **플랫폼:** Android (Capacitor 8 + React 19 + Vite 8)
-- **현재 단계:** Play Store 출시 준비 중 (v1.0.0)
+- **현재 단계:** Play Store / Galaxy Store 출시 완료, 버그 수정 중 (v1.0.5)
 
 ---
 
