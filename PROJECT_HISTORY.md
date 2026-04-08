@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-04-08 — 버그 수정: 스마트 입력·인박스 기간 필터·Calendar 오프라인 삭제 (세션 39)
+
+### 배경
+- 이슈 #121: brio 재화 제거 이후 `hasBrio(2)` 체크 잔재로 스마트 입력 모달이 열리지 않음
+- 이슈 인박스 기간 필터: 기간이 "미래 방향"으로 잘못 계산됨 (오늘 + N일 → 오늘 - N일로 수정)
+- 이슈 #112: 오프라인 삭제 시 `googleEventId`를 syncQueue에 저장 안 해서 복구 후 Calendar 이벤트가 남는 문제
+
+### 변경 내용
+- **스마트 입력 (#121)**: FAB 버튼 onClick에서 `hasBrio(2)` / `setShowBrioChargeModal` 분기 제거 → 항상 `setShowSmartModal(true)`
+- **인박스 기간 필터**: `periodEnd`(미래) → `periodStart`(과거)로 변경 — "1주" = 지난 7일, "1달" = 지난 30일
+- **Calendar 오프라인 삭제 (#112)**: `addSyncQueue('delete', id, { googleEventId })` 저장 + `processSyncQueue`에서 delete 처리 시 `deleteEventFromGoogle` 호출
+
+### 해결된 이슈 (종료)
+- #107 #108 #110 #111 #113 #114 #115 #97 #100 — 이전 커밋에서 이미 해결된 이슈 일괄 종료
+
+### 주요 변경 파일
+- `src/App.jsx` — FAB 버튼 brio 체크 제거, 인박스 기간 필터 로직 수정
+- `src/hooks/useTodosData.js` — syncQueue delete에 googleEventId 포함, processSyncQueue에서 Calendar 삭제 처리
+
+---
+
 ## 2026-04-08 — 버그 수정: 업적 모달 탭 닫기 + 로그인 에러 피드백 (세션 38)
 
 ### 배경
