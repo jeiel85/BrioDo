@@ -4,7 +4,7 @@
 
 ---
 
-## 2026-04-08 — 버그 수정: 스마트 입력·인박스 기간 필터·Calendar 오프라인 삭제 (세션 39)
+## 2026-04-08 — v1.0.4: 버그 수정·브리오 잔재 제거 (세션 39)
 
 ### 배경
 - 이슈 #121: brio 재화 제거 이후 `hasBrio(2)` 체크 잔재로 스마트 입력 모달이 열리지 않음
@@ -19,9 +19,17 @@
 ### 해결된 이슈 (종료)
 - #107 #108 #110 #111 #113 #114 #115 #97 #100 — 이전 커밋에서 이미 해결된 이슈 일괄 종료
 
+### 브리오 잔재 추가 제거
+- **SettingsModal.jsx**: 랜덤 테마 버튼 `⚡1` 표시 제거
+- **AchievementUnlockModal.jsx**: `BRIO_BY_DIFF`, `REWARD_CAP` 상수 + `ach-unlock-brio` 보상 표시 제거
+- **index.css**: `.ach-unlock-brio`, `@keyframes ach-brio-pulse` 스타일 제거
+
 ### 주요 변경 파일
 - `src/App.jsx` — FAB 버튼 brio 체크 제거, 인박스 기간 필터 로직 수정
 - `src/hooks/useTodosData.js` — syncQueue delete에 googleEventId 포함, processSyncQueue에서 Calendar 삭제 처리
+- `src/components/SettingsModal.jsx` — 랜덤 테마 brio 아이콘 제거
+- `src/components/AchievementUnlockModal.jsx` — brio 보상 UI 제거
+- `src/index.css` — brio 관련 CSS 제거
 
 ---
 
