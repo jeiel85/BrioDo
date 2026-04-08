@@ -344,7 +344,7 @@ function App() {
     } else if (statusBarContentStyle === 'weather') {
       if (weatherData) {
         const area = weatherData.area ? ` · ${weatherData.area}` : ''
-        text = `${weatherData.icon} ${weatherData.tempC}° (${weatherData.highC}°/${weatherData.lowC}°)${area}`
+        text = `${weatherData.icon} ${weatherData.tempC}° (${weatherData.lowC}°/${weatherData.highC}°)${area}`
       }
     }
     StatusBarNotifNative?.updateContent({ text: text ?? '' }).catch(() => {})
