@@ -77,6 +77,7 @@ function App() {
   const [settingsScreen, setSettingsScreen] = useState('main')
   const [headerCollapsed, setHeaderCollapsed] = useState(false)
   const todoListRef = useRef(null)
+  const swipeTouchRef = useRef(null) // 스와이프 시작 좌표
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
@@ -98,6 +99,23 @@ function App() {
     setViewMode(mode)
     setIsSearchOpen(false)
     setSearchQuery('')
+  }
+
+  const TAB_ORDER = ['date', 'all', 'lists']
+  const handleSwipeStart = (e) => {
+    const t = e.touches[0]
+    swipeTouchRef.current = { x: t.clientX, y: t.clientY }
+  }
+  const handleSwipeEnd = (e) => {
+    if (!swipeTouchRef.current) return
+    const dx = e.changedTouches[0].clientX - swipeTouchRef.current.x
+    const dy = e.changedTouches[0].clientY - swipeTouchRef.current.y
+    swipeTouchRef.current = null
+    // 수평 이동이 수직보다 크고 50px 이상일 때만 탭 전환
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
+    const idx = TAB_ORDER.indexOf(viewMode)
+    if (dx < 0 && idx < TAB_ORDER.length - 1) switchTab(TAB_ORDER[idx + 1]) // 왼쪽 → 다음 탭
+    if (dx > 0 && idx > 0) switchTab(TAB_ORDER[idx - 1])                    // 오른쪽 → 이전 탭
   }
 
   // 입력 모드: 'smart' | 'manual' (기본값: manual — 로그인 전에는 항상 manual)
@@ -1003,6 +1021,8 @@ function App() {
         className="todo-list-section"
         ref={todoListRef}
         onScroll={(e) => setHeaderCollapsed(e.currentTarget.scrollTop > 44)}
+        onTouchStart={handleSwipeStart}
+        onTouchEnd={handleSwipeEnd}
       >
         {viewMode === 'date' && (
           <TodoList
