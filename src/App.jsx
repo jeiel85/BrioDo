@@ -104,18 +104,40 @@ function App() {
   const TAB_ORDER = ['date', 'all', 'lists']
   const handleSwipeStart = (e) => {
     const t = e.touches[0]
-    swipeTouchRef.current = { x: t.clientX, y: t.clientY }
+    swipeTouchRef.current = { x: t.clientX, y: t.clientY, locked: null }
+    if (todoListRef.current) todoListRef.current.style.transition = 'none'
+  }
+  const handleSwipeMove = (e) => {
+    const ref = swipeTouchRef.current
+    if (!ref) return
+    const dx = e.touches[0].clientX - ref.x
+    const dy = e.touches[0].clientY - ref.y
+    // 방향 미결정 상태에서 수직이 우세하면 스와이프 취소
+    if (ref.locked === null) {
+      if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) { swipeTouchRef.current = null; return }
+      if (Math.abs(dx) > 8) ref.locked = 'h'
+      else return
+    }
+    // 첫/마지막 탭 끝에서 저항감 (rubber band)
+    const idx = TAB_ORDER.indexOf(viewMode)
+    const atEdge = (idx === 0 && dx > 0) || (idx === TAB_ORDER.length - 1 && dx < 0)
+    const offset = atEdge ? dx * 0.25 : dx
+    if (todoListRef.current) todoListRef.current.style.transform = `translateX(${offset}px)`
   }
   const handleSwipeEnd = (e) => {
     if (!swipeTouchRef.current) return
     const dx = e.changedTouches[0].clientX - swipeTouchRef.current.x
     const dy = e.changedTouches[0].clientY - swipeTouchRef.current.y
     swipeTouchRef.current = null
-    // 수평 이동이 수직보다 크고 50px 이상일 때만 탭 전환
+    const el = todoListRef.current
+    if (el) {
+      el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      el.style.transform = 'translateX(0)'
+    }
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
     const idx = TAB_ORDER.indexOf(viewMode)
-    if (dx < 0 && idx < TAB_ORDER.length - 1) switchTab(TAB_ORDER[idx + 1]) // 왼쪽 → 다음 탭
-    if (dx > 0 && idx > 0) switchTab(TAB_ORDER[idx - 1])                    // 오른쪽 → 이전 탭
+    if (dx < 0 && idx < TAB_ORDER.length - 1) switchTab(TAB_ORDER[idx + 1])
+    if (dx > 0 && idx > 0) switchTab(TAB_ORDER[idx - 1])
   }
 
   // 입력 모드: 'smart' | 'manual' (기본값: manual — 로그인 전에는 항상 manual)
@@ -1022,6 +1044,7 @@ function App() {
         ref={todoListRef}
         onScroll={(e) => setHeaderCollapsed(e.currentTarget.scrollTop > 44)}
         onTouchStart={handleSwipeStart}
+        onTouchMove={handleSwipeMove}
         onTouchEnd={handleSwipeEnd}
       >
         {viewMode === 'date' && (
