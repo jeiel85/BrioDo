@@ -35,7 +35,7 @@ import './index.css'
 const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScreen') : null
 const StatusBarNotifNative = Capacitor.isNativePlatform() ? registerPlugin('StatusBarNotification') : null
 
-const APP_VERSION = '1.0.0'
+const APP_VERSION = '1.0.6'
 
 function App() {
   const { lang, langPref, setLangPref, t } = useLanguage()

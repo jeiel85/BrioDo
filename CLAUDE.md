@@ -7,7 +7,7 @@
 
 - **패키지 ID:** `app.briodo`
 - **플랫폼:** Android (Capacitor 8 + React 19 + Vite 8)
-- **현재 단계:** Play Store / Galaxy Store 출시 완료, 버그 수정 중 (v1.0.5)
+- **현재 단계:** Play Store / Galaxy Store 출시 완료, 버그 수정 중 (v1.0.6)
 
 ---
 
@@ -19,6 +19,9 @@
 2. **빌드 파이프라인은 명시 요청 시만 실행**: "빌드해줘" / "디바이스에 올려줘" 등 명시적 요청이 있을 때만 `build → cap sync → gradlew → adb install → adb start` 전체 실행. Galaxy S24(`R3CWC0KB53Z`)에 설치까지 완료해야 빌드 작업이 끝난 것. gradle은 항상 `--quiet` 플래그 사용.
 3. **버전 이력 유지**: 기능 추가/버그 수정 시 `PROJECT_HISTORY.md`에 날짜·세션·내용 기록 후 커밋.
 4. **localStorage 키 네임스페이스**: 모든 키는 `briodo-*` 또는 `briodo_*` 접두사 사용.
+5. **버전 번호 동기화**: 버전 변경 시 아래 두 곳을 항상 함께 수정한다.
+   - `src/App.jsx` 상단 `const APP_VERSION = '...'` (설정 모달 표시용)
+   - `android/app/build.gradle` 의 `versionName` + `versionCode` (스토어 배포용)
 
 ---
 
