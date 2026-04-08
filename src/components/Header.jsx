@@ -24,10 +24,6 @@ export function Header({
   onNotificationTap,
   weatherData,
   weatherLoading,
-  brioBalance,
-  maxBrio,
-  nextChargeMs,
-  onBrioClick,
   isCollapsed,
   allViewPeriod,
   setAllViewPeriodPersisted,
@@ -38,17 +34,6 @@ export function Header({
   const [pickerYear, setPickerYear] = useState(new Date().getFullYear())
 
   const locale = lang === 'ko' ? 'ko-KR' : lang === 'ja' ? 'ja-JP' : lang === 'zh' ? 'zh-CN' : 'en-US'
-
-  const formatChargeTimer = (ms) => {
-    if (ms == null) return null
-    const totalMins = Math.ceil(ms / 60000)
-    const hrs = Math.floor(totalMins / 60)
-    const mins = totalMins % 60
-    if (hrs > 0) return `${hrs}h${mins > 0 ? mins + 'm' : ''}`
-    return `${mins}m`
-  }
-
-  const brioStatus = brioBalance >= maxBrio ? 'full' : brioBalance <= 0 ? 'empty' : brioBalance <= 2 ? 'low' : 'normal'
 
   const getDayClass = (dayOfWeek) => {
     if (dayOfWeek === 0) return 'day-sunday'
@@ -257,25 +242,12 @@ export function Header({
           {/* 인사말 + 오브 */}
           <div className="curator-greeting">
             <div className="greeting-text">
-              {/* 날짜 + 날씨 인라인 */}
+              {/* 날짜 */}
               <div className="greeting-date-row">
                 <span className="greeting-date" onClick={handleGoToToday}>{formattedHeaderDate}</span>
-                {weatherData && (
-                  <span className="greeting-weather-inline">{weatherData.icon} {weatherData.tempC}°</span>
-                )}
               </div>
               <h1 className="greeting-title">{greeting}</h1>
               <p className="greeting-subtitle">{taskSubtitle}</p>
-              {/* 브리오 칩: 날씨/브리오를 그리팅 영역 하단에 배치 */}
-              {brioBalance != null && (
-                <button className={`brio-greeting-chip brio-${brioStatus}`} onClick={onBrioClick} aria-label="Brio">
-                  <span className="brio-chip-icon">⚡</span>
-                  <span className="brio-chip-count">{brioBalance}<span className="brio-chip-max">/{maxBrio}</span></span>
-                  {brioStatus !== 'full' && nextChargeMs != null && (
-                    <span className="brio-chip-timer">{formatChargeTimer(nextChargeMs)}</span>
-                  )}
-                </button>
-              )}
             </div>
             <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
               <svg width="80" height="80" viewBox="0 0 80 80">
@@ -294,6 +266,9 @@ export function Header({
               <div className="momentum-text">
                 <div className="momentum-pct">{pct}%</div>
                 <div className="momentum-label">{lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'Done'}</div>
+                {weatherData && (
+                  <div className="momentum-weather">{weatherData.icon} {weatherData.tempC}°</div>
+                )}
               </div>
             </div>
           </div>

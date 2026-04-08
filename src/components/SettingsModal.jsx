@@ -42,10 +42,10 @@ function SettingsNavItem({ icon, title, subtitle, onClick }) {
 export function SettingsModal({
   lang, langPref, setLangPref,
   fontScale, setFontScale,
-  theme, setTheme, generateRandomTheme, consumeBrio,
+  theme, setTheme, generateRandomTheme,
   viewMode, setViewMode, setSelectedDate,
   inputMode, setInputMode,
-  brioBalance, onAiLimitToast,
+  onAiLimitToast,
   completionCalendarMode, setCompletionCalendarMode,
   defaultReminderOffset, setDefaultReminderOffset,
   allDayReminderTime, setAllDayReminderTime,
@@ -258,10 +258,7 @@ export function SettingsModal({
                   </button>
                   <button
                     className={theme === 'random' ? 'active' : ''}
-                    onClick={() => {
-                      if (consumeBrio && !consumeBrio(1)) return
-                      generateRandomTheme()
-                    }}
+                    onClick={() => generateRandomTheme()}
                   >
                     <span style={{ fontSize: '18px' }}>🎲</span>
                     <span>{L('랜덤', 'Random', 'ランダム', '随机')}</span>
@@ -293,12 +290,6 @@ export function SettingsModal({
                     onClick={() => {
                       if (!user) {
                         onAiLimitToast?.(L('스마트 입력은 로그인 후 이용할 수 있어요', 'Sign in to use Smart Input', 'スマート入力はログイン後にご利用いただけます', '智能输入需要登录后才能使用'))
-                      } else if (brioBalance <= 0) {
-                        onAiLimitToast?.(lang === 'ko'
-                          ? `브리오가 부족합니다 (잔량: ⚡${brioBalance}, 2시간마다 자동 충전)`
-                          : lang === 'ja' ? `Brioが不足しています (残量: ⚡${brioBalance}, 2時間ごとに自動充電)`
-                          : lang === 'zh' ? `Brio不足 (余量: ⚡${brioBalance}, 每2小时自动充电)`
-                          : `Not enough Brio (balance: ⚡${brioBalance}, auto-charges every 2h)`)
                       } else {
                         setInputMode('smart')
                       }
@@ -729,6 +720,24 @@ export function SettingsModal({
                   <div>v{appVersion ?? '1.0.0'}</div>
                   <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Do it with brio.</div>
                 </div>
+              </div>
+
+              {/* Ko-fi 후원 버튼 */}
+              <div className="settings-section settings-support-section">
+                <a
+                  className="settings-kofi-btn"
+                  href="https://ko-fi.com/jeiel85"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => {
+                    e.preventDefault()
+                    import('@capacitor/browser').then(({ Browser }) =>
+                      Browser.open({ url: 'https://ko-fi.com/jeiel85' })
+                    )
+                  }}
+                >
+                  ☕ {L('개발자에게 커피 한잔', 'Buy me a coffee', '開発者にコーヒーを', '给开发者买杯咖啡')}
+                </a>
               </div>
             </div>
           )}

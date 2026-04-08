@@ -8,7 +8,7 @@ import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 // 묵음 감지 후 자동 재시작 최대 횟수 — 이 이상이면 완전 종료
 const MAX_AUTO_RESTARTS = 5
 
-export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice, brioBalance, brioDailyLimit }) {
+export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice, reminderOffset, setReminderOffset, defaultReminderOffset }) {
   const textareaRef = useRef(null)
   const webRecognitionRef = useRef(null)
   const retryingRef = useRef(false)
@@ -239,7 +239,6 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
         </div>
         <div className="modal-header">
           <span className="smart-input-badge">✨ {lang === 'ko' ? '스마트 입력' : 'Smart Input'}</span>
-          <span className="smart-input-brio">⚡{brioBalance ?? '–'}</span>
           <button className="smart-input-close" onClick={handleClose}>✕</button>
         </div>
         </div>
@@ -319,26 +318,12 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           </div>
         )}
 
-        {brioBalance !== undefined && brioBalance < 2 && !isListening && (
-          <p className="smart-brio-warn">
-            {lang === 'ko'
-              ? `⚡ Brio 부족 — AI 없이 저장됩니다 (잔량: ${brioBalance})`
-              : `⚡ Low Brio — will save without AI (balance: ${brioBalance})`}
-          </p>
-        )}
         <button
-          className={`smart-save-btn${brioBalance !== undefined && brioBalance < 2 ? ' no-ai' : ''}`}
+          className="smart-save-btn"
           onClick={() => onSave(smartText)}
           disabled={!smartText.trim() || isAiAnalyzing || isListening}
         >
-          <span>
-            {brioBalance !== undefined && brioBalance < 2
-              ? (lang === 'ko' ? '저장 (AI 없음)' : lang === 'ja' ? '保存 (AI なし)' : lang === 'zh' ? '保存 (无AI)' : 'Save (No AI)')
-              : (lang === 'ko' ? '저장' : lang === 'ja' ? '保存' : lang === 'zh' ? '保存' : 'Save')}
-          </span>
-          {(brioBalance === undefined || brioBalance >= 2) && (
-            <span className="smart-save-brio-cost">⚡2</span>
-          )}
+          <span>{lang === 'ko' ? '저장' : lang === 'ja' ? '保存' : lang === 'zh' ? '保存' : 'Save'}</span>
         </button>
         </div>{/* /smart-input-body */}
       </div>
