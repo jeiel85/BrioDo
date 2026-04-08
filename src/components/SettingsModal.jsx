@@ -58,6 +58,7 @@ export function SettingsModal({
   overlayPermGranted,
   onGrantOverlayPerm,
   calendarSyncEnabled, setCalendarSyncEnabled,
+  calendarSyncNoTime, setCalendarSyncNoTime,
   weatherEnabled, setWeatherEnabled,
   weatherLocation, setWeatherLocation,
   onPreviewLockScreen,
@@ -644,6 +645,22 @@ export function SettingsModal({
                         {completionCalendarMode === 'delete'
                           ? L('완료 시 구글 캘린더에서 삭제합니다. 완료 취소 시 자동으로 다시 추가됩니다.', 'Removes from Google Calendar on completion. Restored on undo.', '完了時にGoogleカレンダーから削除します。完了取消し時に自動で再追加されます。', '完成时从Google日历删除。取消完成时自动重新添加。')
                           : L('완료 시 구글 캘린더에 완료 표시로 남깁니다.', 'Keeps the event in Google Calendar with a completed mark.', '完了時にGoogleカレンダーに完了済みとして残します。', '完成时在Google日历中标记为已完成。')}
+                      </p>
+                      <h3 style={{ marginTop: '18px' }}>{L('시간 없는 일정', 'Timeless Tasks', '時間なしタスク', '无时间任务')}</h3>
+                      <div className="font-size-selector">
+                        <button className={calendarSyncNoTime === 'allday' ? 'active' : ''} onClick={() => setCalendarSyncNoTime('allday')}>
+                          <span>📅</span>
+                          <span>{L('종일로 동기화', 'Sync as all-day', '終日として同期', '同步为全天')}</span>
+                        </button>
+                        <button className={calendarSyncNoTime === 'skip' ? 'active' : ''} onClick={() => setCalendarSyncNoTime('skip')}>
+                          <span>🚫</span>
+                          <span>{L('동기화 안 함', 'Skip sync', '同期しない', '不同步')}</span>
+                        </button>
+                      </div>
+                      <p style={{ fontSize: '11px', color: 'var(--color-on-surface-variant)', marginTop: '8px', lineHeight: '1.4' }}>
+                        {calendarSyncNoTime === 'skip'
+                          ? L('시간이 없는 일정은 캘린더에 동기화되지 않습니다.', 'Tasks without a time will not be synced to calendar.', '時間が設定されていないタスクはカレンダーに同期されません。', '没有时间的任务不会同步到日历。')
+                          : L('시간이 없는 일정은 종일 일정으로 캘린더에 추가됩니다.', 'Tasks without a time are added as all-day events.', '時間が設定されていないタスクは終日イベントとして追加されます。', '没有时间的任务将作为全天活动添加。')}
                       </p>
                     </>
                   ) : (

@@ -10,6 +10,10 @@ export const getCalendarAccessToken = () => {
 export const isCalendarSyncEnabled = () =>
   localStorage.getItem('calendarSyncEnabled') !== 'false'
 
+// 시간 없는 일정 캘린더 동기화 방식: 'allday'(종일로 동기화) | 'skip'(동기화 안 함)
+export const getCalendarSyncNoTime = () =>
+  localStorage.getItem('briodo-calendarSyncNoTime') || 'allday'
+
 // 토큰 자동 갱신 (50분 경과 시 GoogleAuth.refresh() 호출)
 // 반환: { success: boolean, expired: boolean }
 export const refreshAccessTokenIfNeeded = async () => {
@@ -225,6 +229,10 @@ const buildEventPayload = (todo) => {
 
 export const syncEventToGoogle = async (todo) => {
   if (!isCalendarSyncEnabled()) return null
+  // 날짜 없는 일정은 캘린더 동기화 안 함 (#124)
+  if (!todo.date) return null
+  // 시간 없는 일정 동기화 옵션: 'skip'이면 건너뜀 (#123)
+  if (!todo.time && getCalendarSyncNoTime() === 'skip') return null
   const token = getCalendarAccessToken()
   if (!token) {
     console.warn('syncEventToGoogle: no access token — calendar sync skipped')
