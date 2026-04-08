@@ -322,6 +322,14 @@ function App() {
     setCalendarSyncEnabled(val)
     localStorage.setItem('calendarSyncEnabled', String(val))
   }
+  // 시간 없는 일정 캘린더 동기화: 'allday' | 'skip'
+  const [calendarSyncNoTime, setCalendarSyncNoTime] = useState(
+    () => localStorage.getItem('briodo-calendarSyncNoTime') || 'allday'
+  )
+  const setCalendarSyncNoTimePersisted = (val) => {
+    setCalendarSyncNoTime(val)
+    localStorage.setItem('briodo-calendarSyncNoTime', val)
+  }
 
   // 잠금화면 할일 표시 모드: 'today' | 'all'
   const [lockScreenTodoMode, setLockScreenTodoMode] = useState(
@@ -1241,6 +1249,7 @@ function App() {
           overlayPermGranted={overlayPermGranted}
           onGrantOverlayPerm={() => LockScreenNative?.openDrawOverlaysSettings().catch(() => {})}
           calendarSyncEnabled={calendarSyncEnabled} setCalendarSyncEnabled={setCalendarSyncEnabledPersisted}
+          calendarSyncNoTime={calendarSyncNoTime} setCalendarSyncNoTime={setCalendarSyncNoTimePersisted}
           weatherEnabled={weatherEnabled} setWeatherEnabled={setWeatherEnabledPersisted}
           weatherLocation={weatherLocation} setWeatherLocation={setWeatherLocationPersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
