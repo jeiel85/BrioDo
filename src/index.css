@@ -610,12 +610,25 @@ body {
   font-weight: 600;
   line-height: 1;
 }
-.momentum-weather {
-  font-size: calc(8px * var(--font-scale));
-  color: var(--color-on-surface-variant);
-  font-weight: 600;
+.greeting-weather-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+}
+.greeting-weather-icon {
+  font-size: calc(14px * var(--font-scale));
   line-height: 1;
-  margin-top: 3px;
+}
+.greeting-weather-temp {
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+.greeting-weather-range {
+  font-size: calc(11px * var(--font-scale));
+  color: var(--color-on-surface-variant);
+  font-weight: 400;
 }
 
 /* ─── View Selector (hidden in bottom nav version) ─── */
