@@ -1157,7 +1157,7 @@ function App() {
   }
 
   return (
-    <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
+    <div className="card">
       {showNotificationsModal && (
         <NotificationsModal
           onClose={() => { setShowNotificationsModal(false); clearNotifications() }}
@@ -1173,53 +1173,59 @@ function App() {
         </div>
       )}
 
-      {/* 현재 탭 전체 패널 (헤더 + 콘텐츠): 스와이프 시 통째로 이동 */}
-      <div
-        ref={currentPanelRef}
-        style={{ display: 'flex', flexDirection: 'column', height: '100%', willChange: 'transform' }}
-        onTouchStart={handleSwipeStart}
-        onTouchMove={handleSwipeMove}
-        onTouchEnd={handleSwipeEnd}
-      >
-        <Header {...headerProps} viewMode={viewMode} />
-        <div
-          className="todo-list-section"
-          ref={todoListRef}
-          onScroll={(e) => setHeaderCollapsed(e.currentTarget.scrollTop > 44)}
-        >
-          {searchQuery.trim() && viewMode === 'lists'
-            ? (
-              <TodoList
-                user={user} t={t} lang={lang}
-                activeTodos={activeTodos}
-                completedTodos={completedTodos}
-                viewMode='all'
-                showAllIncomplete={true}
-                todayStr={todayStr}
-                openEditModal={openEditModal}
-                toggleComplete={toggleComplete}
-                toggleSubtaskComplete={toggleSubtaskComplete}
-                deleteTodo={deleteTodo}
-              />
-            )
-            : renderTabContent(viewMode)
-          }
-        </div>
-      </div>
+      {/* 스와이프 클리핑 wrapper: card padding-top 이후 영역에서 overflow hidden 적용 */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
 
-      {/* 스와이프 중 옆에 붙어오는 인접 탭 패널 (헤더 포함 풀스크린) */}
-      {swipingToTab && (
+        {/* 현재 탭 전체 패널 (헤더 + 콘텐츠): 스와이프 시 통째로 이동 */}
         <div
-          ref={adjacentPanelRef}
-          style={{ position: 'absolute', inset: 0, pointerEvents: 'none', willChange: 'transform',
-                   display: 'flex', flexDirection: 'column' }}
+          ref={currentPanelRef}
+          style={{ display: 'flex', flexDirection: 'column', height: '100%', willChange: 'transform' }}
+          onTouchStart={handleSwipeStart}
+          onTouchMove={handleSwipeMove}
+          onTouchEnd={handleSwipeEnd}
         >
-          <Header {...headerProps} viewMode={swipingToTab} />
-          <div className="todo-list-section">
-            {renderTabContent(swipingToTab)}
+          <Header {...headerProps} viewMode={viewMode} />
+          <div
+            className="todo-list-section"
+            ref={todoListRef}
+            onScroll={(e) => setHeaderCollapsed(e.currentTarget.scrollTop > 44)}
+          >
+            {searchQuery.trim() && viewMode === 'lists'
+              ? (
+                <TodoList
+                  user={user} t={t} lang={lang}
+                  activeTodos={activeTodos}
+                  completedTodos={completedTodos}
+                  viewMode='all'
+                  showAllIncomplete={true}
+                  todayStr={todayStr}
+                  openEditModal={openEditModal}
+                  toggleComplete={toggleComplete}
+                  toggleSubtaskComplete={toggleSubtaskComplete}
+                  deleteTodo={deleteTodo}
+                />
+              )
+              : renderTabContent(viewMode)
+            }
           </div>
         </div>
-      )}
+
+        {/* 스와이프 중 옆에 붙어오는 인접 탭 패널 (헤더 포함 풀스크린) */}
+        {/* inset: 0 은 이 wrapper 기준 — card padding-top 이후 동일 영역 */}
+        {swipingToTab && (
+          <div
+            ref={adjacentPanelRef}
+            style={{ position: 'absolute', inset: 0, pointerEvents: 'none', willChange: 'transform',
+                     display: 'flex', flexDirection: 'column' }}
+          >
+            <Header {...headerProps} viewMode={swipingToTab} />
+            <div className="todo-list-section">
+              {renderTabContent(swipingToTab)}
+            </div>
+          </div>
+        )}
+
+      </div>
 
 
       {/* FAB: date/all/lists 뷰에서만 표시 */}
