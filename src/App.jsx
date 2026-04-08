@@ -113,6 +113,20 @@ function App() {
     toastTimerRef.current = setTimeout(() => setToastMsg(''), duration)
   }
 
+  const handleLoginWithFeedback = () => {
+    handleLogin((e) => {
+      // 사용자가 직접 취소한 경우는 toast 표시 안 함
+      const code = e?.code || ''
+      if (code === '12501' || code === 'auth/popup-closed-by-user') return
+      const msg = lang === 'ko'
+        ? `로그인 실패: ${e?.message || '알 수 없는 오류'}`
+        : lang === 'ja' ? `ログイン失敗: ${e?.message || '不明なエラー'}`
+        : lang === 'zh' ? `登录失败: ${e?.message || '未知错误'}`
+        : `Login failed: ${e?.message || 'Unknown error'}`
+      showToastMsg(msg, 5000)
+    })
+  }
+
   // 스마트 입력 모달 상태
   const [showSmartModal, setShowSmartModal] = useState(false)
   const [smartText, setSmartText] = useState('')
@@ -970,7 +984,7 @@ function App() {
       )}
 
       {tokenExpired && (
-        <div className="token-expired-banner" onClick={() => { setTokenExpired(false); handleLogin() }}>
+        <div className="token-expired-banner" onClick={() => { setTokenExpired(false); handleLoginWithFeedback() }}>
           {t.calendarExpired}
         </div>
       )}
@@ -1123,7 +1137,7 @@ function App() {
           completionCalendarMode={completionCalendarMode} setCompletionCalendarMode={setCompletionCalendarModePersisted}
           defaultReminderOffset={defaultReminderOffset} setDefaultReminderOffset={setDefaultReminderOffsetPersisted}
           allDayReminderTime={allDayReminderTime} setAllDayReminderTime={setAllDayReminderTimePersisted}
-          user={user} handleLogin={handleLogin} handleLogout={handleLogout}
+          user={user} handleLogin={handleLoginWithFeedback} handleLogout={handleLogout}
           lockScreenEnabled={lockScreenEnabled} setLockScreenEnabled={setLockScreenEnabledPersisted}
           lockScreenTodoMode={lockScreenTodoMode} setLockScreenTodoMode={setLockScreenTodoModePersisted}
           lockScreenShowCompleted={lockScreenShowCompleted} setLockScreenShowCompleted={setLockScreenShowCompletedPersisted}
@@ -1171,7 +1185,7 @@ function App() {
         <OnboardingModal
           lang={lang}
           setLangPref={setLangPref}
-          handleLogin={handleLogin}
+          handleLogin={handleLoginWithFeedback}
           onDone={() => setShowOnboarding(false)}
         />
       )}

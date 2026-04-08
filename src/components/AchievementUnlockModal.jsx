@@ -146,7 +146,7 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
             {Math.min(localAchievement.brioReward ?? BRIO_BY_DIFF[localAchievement.difficulty] ?? 0, REWARD_CAP) > 0 && (
               <div className="ach-unlock-brio">⚡+{Math.min(localAchievement.brioReward ?? BRIO_BY_DIFF[localAchievement.difficulty] ?? 0, REWARD_CAP)}</div>
             )}
-            <div className="ach-unlock-tap">
+            <div className="ach-unlock-tap" onClick={() => dismiss(localAchievement)}>
               {lang === 'ko' ? '탭하여 닫기' : lang === 'ja' ? 'タップして閉じる' : lang === 'zh' ? '点击关闭' : 'Tap to close'}
             </div>
           </div>
