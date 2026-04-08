@@ -33,6 +33,9 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
           await setDoc(doc(db, "todos", item.todoId), finalPayload, { merge: true })
         } else if (item.action === 'delete') {
           await deleteDoc(doc(db, "todos", item.todoId))
+          if (item.payload?.googleEventId) {
+            deleteEventFromGoogle(item.payload.googleEventId).catch(() => {})
+          }
         }
         await clearSyncQueue(item.id)
       }
@@ -346,7 +349,7 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
             setTimeout(() => deleteEventFromGoogle(target.googleEventId), 100)
           }
         } else {
-          await addSyncQueue('delete', id)
+          await addSyncQueue('delete', id, { googleEventId: target?.googleEventId || null })
         }
       }
     } catch (e) { console.error(e) }

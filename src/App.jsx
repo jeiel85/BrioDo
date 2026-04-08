@@ -845,26 +845,26 @@ function App() {
       const dtB = new Date(`${b.date} ${b.time?.includes(':') ? b.time : '00:00'}`)
       return dtA - dtB
     }
-    const today = new Date(todayStr + 'T00:00:00')
-    const periodEnd = (() => {
+    const today = new Date(todayStr + 'T23:59:59')
+    const periodStart = (() => {
       if (allViewPeriod === 'all') return null
-      const d = new Date(todayStr + 'T23:59:59')
-      if (allViewPeriod === 'week') d.setDate(today.getDate() + 6)
-      else if (allViewPeriod === 'month') d.setMonth(today.getMonth() + 1)
-      else if (allViewPeriod === 'quarter') d.setMonth(today.getMonth() + 3)
-      else if (allViewPeriod === 'half') d.setMonth(today.getMonth() + 6)
-      else if (allViewPeriod === 'year') d.setFullYear(today.getFullYear() + 1)
+      const d = new Date(todayStr + 'T00:00:00')
+      if (allViewPeriod === 'week') d.setDate(d.getDate() - 6)
+      else if (allViewPeriod === 'month') d.setMonth(d.getMonth() - 1)
+      else if (allViewPeriod === 'quarter') d.setMonth(d.getMonth() - 3)
+      else if (allViewPeriod === 'half') d.setMonth(d.getMonth() - 6)
+      else if (allViewPeriod === 'year') d.setFullYear(d.getFullYear() - 1)
       return d
     })()
     const base = todos
       .filter(t => !t.recurrence?.type || t.recurrence.type === 'none')
       .filter(t => !selectedTag || t.tags?.includes(selectedTag))
       .filter(t => {
-        if (!periodEnd) return true
+        if (!periodStart) return true
         if (!t.date) return true
         const d = new Date(t.date + 'T00:00:00')
         if (isNaN(d.getTime())) return true
-        return d <= periodEnd
+        return d >= periodStart && d <= today
       })
       .sort(sortByDate)
     return { incomplete: base.filter(t => !t.completed), completed: base.filter(t => t.completed) }
@@ -1077,11 +1077,7 @@ function App() {
           onClick={() => {
             const mode = user ? inputMode : 'manual'
             if (mode === 'smart') {
-              if (!hasBrio(2)) {
-                setShowBrioChargeModal(true)
-              } else {
-                setShowSmartModal(true)
-              }
+              setShowSmartModal(true)
             } else {
               handleOpenAddModal()
             }
