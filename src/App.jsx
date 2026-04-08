@@ -77,6 +77,7 @@ function App() {
   const [settingsScreen, setSettingsScreen] = useState('main')
   const [headerCollapsed, setHeaderCollapsed] = useState(false)
   const todoListRef = useRef(null)
+  const headerRef = useRef(null)
   const swipeTouchRef = useRef(null) // 스와이프 시작 좌표
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
   const [selectedTag, setSelectedTag] = useState(null)
@@ -103,9 +104,12 @@ function App() {
 
   const TAB_ORDER = ['date', 'all', 'lists']
   const handleSwipeStart = (e) => {
+    // 할일 카드 위에서 시작된 터치는 탭 스와이프 무시 (#125)
+    if (e.target.closest('.todo-card')) return
     const t = e.touches[0]
     swipeTouchRef.current = { x: t.clientX, y: t.clientY, locked: null }
     if (todoListRef.current) todoListRef.current.style.transition = 'none'
+    if (headerRef.current) headerRef.current.style.transition = 'none'
   }
   const handleSwipeMove = (e) => {
     const ref = swipeTouchRef.current
@@ -123,16 +127,21 @@ function App() {
     const atEdge = (idx === 0 && dx > 0) || (idx === TAB_ORDER.length - 1 && dx < 0)
     const offset = atEdge ? dx * 0.25 : dx
     if (todoListRef.current) todoListRef.current.style.transform = `translateX(${offset}px)`
+    if (headerRef.current) headerRef.current.style.transform = `translateX(${offset}px)` // 헤더도 같이 이동 (#122)
   }
   const handleSwipeEnd = (e) => {
     if (!swipeTouchRef.current) return
     const dx = e.changedTouches[0].clientX - swipeTouchRef.current.x
     const dy = e.changedTouches[0].clientY - swipeTouchRef.current.y
     swipeTouchRef.current = null
-    const el = todoListRef.current
-    if (el) {
-      el.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-      el.style.transform = 'translateX(0)'
+    const transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+    if (todoListRef.current) {
+      todoListRef.current.style.transition = transition
+      todoListRef.current.style.transform = 'translateX(0)'
+    }
+    if (headerRef.current) {
+      headerRef.current.style.transition = transition
+      headerRef.current.style.transform = 'translateX(0)'
     }
     if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
     const idx = TAB_ORDER.indexOf(viewMode)
@@ -981,6 +990,7 @@ function App() {
 
   return (
     <div className="card">
+      <div ref={headerRef}>
       <Header
         lang={lang} t={t}
         formattedHeaderDate={formattedHeaderDate} handleGoToToday={handleGoToToday}
@@ -1023,6 +1033,7 @@ function App() {
         allTodosTotal={todos.length}
         allTodosCompleted={todos.filter(t => t.completed).length}
       />
+      </div>
 
       {showNotificationsModal && (
         <NotificationsModal
