@@ -4,6 +4,27 @@
 
 ---
 
+## 2026-04-08 — 버그 수정: 업적 모달 탭 닫기 + 로그인 에러 피드백 (세션 38)
+
+### 배경
+- 이슈 #119: 일부 기기에서 구글 로그인 안됨 + 업적 달성 모달 탭 닫기 동작 안됨
+
+### 변경 내용
+- **업적 달성 모달 탭 닫기 버그 수정** — `ach-unlock-tap` 텍스트에 `onClick` 추가
+  - 기존: 카드가 `stopPropagation`이라 탭 텍스트 클릭 시 이벤트 전파 차단 → 모달 안 닫힘
+  - 수정: `ach-unlock-tap` div에 직접 `onClick={() => dismiss(localAchievement)}` 추가
+- **로그인 에러 toast 피드백** — 로그인 실패 시 에러 메시지 toast로 표시
+  - `handleLogin(onError)` 콜백 파라미터 추가
+  - `handleLoginWithFeedback` 래퍼 생성 (사용자 취소 제외, 다국어 메시지)
+- **브리오 관련 GitHub 이슈 일괄 종료** — #56, #57, #58, #60, #61, #62, #65, #66, #117
+
+### 주요 변경 파일
+- `src/components/AchievementUnlockModal.jsx`
+- `src/hooks/useAuth.js`
+- `src/App.jsx`
+
+---
+
 ## 2026-04-07 — Galaxy Store 출시 준비 + 헤더 UX 전면 개선 (세션 37)
 
 ### 배경

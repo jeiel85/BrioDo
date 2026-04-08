@@ -103,7 +103,7 @@ export function useAuth() {
     return () => clearInterval(interval)
   }, [user])
 
-  const handleLogin = async () => {
+  const handleLogin = async (onError) => {
     try {
       if (Capacitor.isNativePlatform()) {
         // 네이티브: GoogleAuth 플러그인으로 OAuth2 accessToken 포함 로그인
@@ -130,6 +130,7 @@ export function useAuth() {
       }
     } catch (e) {
       console.error("Login Error:", e.code, e.message)
+      if (onError) onError(e)
     }
   }
 
