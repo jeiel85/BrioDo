@@ -280,7 +280,6 @@ export function SettingsModal({
                   >
                     <span style={{ fontSize: '18px' }}>🎲</span>
                     <span>{L('랜덤', 'Random', 'ランダム', '随机')}</span>
-                    <span style={{ fontSize: '10px', opacity: 0.7, marginTop: '1px' }}>⚡1</span>
                   </button>
                   <button
                     className={theme === 'materialyou' ? 'active' : ''}

@@ -92,9 +92,6 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
     }
   }, [achievement, onDismiss])
 
-  const BRIO_BY_DIFF = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 5, 8: 7, 9: 10, 10: 15 }
-  const REWARD_CAP = 15
-
   return (
     <>
       {/* confetti 전용 캔버스 — 항상 DOM에 유지, 업적마다 재생성 없음
@@ -143,9 +140,6 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
             <div className="ach-unlock-difficulty">
               {'★'.repeat(Math.ceil(localAchievement.difficulty / 2))}{'☆'.repeat(5 - Math.ceil(localAchievement.difficulty / 2))}
             </div>
-            {Math.min(localAchievement.brioReward ?? BRIO_BY_DIFF[localAchievement.difficulty] ?? 0, REWARD_CAP) > 0 && (
-              <div className="ach-unlock-brio">⚡+{Math.min(localAchievement.brioReward ?? BRIO_BY_DIFF[localAchievement.difficulty] ?? 0, REWARD_CAP)}</div>
-            )}
             <div className="ach-unlock-tap" onClick={() => dismiss(localAchievement)}>
               {lang === 'ko' ? '탭하여 닫기' : lang === 'ja' ? 'タップして閉じる' : lang === 'zh' ? '点击关闭' : 'Tap to close'}
             </div>
