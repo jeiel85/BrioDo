@@ -76,11 +76,11 @@ function App() {
   const [allViewPeriod, setAllViewPeriod] = useState(() => localStorage.getItem('briodo-allViewPeriod') || 'all')
   const [settingsScreen, setSettingsScreen] = useState('main')
   const [headerCollapsed, setHeaderCollapsed] = useState(false)
-  const todoListRef = useRef(null)
-  const headerRef = useRef(null)
+  const todoListRef = useRef(null)   // 스크롤 가능한 content div (scrollTop 리셋용)
+  const currentPanelRef = useRef(null) // 헤더+콘텐츠 전체 슬라이딩 패널
   const swipeTouchRef = useRef(null) // 스와이프 시작 좌표
   const swipeEnterDirRef = useRef(null) // 탭 전환 시 새 콘텐츠 진입 방향 ('left'|'right')
-  const adjacentPanelRef = useRef(null) // 스와이프 중 옆에 붙어오는 인접 탭 패널
+  const adjacentPanelRef = useRef(null) // 스와이프 중 옆에 붙어오는 인접 탭 패널 (헤더 포함 풀스크린)
   const swipeAdjacentBaseRef = useRef(0) // 인접 패널 시작 오프셋 (+/- window.innerWidth)
   const [swipingToTab, setSwipingToTab] = useState(null) // 스와이프 중 보여줄 인접 탭
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
@@ -99,23 +99,18 @@ function App() {
     setHeaderCollapsed(false)
     if (todoListRef.current) todoListRef.current.scrollTop = 0
 
-    // 스와이프로 전환된 경우: 새 콘텐츠를 반대편에서 슬라이드인
+    // 탭 버튼 클릭 전환 시: 슬라이드인 애니메이션 (스와이프는 인접 패널이 처리)
     if (swipeEnterDirRef.current) {
       const fromX = swipeEnterDirRef.current === 'right' ? '100%' : '-100%'
       swipeEnterDirRef.current = null
       const transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-      ;[todoListRef, headerRef].forEach(ref => {
-        if (!ref.current) return
-        ref.current.style.transition = 'none'
-        ref.current.style.transform = `translateX(${fromX})`
-      })
-      // reflow 강제 후 애니메이션
-      todoListRef.current?.getBoundingClientRect()
-      ;[todoListRef, headerRef].forEach(ref => {
-        if (!ref.current) return
-        ref.current.style.transition = transition
-        ref.current.style.transform = 'translateX(0)'
-      })
+      if (currentPanelRef.current) {
+        currentPanelRef.current.style.transition = 'none'
+        currentPanelRef.current.style.transform = `translateX(${fromX})`
+        currentPanelRef.current.getBoundingClientRect()
+        currentPanelRef.current.style.transition = transition
+        currentPanelRef.current.style.transform = 'translateX(0)'
+      }
     }
   }, [viewMode])
 
@@ -131,8 +126,7 @@ function App() {
     if (e.target.closest('.todo-card')) return
     const t = e.touches[0]
     swipeTouchRef.current = { x: t.clientX, y: t.clientY, locked: null }
-    if (todoListRef.current) todoListRef.current.style.transition = 'none'
-    if (headerRef.current) headerRef.current.style.transition = 'none'
+    if (currentPanelRef.current) currentPanelRef.current.style.transition = 'none'
   }
   const handleSwipeMove = (e) => {
     const ref = swipeTouchRef.current
@@ -157,9 +151,9 @@ function App() {
     const idx = TAB_ORDER.indexOf(viewMode)
     const atEdge = (idx === 0 && dx > 0) || (idx === TAB_ORDER.length - 1 && dx < 0)
     const offset = atEdge ? dx * 0.25 : dx
-    if (todoListRef.current) todoListRef.current.style.transform = `translateX(${offset}px)`
-    if (headerRef.current) headerRef.current.style.transform = `translateX(${offset}px)`
-    // 인접 탭 패널을 현재 탭 옆에 붙여서 같이 이동
+    // 헤더+콘텐츠 전체 패널을 같이 이동
+    if (currentPanelRef.current) currentPanelRef.current.style.transform = `translateX(${offset}px)`
+    // 인접 탭 패널(헤더 포함)을 현재 패널 옆에 붙여서 같이 이동
     if (adjacentPanelRef.current) {
       adjacentPanelRef.current.style.transform = `translateX(${swipeAdjacentBaseRef.current + offset}px)`
     }
@@ -176,13 +170,12 @@ function App() {
     const shouldSwitch = Math.abs(dx) >= 50 && Math.abs(dx) >= Math.abs(dy)
 
     if (shouldSwitch && (canGoLeft || canGoRight)) {
-      // 현재 탭: 스와이프 방향으로 완전히 밀어냄
+      // 현재 패널(헤더+콘텐츠): 스와이프 방향으로 완전히 밀어냄
       const outX = dx < 0 ? -window.innerWidth : window.innerWidth
-      ;[todoListRef, headerRef].forEach(r => {
-        if (!r.current) return
-        r.current.style.transition = transition
-        r.current.style.transform = `translateX(${outX}px)`
-      })
+      if (currentPanelRef.current) {
+        currentPanelRef.current.style.transition = transition
+        currentPanelRef.current.style.transform = `translateX(${outX}px)`
+      }
       // 인접 패널: 중앙(0)으로 슬라이드인
       if (adjacentPanelRef.current) {
         adjacentPanelRef.current.style.transition = transition
@@ -193,21 +186,18 @@ function App() {
       setTimeout(() => {
         if (canGoLeft) switchTab(TAB_ORDER[idx + 1])
         else switchTab(TAB_ORDER[idx - 1])
-        // 탭 전환 후 현재 패널 즉시 리셋 (인접 패널이 사라지면서 자연스럽게 이어짐)
-        ;[todoListRef, headerRef].forEach(r => {
-          if (!r.current) return
-          r.current.style.transition = 'none'
-          r.current.style.transform = 'translateX(0)'
-        })
+        if (currentPanelRef.current) {
+          currentPanelRef.current.style.transition = 'none'
+          currentPanelRef.current.style.transform = 'translateX(0)'
+        }
         setSwipingToTab(null)
       }, 300)
     } else {
-      // 임계값 미달 — 현재 탭 원위치, 인접 패널 밀어냄
-      ;[todoListRef, headerRef].forEach(r => {
-        if (!r.current) return
-        r.current.style.transition = transition
-        r.current.style.transform = 'translateX(0)'
-      })
+      // 임계값 미달 — 현재 패널 원위치, 인접 패널 밀어냄
+      if (currentPanelRef.current) {
+        currentPanelRef.current.style.transition = transition
+        currentPanelRef.current.style.transform = 'translateX(0)'
+      }
       if (adjacentPanelRef.current) {
         adjacentPanelRef.current.style.transition = transition
         adjacentPanelRef.current.style.transform = `translateX(${swipeAdjacentBaseRef.current}px)`
@@ -1127,53 +1117,47 @@ function App() {
     </>
   )
 
-  return (
-    <div className="card">
-      <div ref={headerRef}>
-      <Header
-        lang={lang} t={t}
-        formattedHeaderDate={formattedHeaderDate} handleGoToToday={handleGoToToday}
-        user={user}
-        viewMode={viewMode} setViewMode={setViewMode}
-        todayStr={todayStr} setSelectedDate={setSelectedDate}
-        allUsedTags={allUsedTags} selectedTag={selectedTag} setSelectedTag={setSelectedTag}
-        tagExpanded={tagExpanded} setTagExpanded={setTagExpanded}
-        selectedDate={selectedDate}
-        calendarExpanded={calendarExpanded} setCalendarExpanded={setCalendarExpanded}
-        prevWeek={prevWeek} nextWeek={nextWeek}
-        viewMonth={viewMonth}
-        viewMonthLabel={viewMonthLabel}
-        currentWeekDates={currentWeekDates}
-        monthGridDates={monthGridDates}
-        weekdayNames={weekdayNames}
-        prevMonth={prevMonth} nextMonth={nextMonth} goToMonth={goToMonth}
-        setShowSettings={setShowSettings}
-        searchQuery={searchQuery} setSearchQuery={(q) => { setSearchQuery(q); if (q.trim()) trackEngagement('searchUsed'); }}
-        isSearchOpen={isSearchOpen} setIsSearchOpen={(open) => {
-          setIsSearchOpen(open)
-          if (open) {
-            // 검색 열 때 항상 할일(date) 탭으로 이동
-            setViewMode('date')
-          } else {
-            setSearchQuery('')
-          }
-        }}
-        activeTodosCount={headerActiveTodosCount}
-        completedTodosCount={headerCompletedTodosCount}
-        weeklyPulse={weeklyPulse}
-        allIncompleteTodosCount={allIncompleteTodos.length}
-        notificationCount={notifications.length}
-        onNotificationTap={() => setShowNotificationsModal(true)}
-        weatherData={weatherEnabled ? weatherData : null}
-        weatherLoading={weatherLoading}
-        isCollapsed={headerCollapsed}
-        allViewPeriod={allViewPeriod}
-        setAllViewPeriodPersisted={setAllViewPeriodPersisted}
-        allTodosTotal={todos.length}
-        allTodosCompleted={todos.filter(t => t.completed).length}
-      />
-      </div>
+  // 헤더 공통 props (현재/인접 패널 둘 다 사용)
+  const headerProps = {
+    lang, t,
+    formattedHeaderDate, handleGoToToday,
+    user,
+    setViewMode,
+    todayStr, setSelectedDate,
+    allUsedTags, selectedTag, setSelectedTag,
+    tagExpanded, setTagExpanded,
+    selectedDate,
+    calendarExpanded, setCalendarExpanded,
+    prevWeek, nextWeek,
+    viewMonth, viewMonthLabel,
+    currentWeekDates, monthGridDates, weekdayNames,
+    prevMonth, nextMonth, goToMonth,
+    setShowSettings,
+    searchQuery,
+    setSearchQuery: (q) => { setSearchQuery(q); if (q.trim()) trackEngagement('searchUsed') },
+    isSearchOpen,
+    setIsSearchOpen: (open) => {
+      setIsSearchOpen(open)
+      if (open) setViewMode('date')
+      else setSearchQuery('')
+    },
+    activeTodosCount: headerActiveTodosCount,
+    completedTodosCount: headerCompletedTodosCount,
+    weeklyPulse,
+    allIncompleteTodosCount: allIncompleteTodos.length,
+    notificationCount: notifications.length,
+    onNotificationTap: () => setShowNotificationsModal(true),
+    weatherData: weatherEnabled ? weatherData : null,
+    weatherLoading,
+    isCollapsed: headerCollapsed,
+    allViewPeriod,
+    setAllViewPeriodPersisted,
+    allTodosTotal: todos.length,
+    allTodosCompleted: todos.filter(t => t.completed).length,
+  }
 
+  return (
+    <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
       {showNotificationsModal && (
         <NotificationsModal
           onClose={() => { setShowNotificationsModal(false); clearNotifications() }}
@@ -1189,12 +1173,15 @@ function App() {
         </div>
       )}
 
-      {/* 탭 콘텐츠 영역: overflow hidden으로 인접 패널 클리핑 */}
-      <div style={{ position: 'relative', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+      {/* 현재 탭 전체 패널 (헤더 + 콘텐츠): 스와이프 시 통째로 이동 */}
+      <div
+        ref={currentPanelRef}
+        style={{ display: 'flex', flexDirection: 'column', height: '100%', willChange: 'transform' }}
         onTouchStart={handleSwipeStart}
         onTouchMove={handleSwipeMove}
         onTouchEnd={handleSwipeEnd}
       >
+        <Header {...headerProps} viewMode={viewMode} />
         <div
           className="todo-list-section"
           ref={todoListRef}
@@ -1218,17 +1205,22 @@ function App() {
             : renderTabContent(viewMode)
           }
         </div>
-        {/* 스와이프 중 옆에 붙어오는 인접 탭 패널 */}
-        {swipingToTab && (
-          <div
-            ref={adjacentPanelRef}
-            className="todo-list-section"
-            style={{ position: 'absolute', inset: 0, pointerEvents: 'none', willChange: 'transform' }}
-          >
+      </div>
+
+      {/* 스와이프 중 옆에 붙어오는 인접 탭 패널 (헤더 포함 풀스크린) */}
+      {swipingToTab && (
+        <div
+          ref={adjacentPanelRef}
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none', willChange: 'transform',
+                   display: 'flex', flexDirection: 'column' }}
+        >
+          <Header {...headerProps} viewMode={swipingToTab} />
+          <div className="todo-list-section">
             {renderTabContent(swipingToTab)}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
 
       {/* FAB: date/all/lists 뷰에서만 표시 */}
       {(viewMode === 'date' || viewMode === 'all' || viewMode === 'lists') && (
