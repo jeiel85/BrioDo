@@ -241,20 +241,13 @@ export const ACHIEVEMENT_DEFS = [
   { id: 'X41', icon: '⏰', hidden: true, difficulty: 8, category: 'special', name: n('자정 완료','Exact Midnight','深夜0時完了','午夜整点完成'), desc: n('정확히 00:00에 할 일 완료','Complete a task exactly at midnight (00:00)','正確に00:00にタスクを完了','在00:00整点完成任务'), check: s => s.flags?.exactMidnight },
   { id: 'X42', icon: '🎊', hidden: true, difficulty: 5, category: 'special', name: n('한해의 마지막 X','Year\'s End X','大晦日X','年末X'), desc: n('12월 31일에 할 일 완료 (비밀 보상)','Complete a task on December 31st (secret bonus)','12月31日にタスクを完了','在12月31日完成任务'), check: s => s.special?.dec31 },
   { id: 'X43', icon: '🌸', hidden: true, difficulty: 10, category: 'special', name: n('사계절 전사','Four Seasons','四季の戦士','四季战士'), desc: n('봄/여름/가을/겨울 각각 50개 완료','Complete 50 tasks in each of the 4 seasons','春夏秋冬それぞれ50件完了','在四个季节各完成50件'), check: s => s.flags?.allSeasons50 },
-  { id: 'X44', icon: '📺', hidden: true, difficulty: 7, category: 'engagement', name: n('광고 애청자','Ad Watcher','広告愛好者','广告爱好者'), desc: n('광고 시청으로 브리오 20회 충전','Recharge brio by watching 20 ads','広告視聴でブリオ20回チャージ','通过看广告充值20次'), check: s => (s.flags?.adsWatched || 0) >= 20 },
-  { id: 'X45', icon: '🏅', hidden: true, difficulty: 8, category: 'engagement', name: n('업적 부자','Brio Rich','実績持ち','成就富翁'), desc: n('업적으로 브리오 200개 획득','Earn 200 brio from achievements','実績からブリオを200個獲得','通过成就获得200个能量'), check: s => (s.flags?.brioFromAchievements || 0) >= 200 },
-  { id: 'X46', icon: '♻️', hidden: true, difficulty: 7, category: 'engagement', name: n('재충전 달인','Recharge Master','再充電の達人','再充值达人'), desc: n('브리오를 0으로 소진 후 충전 10회','Recharge from zero brio 10 times','ブリオを0にした後10回チャージ','将能量耗尽后充值10次'), check: s => (s.flags?.brioEmptied || 0) >= 10 },
   { id: 'X47', icon: '🌈', hidden: true, difficulty: 10, category: 'engagement', name: n('업적 컬렉터 120','Achievement Collector 120','実績コレクター120','成就收集者120'), desc: n('공개 업적 120개 달성','Unlock 120 public achievements','公開実績120個を解除','解锁120个公开成就'), check: s => s.unlockedPublicCount >= 120 },
   { id: 'X48', icon: '👑', hidden: true, difficulty: 10, category: 'engagement', name: n('업적 완파','Achievement Legend','実績完全制覇','成就传说'), desc: n('공개 업적 150개 전부 달성','Unlock all 150 public achievements','公開実績150個を全解除','解锁所有150个公开成就'), check: s => s.unlockedPublicCount >= 150 },
   { id: 'X49', icon: '🔮', hidden: true, difficulty: 5, category: 'engagement', name: n('비밀의 시작','Secret Start','秘密の始まり','秘密的开始'), desc: n('첫 비밀 업적 달성','Unlock your first secret achievement','初めての秘密実績を解除','解锁第一个秘密成就'), check: s => (s.unlockedSecretCount || 0) >= 1 },
   { id: 'X50', icon: '💎', hidden: true, difficulty: 10, category: 'engagement', name: n('비밀 전도사','Secret Evangelist','秘密の伝道師','秘密传道士'), desc: n('비밀 업적 10개 달성','Unlock 10 secret achievements','秘密実績を10個解除','解锁10个秘密成就'), check: s => (s.unlockedSecretCount || 0) >= 10 },
 ]
 
-// 업적 보상 재조정 — 광고 수익 균형화 (구: 1→1,2→2,...,10→30)
-const ACHIEVEMENT_BRIO_REWARD = { 1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 4, 7: 5, 8: 7, 9: 10, 10: 15 }
-const ACHIEVEMENT_REWARD_CAP = 15 // 숨겨진 업적 포함 단일 보상 상한
-
-export function useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio }) {
+export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
   const [notifications, setNotifications] = useState([])
   const [unlockQueue, setUnlockQueue] = useState([])
   const [currentUnlock, setCurrentUnlock] = useState(null)
@@ -422,21 +415,6 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio
       const newAchs = newOnes.map(id => ACHIEVEMENT_DEFS.find(a => a.id === id)).filter(Boolean)
       setNotifications(prev => [...prev, ...newAchs])
       setUnlockQueue(prev => [...prev, ...newAchs])
-
-      // 브리오 보상 지급 — 모달 진입 애니메이션(~500ms) 이후 실행
-      // 동기 호출 시 App 전체 re-render가 모달 visible 전환과 겹쳐 깜빡임 유발
-      const totalReward = newAchs.reduce((sum, a) => {
-        const base = a.brioReward ?? ACHIEVEMENT_BRIO_REWARD[a.difficulty] ?? 0
-        return sum + Math.min(base, ACHIEVEMENT_REWARD_CAP)
-      }, 0)
-      if (totalReward > 0) {
-        setTimeout(() => { if (chargeBrio) chargeBrio(totalReward) }, 600)
-        try {
-          const flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}')
-          flags.brioFromAchievements = (flags.brioFromAchievements || 0) + totalReward
-          localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
-        } catch (e) {}
-      }
 
       if (user?.uid) {
         setDoc(doc(db, 'userSettings', user.uid), {

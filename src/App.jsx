@@ -18,8 +18,6 @@ import { useAuth } from './hooks/useAuth'
 import { useTheme } from './hooks/useTheme'
 import { useTodosData } from './hooks/useTodosData'
 import { useCalendarNav } from './hooks/useCalendarNav'
-import { useBrio, DAILY_BRIO } from './hooks/useBrio'
-
 import { Header } from './components/Header'
 import { TodoList } from './components/TodoList'
 import { BottomNav } from './components/BottomNav'
@@ -32,8 +30,6 @@ import { AchievementUnlockModal } from './components/AchievementUnlockModal'
 import { AchievementsModal } from './components/AchievementsModal'
 import { LockScreenView } from './components/LockScreenView'
 import { OnboardingModal, shouldShowOnboarding } from './components/OnboardingModal'
-import { BrioChargeModal } from './components/BrioChargeModal'
-
 import './index.css'
 
 const LockScreenNative = Capacitor.isNativePlatform() ? registerPlugin('LockScreen') : null
@@ -108,9 +104,6 @@ function App() {
   const [inputMode, setInputMode] = useState(() => localStorage.getItem('inputMode') || 'manual')
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
 
-  // 브리오 에너지 시스템
-  const { balance: brioBalance, consume: consumeBrio, charge: chargeBrio, hasBrio, maxBrio, nextChargeMs, chargeProgress } = useBrio(user)
-  const [showBrioChargeModal, setShowBrioChargeModal] = useState(false)
   const toastTimerRef = useRef(null)
   const [toastMsg, setToastMsg] = useState('')
 
@@ -124,13 +117,6 @@ function App() {
   const [showSmartModal, setShowSmartModal] = useState(false)
   const [smartText, setSmartText] = useState('')
   const [smartReminderOffset, setSmartReminderOffset] = useState(null)
-
-  // 브리오 소진 시 자동 수동 전환 (앱 시작 + 브리오 변경 시 모두 반응)
-  useEffect(() => {
-    if (!hasBrio() && inputMode === 'smart') {
-      setInputModePersisted('manual')
-    }
-  }, [brioBalance])
 
   // 알림 채널 초기화 및 앱 사용 빈도 트래킹 (앱 시작 시 1회)
   useEffect(() => {
@@ -748,23 +734,19 @@ function App() {
       await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
       setTimeout(async () => {
         try {
-          if (!hasBrio(2)) return
           let finalData = { text: savedText, date: today, time: '', tags: [], reminderOffset: savedReminderOffset }
-          if (hasBrio(2)) {
-            const ai = await getAiFullAnalysis(savedText)
-            if (ai) {
-              finalData = {
-                text: ai.refinedText || savedText,
-                date: ai.date || today,
-                time: ai.time || '',
-                tags: ai.categories || [],
-                reminderOffset: savedReminderOffset
-              }
-              setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
-              await saveLocalTodo({ ...localPayload, ...finalData })
-              await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
-              consumeBrio(2) // AI 전체 분석(태그+일정+우선순위) = 2 브리오
+          const ai = await getAiFullAnalysis(savedText)
+          if (ai) {
+            finalData = {
+              text: ai.refinedText || savedText,
+              date: ai.date || today,
+              time: ai.time || '',
+              tags: ai.categories || [],
+              reminderOffset: savedReminderOffset
             }
+            setTodos(prev => prev.map(t => t.id === newId ? { ...t, ...finalData } : t))
+            await saveLocalTodo({ ...localPayload, ...finalData })
+            await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
           }
           // AI 분석 완료 후 알림 스케줄 (날짜가 확정된 시점)
           scheduleNotification({ ...localPayload, ...finalData, id: newId })
@@ -889,7 +871,7 @@ function App() {
     return result
   }, [todos])
 
-  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse, user, chargeBrio })
+  const { unlockedIds, unlockedSortedByDifficulty, notifications, clearNotifications, currentUnlock, dismissUnlock } = useAchievements({ todos, todayStr, weeklyPulse, user })
 
   const formattedHeaderDate = useMemo(() => {
     const d = new Date(selectedDate)
@@ -971,10 +953,6 @@ function App() {
         onNotificationTap={() => setShowNotificationsModal(true)}
         weatherData={weatherEnabled ? weatherData : null}
         weatherLoading={weatherLoading}
-        brioBalance={brioBalance}
-        maxBrio={maxBrio}
-        nextChargeMs={nextChargeMs}
-        onBrioClick={() => setShowBrioChargeModal(true)}
         isCollapsed={headerCollapsed}
         allViewPeriod={allViewPeriod}
         setAllViewPeriodPersisted={setAllViewPeriodPersisted}
@@ -1119,7 +1097,6 @@ function App() {
           reminderOffset={smartReminderOffset} setReminderOffset={setSmartReminderOffset}
           defaultReminderOffset={defaultReminderOffset}
           autoStartVoice={!smartText}
-          brioBalance={brioBalance}
         />
       )}
 
@@ -1138,11 +1115,10 @@ function App() {
         <SettingsModal
           lang={lang} langPref={langPref} setLangPref={setLangPref} t={t}
           fontScale={fontScale} setFontScale={setFontScale}
-          theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme} consumeBrio={consumeBrio}
+          theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme}
           viewMode={viewMode} setViewMode={setViewMode}
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
-          brioBalance={brioBalance}
           onAiLimitToast={(msg) => showToastMsg(msg)}
           completionCalendarMode={completionCalendarMode} setCompletionCalendarMode={setCompletionCalendarModePersisted}
           defaultReminderOffset={defaultReminderOffset} setDefaultReminderOffset={setDefaultReminderOffsetPersisted}
@@ -1200,17 +1176,6 @@ function App() {
         />
       )}
 
-      {showBrioChargeModal && (
-        <BrioChargeModal
-          lang={lang}
-          balance={brioBalance}
-          maxBrio={maxBrio}
-          nextChargeMs={nextChargeMs}
-          chargeProgress={chargeProgress}
-          onCharge={chargeBrio}
-          onClose={() => setShowBrioChargeModal(false)}
-        />
-      )}
 
     </div>
   )
