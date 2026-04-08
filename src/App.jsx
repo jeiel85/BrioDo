@@ -80,6 +80,9 @@ function App() {
   const headerRef = useRef(null)
   const swipeTouchRef = useRef(null) // 스와이프 시작 좌표
   const swipeEnterDirRef = useRef(null) // 탭 전환 시 새 콘텐츠 진입 방향 ('left'|'right')
+  const adjacentPanelRef = useRef(null) // 스와이프 중 옆에 붙어오는 인접 탭 패널
+  const swipeAdjacentBaseRef = useRef(0) // 인접 패널 시작 오프셋 (+/- window.innerWidth)
+  const [swipingToTab, setSwipingToTab] = useState(null) // 스와이프 중 보여줄 인접 탭
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
@@ -139,15 +142,27 @@ function App() {
     // 방향 미결정 상태에서 수직이 우세하면 스와이프 취소
     if (ref.locked === null) {
       if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 8) { swipeTouchRef.current = null; return }
-      if (Math.abs(dx) > 8) ref.locked = 'h'
-      else return
+      if (Math.abs(dx) > 8) {
+        ref.locked = 'h'
+        // 인접 탭 결정 후 옆 패널 렌더링 시작
+        const idx = TAB_ORDER.indexOf(viewMode)
+        const adjacentIdx = dx < 0 ? idx + 1 : idx - 1
+        if (adjacentIdx >= 0 && adjacentIdx < TAB_ORDER.length) {
+          swipeAdjacentBaseRef.current = dx < 0 ? window.innerWidth : -window.innerWidth
+          setSwipingToTab(TAB_ORDER[adjacentIdx])
+        }
+      } else return
     }
     // 첫/마지막 탭 끝에서 저항감 (rubber band)
     const idx = TAB_ORDER.indexOf(viewMode)
     const atEdge = (idx === 0 && dx > 0) || (idx === TAB_ORDER.length - 1 && dx < 0)
     const offset = atEdge ? dx * 0.25 : dx
     if (todoListRef.current) todoListRef.current.style.transform = `translateX(${offset}px)`
-    if (headerRef.current) headerRef.current.style.transform = `translateX(${offset}px)` // 헤더도 같이 이동 (#122)
+    if (headerRef.current) headerRef.current.style.transform = `translateX(${offset}px)`
+    // 인접 탭 패널을 현재 탭 옆에 붙여서 같이 이동
+    if (adjacentPanelRef.current) {
+      adjacentPanelRef.current.style.transform = `translateX(${swipeAdjacentBaseRef.current + offset}px)`
+    }
   }
   const handleSwipeEnd = (e) => {
     if (!swipeTouchRef.current) return
@@ -161,26 +176,43 @@ function App() {
     const shouldSwitch = Math.abs(dx) >= 50 && Math.abs(dx) >= Math.abs(dy)
 
     if (shouldSwitch && (canGoLeft || canGoRight)) {
-      // 현재 탭을 스와이프 방향으로 완전히 밀어냄
-      const outX = dx < 0 ? '-100%' : '100%'
-      ;[todoListRef, headerRef].forEach(ref => {
-        if (!ref.current) return
-        ref.current.style.transition = transition
-        ref.current.style.transform = `translateX(${outX})`
+      // 현재 탭: 스와이프 방향으로 완전히 밀어냄
+      const outX = dx < 0 ? -window.innerWidth : window.innerWidth
+      ;[todoListRef, headerRef].forEach(r => {
+        if (!r.current) return
+        r.current.style.transition = transition
+        r.current.style.transform = `translateX(${outX}px)`
       })
-      // 새 탭 진입 방향 기록 후 애니메이션 완료 시점에 전환
-      swipeEnterDirRef.current = dx < 0 ? 'right' : 'left'
+      // 인접 패널: 중앙(0)으로 슬라이드인
+      if (adjacentPanelRef.current) {
+        adjacentPanelRef.current.style.transition = transition
+        adjacentPanelRef.current.style.transform = 'translateX(0)'
+      }
+      // 애니메이션 완료 후 실제 탭 전환 + 정리
+      swipeEnterDirRef.current = null // useEffect의 별도 slide-in 방지
       setTimeout(() => {
         if (canGoLeft) switchTab(TAB_ORDER[idx + 1])
         else switchTab(TAB_ORDER[idx - 1])
+        // 탭 전환 후 현재 패널 즉시 리셋 (인접 패널이 사라지면서 자연스럽게 이어짐)
+        ;[todoListRef, headerRef].forEach(r => {
+          if (!r.current) return
+          r.current.style.transition = 'none'
+          r.current.style.transform = 'translateX(0)'
+        })
+        setSwipingToTab(null)
       }, 300)
     } else {
-      // 임계값 미달 — 원위치 복귀
-      ;[todoListRef, headerRef].forEach(ref => {
-        if (!ref.current) return
-        ref.current.style.transition = transition
-        ref.current.style.transform = 'translateX(0)'
+      // 임계값 미달 — 현재 탭 원위치, 인접 패널 밀어냄
+      ;[todoListRef, headerRef].forEach(r => {
+        if (!r.current) return
+        r.current.style.transition = transition
+        r.current.style.transform = 'translateX(0)'
       })
+      if (adjacentPanelRef.current) {
+        adjacentPanelRef.current.style.transition = transition
+        adjacentPanelRef.current.style.transform = `translateX(${swipeAdjacentBaseRef.current}px)`
+      }
+      setTimeout(() => setSwipingToTab(null), 300)
     }
   }
 
@@ -1031,6 +1063,70 @@ function App() {
     )
   }
 
+  const renderTabContent = (mode) => (
+    <>
+      {mode === 'date' && (
+        <TodoList
+          user={user} t={t} lang={lang}
+          activeTodos={activeTodos}
+          completedTodos={completedTodos}
+          viewMode={mode}
+          showAllIncomplete={false}
+          todayStr={todayStr}
+          openEditModal={openEditModal}
+          toggleComplete={toggleComplete}
+          toggleSubtaskComplete={toggleSubtaskComplete}
+          deleteTodo={deleteTodo}
+        />
+      )}
+      {mode === 'all' && (
+        <>
+          {!headerCollapsed && <div className="all-period-filter">
+            {(['all', 'week', 'month', 'quarter', 'half', 'year']).map(p => (
+              <button
+                key={p}
+                className={`period-filter-btn${allViewPeriod === p ? ' active' : ''}`}
+                onClick={() => setAllViewPeriodPersisted(p)}
+              >
+                {p === 'all' ? (lang === 'ko' ? '전체' : lang === 'ja' ? 'すべて' : lang === 'zh' ? '全部' : 'All')
+                : p === 'week' ? (lang === 'ko' ? '1주' : lang === 'ja' ? '1週' : lang === 'zh' ? '1周' : '1W')
+                : p === 'month' ? (lang === 'ko' ? '1달' : lang === 'ja' ? '1ヶ月' : lang === 'zh' ? '1月' : '1M')
+                : p === 'quarter' ? (lang === 'ko' ? '분기' : lang === 'ja' ? '四半期' : lang === 'zh' ? '季度' : '3M')
+                : p === 'half' ? (lang === 'ko' ? '반기' : lang === 'ja' ? '半年' : lang === 'zh' ? '半年' : '6M')
+                : (lang === 'ko' ? '1년' : lang === 'ja' ? '1年' : lang === 'zh' ? '1年' : '1Y')}
+              </button>
+            ))}
+          </div>}
+          <TodoList
+            user={user} t={t} lang={lang}
+            activeTodos={allIncompleteTodos}
+            completedTodos={allCompletedTodos}
+            viewMode={mode}
+            showAllIncomplete={true}
+            todayStr={todayStr}
+            openEditModal={openEditModal}
+            toggleComplete={toggleComplete}
+            toggleSubtaskComplete={toggleSubtaskComplete}
+            deleteTodo={deleteTodo}
+          />
+        </>
+      )}
+      {mode === 'lists' && (
+        <CollectionsScreen
+          todos={todos}
+          t={t} lang={lang}
+          openEditModal={openEditModal}
+          toggleComplete={toggleComplete}
+          todayStr={todayStr}
+          weeklyPulse={weeklyPulse}
+          unlockedIds={unlockedIds}
+          unlockedSortedByDifficulty={unlockedSortedByDifficulty}
+          onShowAllAchievements={() => setShowAchievementsModal(true)}
+        />
+      )}
+    </>
+  )
+
   return (
     <div className="card">
       <div ref={headerRef}>
@@ -1093,87 +1189,44 @@ function App() {
         </div>
       )}
 
-      <div
-        className="todo-list-section"
-        ref={todoListRef}
-        onScroll={(e) => setHeaderCollapsed(e.currentTarget.scrollTop > 44)}
+      {/* 탭 콘텐츠 영역: overflow hidden으로 인접 패널 클리핑 */}
+      <div style={{ position: 'relative', flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
         onTouchStart={handleSwipeStart}
         onTouchMove={handleSwipeMove}
         onTouchEnd={handleSwipeEnd}
       >
-        {viewMode === 'date' && (
-          <TodoList
-            user={user} t={t} lang={lang}
-            activeTodos={activeTodos}
-            completedTodos={completedTodos}
-            viewMode={viewMode}
-            showAllIncomplete={false}
-            todayStr={todayStr}
-            openEditModal={openEditModal}
-            toggleComplete={toggleComplete}
-            toggleSubtaskComplete={toggleSubtaskComplete}
-            deleteTodo={deleteTodo}
-          />
-        )}
-        {viewMode === 'all' && (
-          <>
-            {!headerCollapsed && <div className="all-period-filter">
-              {(['all', 'week', 'month', 'quarter', 'half', 'year']).map(p => (
-                <button
-                  key={p}
-                  className={`period-filter-btn${allViewPeriod === p ? ' active' : ''}`}
-                  onClick={() => setAllViewPeriodPersisted(p)}
-                >
-                  {p === 'all' ? (lang === 'ko' ? '전체' : lang === 'ja' ? 'すべて' : lang === 'zh' ? '全部' : 'All')
-                  : p === 'week' ? (lang === 'ko' ? '1주' : lang === 'ja' ? '1週' : lang === 'zh' ? '1周' : '1W')
-                  : p === 'month' ? (lang === 'ko' ? '1달' : lang === 'ja' ? '1ヶ月' : lang === 'zh' ? '1月' : '1M')
-                  : p === 'quarter' ? (lang === 'ko' ? '분기' : lang === 'ja' ? '四半期' : lang === 'zh' ? '季度' : '3M')
-                  : p === 'half' ? (lang === 'ko' ? '반기' : lang === 'ja' ? '半年' : lang === 'zh' ? '半年' : '6M')
-                  : (lang === 'ko' ? '1년' : lang === 'ja' ? '1年' : lang === 'zh' ? '1年' : '1Y')}
-                </button>
-              ))}
-            </div>}
-          <TodoList
-            user={user} t={t} lang={lang}
-            activeTodos={allIncompleteTodos}
-            completedTodos={allCompletedTodos}
-            viewMode={viewMode}
-            showAllIncomplete={true}
-            todayStr={todayStr}
-            openEditModal={openEditModal}
-            toggleComplete={toggleComplete}
-            toggleSubtaskComplete={toggleSubtaskComplete}
-            deleteTodo={deleteTodo}
-          />
-          </>
-        )}
-        {viewMode === 'lists' && !searchQuery.trim() && (
-          <CollectionsScreen
-            todos={todos}
-            t={t} lang={lang}
-            openEditModal={openEditModal}
-            toggleComplete={toggleComplete}
-            todayStr={todayStr}
-            weeklyPulse={weeklyPulse}
-            unlockedIds={unlockedIds}
-            unlockedSortedByDifficulty={unlockedSortedByDifficulty}
-            onShowAllAchievements={() => setShowAchievementsModal(true)}
-          />
-        )}
-        {/* 검색 활성화 시: viewMode 무관하게 검색 결과 표시 */}
-        {searchQuery.trim() && viewMode === 'lists' && (
-          <TodoList
-            user={user} t={t} lang={lang}
-            activeTodos={activeTodos}
-            completedTodos={completedTodos}
-            viewMode='all'
-            showAllIncomplete={true}
-            todayStr={todayStr}
-            openEditModal={openEditModal}
-            toggleComplete={toggleComplete}
-            toggleSubtaskComplete={toggleSubtaskComplete}
-            deleteTodo={deleteTodo}
-          />
+        <div
+          className="todo-list-section"
+          ref={todoListRef}
+          onScroll={(e) => setHeaderCollapsed(e.currentTarget.scrollTop > 44)}
+        >
+          {searchQuery.trim() && viewMode === 'lists'
+            ? (
+              <TodoList
+                user={user} t={t} lang={lang}
+                activeTodos={activeTodos}
+                completedTodos={completedTodos}
+                viewMode='all'
+                showAllIncomplete={true}
+                todayStr={todayStr}
+                openEditModal={openEditModal}
+                toggleComplete={toggleComplete}
+                toggleSubtaskComplete={toggleSubtaskComplete}
+                deleteTodo={deleteTodo}
+              />
+            )
+            : renderTabContent(viewMode)
+          }
+        </div>
+        {/* 스와이프 중 옆에 붙어오는 인접 탭 패널 */}
+        {swipingToTab && (
+          <div
+            ref={adjacentPanelRef}
+            className="todo-list-section"
+            style={{ position: 'absolute', inset: 0, pointerEvents: 'none', willChange: 'transform' }}
+          >
+            {renderTabContent(swipingToTab)}
+          </div>
         )}
       </div>
 
