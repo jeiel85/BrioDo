@@ -186,6 +186,24 @@ export function SettingsModal({
                 subtitle={`v${appVersion ?? '1.0.0'} · Do it with brio.`}
                 onClick={() => setScreen('about')}
               />
+
+              {/* Ko-fi 후원 버튼 — 메인 화면 노출 */}
+              <div className="settings-support-section">
+                <a
+                  className="settings-kofi-btn"
+                  href="https://ko-fi.com/jeiel85"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={e => {
+                    e.preventDefault()
+                    import('@capacitor/browser').then(({ Browser }) =>
+                      Browser.open({ url: 'https://ko-fi.com/jeiel85' })
+                    )
+                  }}
+                >
+                  ☕ {L('개발자에게 커피 한잔', 'Buy me a coffee', '開発者にコーヒーを', '给开发者买杯咖啡')}
+                </a>
+              </div>
             </div>
           )}
 
@@ -722,23 +740,6 @@ export function SettingsModal({
                 </div>
               </div>
 
-              {/* Ko-fi 후원 버튼 */}
-              <div className="settings-section settings-support-section">
-                <a
-                  className="settings-kofi-btn"
-                  href="https://ko-fi.com/jeiel85"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={e => {
-                    e.preventDefault()
-                    import('@capacitor/browser').then(({ Browser }) =>
-                      Browser.open({ url: 'https://ko-fi.com/jeiel85' })
-                    )
-                  }}
-                >
-                  ☕ {L('개발자에게 커피 한잔', 'Buy me a coffee', '開発者にコーヒーを', '给开发者买杯咖啡')}
-                </a>
-              </div>
             </div>
           )}
 

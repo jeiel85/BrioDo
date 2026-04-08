@@ -248,6 +248,13 @@ export function Header({
               </div>
               <h1 className="greeting-title">{greeting}</h1>
               <p className="greeting-subtitle">{taskSubtitle}</p>
+              {weatherData && (
+                <div className="greeting-weather-row">
+                  <span className="greeting-weather-icon">{weatherData.icon}</span>
+                  <span className="greeting-weather-temp">{weatherData.tempC}°</span>
+                  <span className="greeting-weather-range">{weatherData.lowC}° / {weatherData.highC}°</span>
+                </div>
+              )}
             </div>
             <div className="momentum-orb" title={`${pct}% ${lang === 'ko' ? '완료' : 'complete'}`}>
               <svg width="80" height="80" viewBox="0 0 80 80">
@@ -266,9 +273,6 @@ export function Header({
               <div className="momentum-text">
                 <div className="momentum-pct">{pct}%</div>
                 <div className="momentum-label">{lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'Done'}</div>
-                {weatherData && (
-                  <div className="momentum-weather">{weatherData.icon} {weatherData.tempC}°</div>
-                )}
               </div>
             </div>
           </div>
