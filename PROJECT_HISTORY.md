@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-04-08 — v1.0.5: 앱 크래시(메모리 누수) 수정 (세션 40)
+
+### 배경
+- 삼성 디바이스 케어에서 앱 강제 종료 알림 (#99 #120)
+- Android가 메모리 부족으로 OOM Killer 발동 → 앱 강제 종료
+
+### 수정 내용
+- **네트워크 리스너 메모리 누수** (`useTodosData.js`) — Promise 비동기 타이밍 이슈로 매 렌더마다 리스너가 중복 등록되던 문제. `cancelled` 플래그로 unmount 후 등록 방지
+- **appStateChange 리스너 정리 누락** (`App.jsx`) — 동일 패턴. cancelled 플래그 추가
+- **LockScreenService 중복 실행** (`LockScreenService.java`) — 화면 켜질 때마다 중복 Activity 실행. `volatile boolean launching` 플래그로 2초 이내 중복 호출 차단
+- **상태바 todos 의존성 과다** (`App.jsx`) — todos 배열 전체가 dependency → 할 일 변경마다 Native 호출. `useMemo`로 필요한 텍스트만 계산 후 그 값만 의존
+
+### 주요 변경 파일
+- `src/hooks/useTodosData.js`
+- `src/App.jsx`
+- `android/app/src/main/java/app/briodo/LockScreenService.java`
+
+---
+
 ## 2026-04-08 — v1.0.4: 버그 수정·브리오 잔재 제거 (세션 39)
 
 ### 배경

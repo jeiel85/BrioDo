@@ -44,17 +44,25 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
 
   // 네트워크 상태 감지 및 오프라인 큐 처리
   useEffect(() => {
-    Network.getStatus().then(status => {
-      setIsOnline(status.connected)
-      if (status.connected && user) processSyncQueue()
-    })
+    let networkListener = null
+    let cancelled = false
     const handleNetworkChange = async (status) => {
       setIsOnline(status.connected)
       if (status.connected && user) await processSyncQueue()
     }
-    let networkListener = null
-    Network.addListener('networkStatusChange', handleNetworkChange).then(l => { networkListener = l })
-    return () => { networkListener?.remove() }
+    Network.getStatus().then(status => {
+      if (cancelled) return
+      setIsOnline(status.connected)
+      if (status.connected && user) processSyncQueue()
+    })
+    Network.addListener('networkStatusChange', handleNetworkChange).then(l => {
+      if (cancelled) { l.remove(); return }
+      networkListener = l
+    })
+    return () => {
+      cancelled = true
+      networkListener?.remove()
+    }
   }, [user])
 
   // 로그인 시 게스트 todos를 Firestore로 마이그레이션 (미완료 항목만)
