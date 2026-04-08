@@ -4,6 +4,42 @@
 
 ---
 
+## 2026-04-09 — v1.0.6: 탭 스와이프 UX 완성 + 캘린더 동기화 개선 (세션 42)
+
+### 배경
+- 스와이프 탭 전환 구현 후 연속 피드백 이슈 (#122 #123 #124 #125)
+
+### 변경 내용
+
+#### 탭 스와이프 UX 개선
+- **#122** — 스와이프 시 헤더도 함께 이동 (`headerRef` 추가)
+- **#125** — `.todo-card` 위에서 시작된 터치는 탭 스와이프 무시 (할일 제스처 충돌 해결)
+- **탭 전환 슬라이드 애니메이션** — 기존 탭 밀려나고 새 탭 반대편에서 슬라이드인
+- **인접 탭 실시간 따라오기** — 드래그 중 옆 탭 콘텐츠가 손가락 따라 붙어서 이동
+  - `swipingToTab` state + `adjacentPanelRef`로 인접 패널 렌더링
+  - `renderTabContent(mode)` 함수로 탭 콘텐츠 분리
+- **풀스크린 패널 구조** — `currentPanelRef`가 헤더+콘텐츠를 하나의 단위로 슬라이드
+  - 인접 패널도 `Header(viewMode=swipingToTab)` 포함 풀스크린 absolute 패널
+- **상단 간격 버그 수정** — `card` padding-top(safe-area)이 인접 패널 `inset:0`에 무시되던 문제
+  - `overflow:hidden`을 padding-top 이후 inner wrapper에 분리 적용
+
+#### 캘린더 동기화 개선
+- **#124** — 날짜 없는 일정은 `syncEventToGoogle`에서 즉시 차단 (`!todo.date` guard)
+- **#123** — 시간 없는 일정 동기화 옵션 추가 (`briodo-calendarSyncNoTime`)
+  - '종일로 동기화'(기본) / '동기화 안 함' — 설정 > 계정 > Google 캘린더 동기화 내 UI
+
+#### 기타
+- `APP_VERSION` `1.0.0` → `1.0.6` 동기화 (build.gradle 기준)
+- `CLAUDE.md` 버전 번호 동기화 규칙 추가
+
+### 주요 변경 파일
+- `src/App.jsx`
+- `src/calendar.js`
+- `src/components/SettingsModal.jsx`
+- `CLAUDE.md`
+
+---
+
 ## 2026-04-08 — v1.0.6: 좌우 스와이프 탭 이동 구현 (세션 41)
 
 ### 배경
