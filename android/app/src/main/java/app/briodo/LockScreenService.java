@@ -44,6 +44,7 @@ public class LockScreenService extends Service {
     static final int    NOTIF_ID_LAUNCH    = 9002;   // 화면 켜짐 시 발송 후 자동소멸
 
     private BroadcastReceiver screenReceiver;
+    private static volatile boolean launching = false;
 
     @Override
     public void onCreate() {
@@ -122,6 +123,13 @@ public class LockScreenService extends Service {
      *   3. 둘 다 없음 → 탭 가능한 폴백 알림
      */
     private void launchLockScreen(Context ctx) {
+        if (launching) {
+            Log.d(TAG, "launchLockScreen: already launching, skipping");
+            return;
+        }
+        launching = true;
+        new Handler(Looper.getMainLooper()).postDelayed(() -> launching = false, 2000);
+
         KeyguardManager km = (KeyguardManager) ctx.getSystemService(Context.KEYGUARD_SERVICE);
         boolean keyguardLocked = km != null && km.isKeyguardLocked();
         Log.d(TAG, "isKeyguardLocked=" + keyguardLocked);

@@ -347,22 +347,25 @@ function App() {
     return () => { handler?.remove?.() }
   }, [])
 
-  // 알림 내용 표시 방식에 따라 본문 텍스트 갱신
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform() || !statusBarNotifEnabled) return
-    let text = null // null → 서비스 기본값("오늘도 활기차게, 해내세요! ✨")
+  // 상태바 텍스트 — todos 배열 전체 대신 필요한 값만 계산
+  const statusBarText = useMemo(() => {
     if (statusBarContentStyle === 'tasks') {
       const today = new Date().toISOString().slice(0, 10)
       const remaining = todos.filter(t => t.date === today && !t.completed).length
-      text = lang === 'ko' ? `오늘 남은 할일 ${remaining}개` : `${remaining} tasks left today`
-    } else if (statusBarContentStyle === 'weather') {
-      if (weatherData) {
-        const area = weatherData.area ? ` · ${weatherData.area}` : ''
-        text = `${weatherData.icon} ${weatherData.tempC}° (${weatherData.lowC}°/${weatherData.highC}°)${area}`
-      }
+      return lang === 'ko' ? `오늘 남은 할일 ${remaining}개` : `${remaining} tasks left today`
     }
-    StatusBarNotifNative?.updateContent({ text: text ?? '' }).catch(() => {})
-  }, [statusBarContentStyle, statusBarNotifEnabled, todos, weatherData, lang])
+    if (statusBarContentStyle === 'weather' && weatherData) {
+      const area = weatherData.area ? ` · ${weatherData.area}` : ''
+      return `${weatherData.icon} ${weatherData.tempC}° (${weatherData.lowC}°/${weatherData.highC}°)${area}`
+    }
+    return null
+  }, [statusBarContentStyle, todos, weatherData, lang])
+
+  // 알림 내용 표시 방식에 따라 본문 텍스트 갱신
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform() || !statusBarNotifEnabled) return
+    StatusBarNotifNative?.updateContent({ text: statusBarText ?? '' }).catch(() => {})
+  }, [statusBarNotifEnabled, statusBarText])
 
   const checkLockScreen = async () => {
     if (!LockScreenNative || localStorage.getItem('lockScreenEnabled') === 'false') return
@@ -388,11 +391,18 @@ function App() {
   // 앱 포그라운드 복귀 시 상태바 재동기화 (#51 #48)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
-    let listener
+    let listener = null
+    let cancelled = false
     CapApp.addListener('appStateChange', ({ isActive }) => {
       if (isActive) setTimeout(() => syncStatusBar(), 300)
-    }).then(l => { listener = l })
-    return () => listener?.remove()
+    }).then(l => {
+      if (cancelled) { l.remove(); return }
+      listener = l
+    })
+    return () => {
+      cancelled = true
+      listener?.remove()
+    }
   }, [syncStatusBar])
 
   const handleLockToggleTorch = async (on) => {
