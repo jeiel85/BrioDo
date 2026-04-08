@@ -79,6 +79,7 @@ function App() {
   const todoListRef = useRef(null)
   const headerRef = useRef(null)
   const swipeTouchRef = useRef(null) // 스와이프 시작 좌표
+  const swipeEnterDirRef = useRef(null) // 탭 전환 시 새 콘텐츠 진입 방향 ('left'|'right')
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
@@ -94,6 +95,25 @@ function App() {
     // 탭 전환 시 헤더 펼치기 + 스크롤 초기화
     setHeaderCollapsed(false)
     if (todoListRef.current) todoListRef.current.scrollTop = 0
+
+    // 스와이프로 전환된 경우: 새 콘텐츠를 반대편에서 슬라이드인
+    if (swipeEnterDirRef.current) {
+      const fromX = swipeEnterDirRef.current === 'right' ? '100%' : '-100%'
+      swipeEnterDirRef.current = null
+      const transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+      ;[todoListRef, headerRef].forEach(ref => {
+        if (!ref.current) return
+        ref.current.style.transition = 'none'
+        ref.current.style.transform = `translateX(${fromX})`
+      })
+      // reflow 강제 후 애니메이션
+      todoListRef.current?.getBoundingClientRect()
+      ;[todoListRef, headerRef].forEach(ref => {
+        if (!ref.current) return
+        ref.current.style.transition = transition
+        ref.current.style.transform = 'translateX(0)'
+      })
+    }
   }, [viewMode])
 
   const switchTab = (mode) => {
@@ -135,18 +155,33 @@ function App() {
     const dy = e.changedTouches[0].clientY - swipeTouchRef.current.y
     swipeTouchRef.current = null
     const transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-    if (todoListRef.current) {
-      todoListRef.current.style.transition = transition
-      todoListRef.current.style.transform = 'translateX(0)'
-    }
-    if (headerRef.current) {
-      headerRef.current.style.transition = transition
-      headerRef.current.style.transform = 'translateX(0)'
-    }
-    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return
     const idx = TAB_ORDER.indexOf(viewMode)
-    if (dx < 0 && idx < TAB_ORDER.length - 1) switchTab(TAB_ORDER[idx + 1])
-    if (dx > 0 && idx > 0) switchTab(TAB_ORDER[idx - 1])
+    const canGoLeft = dx < 0 && idx < TAB_ORDER.length - 1
+    const canGoRight = dx > 0 && idx > 0
+    const shouldSwitch = Math.abs(dx) >= 50 && Math.abs(dx) >= Math.abs(dy)
+
+    if (shouldSwitch && (canGoLeft || canGoRight)) {
+      // 현재 탭을 스와이프 방향으로 완전히 밀어냄
+      const outX = dx < 0 ? '-100%' : '100%'
+      ;[todoListRef, headerRef].forEach(ref => {
+        if (!ref.current) return
+        ref.current.style.transition = transition
+        ref.current.style.transform = `translateX(${outX})`
+      })
+      // 새 탭 진입 방향 기록 후 애니메이션 완료 시점에 전환
+      swipeEnterDirRef.current = dx < 0 ? 'right' : 'left'
+      setTimeout(() => {
+        if (canGoLeft) switchTab(TAB_ORDER[idx + 1])
+        else switchTab(TAB_ORDER[idx - 1])
+      }, 300)
+    } else {
+      // 임계값 미달 — 원위치 복귀
+      ;[todoListRef, headerRef].forEach(ref => {
+        if (!ref.current) return
+        ref.current.style.transition = transition
+        ref.current.style.transform = 'translateX(0)'
+      })
+    }
   }
 
   // 입력 모드: 'smart' | 'manual' (기본값: manual — 로그인 전에는 항상 manual)
