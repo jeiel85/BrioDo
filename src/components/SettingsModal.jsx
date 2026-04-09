@@ -781,6 +781,11 @@ export function SettingsModal({
                   <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-on-surface)', marginBottom: '3px' }}>BrioDo</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                     <span>v{appVersion ?? '1.0.0'}</span>
+                    {updateStatus === 'up-to-date' && (
+                      <span style={{ fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '10px', background: 'var(--color-secondary-container)', color: 'var(--color-secondary)' }}>
+                        ✓ {L('최신', 'Latest', '最新', '最新')}
+                      </span>
+                    )}
                     {updateStatus === 'available' && (
                       <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '10px', background: 'var(--color-primary)', color: 'var(--color-on-primary)' }}>
                         {L('업데이트', 'Update', 'アップデート', '更新')}
