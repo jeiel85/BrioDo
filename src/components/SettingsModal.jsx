@@ -212,7 +212,13 @@ export function SettingsModal({
               <SettingsNavItem
                 icon="ℹ️"
                 title="BrioDo"
-                subtitle={`v${appVersion ?? '1.0.0'} · Do it with brio.`}
+                subtitle={
+                  updateStatus === 'available'
+                    ? `v${appVersion ?? '1.0.0'} · ${L('새 버전 있음', 'Update available', 'アップデートあり', '有新版本')} v${latestVersion} ↑`
+                    : updateStatus === 'up-to-date'
+                    ? `v${appVersion ?? '1.0.0'} · ✓ ${L('최신 버전', 'Up to date', '最新版', '最新版本')}`
+                    : `v${appVersion ?? '1.0.0'} · Do it with brio.`
+                }
                 onClick={() => setScreen('about')}
               />
 
