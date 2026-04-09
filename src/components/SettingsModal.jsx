@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { getLocalDateString } from '../utils/helpers'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
@@ -95,6 +95,10 @@ export function SettingsModal({
   const openPlayStore = () => {
     window.open('market://details?id=app.briodo', '_system')
   }
+
+  useEffect(() => {
+    checkForUpdate()
+  }, [])
 
   const close = () => setShowSettings(false)
   const goBack = () => setScreen('main')
@@ -775,31 +779,25 @@ export function SettingsModal({
                 )}
                 <div style={{ textAlign: 'center', padding: '8px 0 4px', color: 'var(--color-on-surface-variant)', fontSize: '12px' }}>
                   <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-on-surface)', marginBottom: '3px' }}>BrioDo</div>
-                  <div>v{appVersion ?? '1.0.0'}</div>
-                  <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Do it with brio.</div>
-                  <div style={{ marginTop: '10px' }}>
-                    {updateStatus === 'idle' && (
-                      <button onClick={checkForUpdate} style={{ fontSize: '11px', padding: '4px 14px', borderRadius: '20px', border: '1px solid var(--color-outline)', background: 'transparent', color: 'var(--color-on-surface-variant)', cursor: 'pointer' }}>
-                        {L('업데이트 확인', 'Check for updates', 'アップデート確認', '检查更新')}
-                      </button>
-                    )}
-                    {updateStatus === 'checking' && (
-                      <span style={{ fontSize: '11px', opacity: 0.6 }}>{L('확인 중...', 'Checking...', '確認中...', '检查中...')}</span>
-                    )}
-                    {updateStatus === 'up-to-date' && (
-                      <span style={{ fontSize: '11px', color: 'var(--color-primary)' }}>✓ {L('최신 버전이에요', 'You\'re up to date', '最新バージョンです', '已是最新版本')}</span>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <span>v{appVersion ?? '1.0.0'}</span>
                     {updateStatus === 'available' && (
-                      <div>
-                        <div style={{ fontSize: '11px', marginBottom: '6px', color: 'var(--color-on-surface-variant)' }}>
-                          v{latestVersion} {L('업데이트 가능', 'available', '利用可能', '可更新')}
-                        </div>
-                        <button onClick={openPlayStore} style={{ fontSize: '12px', fontWeight: 700, padding: '6px 18px', borderRadius: '20px', border: 'none', background: 'var(--color-primary)', color: 'var(--color-on-primary)', cursor: 'pointer' }}>
-                          {L('Play Store에서 업데이트', 'Update on Play Store', 'Play Storeで更新', '在Play Store更新')}
-                        </button>
-                      </div>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '10px', background: 'var(--color-primary)', color: 'var(--color-on-primary)' }}>
+                        {L('업데이트', 'Update', 'アップデート', '更新')}
+                      </span>
                     )}
                   </div>
+                  <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Do it with brio.</div>
+                  {updateStatus === 'available' && (
+                    <div style={{ marginTop: '10px' }}>
+                      <div style={{ fontSize: '11px', marginBottom: '6px', color: 'var(--color-on-surface-variant)' }}>
+                        v{latestVersion} {L('업데이트 가능', 'available', '利用可能', '可更新')}
+                      </div>
+                      <button onClick={openPlayStore} style={{ fontSize: '12px', fontWeight: 700, padding: '6px 18px', borderRadius: '20px', border: 'none', background: 'var(--color-primary)', color: 'var(--color-on-primary)', cursor: 'pointer' }}>
+                        {L('Play Store에서 업데이트', 'Update on Play Store', 'Play Storeで更新', '在Play Store更新')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
