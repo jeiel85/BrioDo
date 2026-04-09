@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-04-09 — v1.0.7: 안정성 개선 + OAuth 경고 제거 (세션 43)
+
+### 변경 내용
+
+#### Samsung 배터리 "오류 발생 빈도 높음" 수정
+- `appStateChange` 이벤트 리스너 중복 등록 버그 수정
+  - `useEffect([syncStatusBar])`와 `useEffect([])` 두 곳에서 각각 등록 → 앱 복귀 시 2배 상태 업데이트 발생
+  - 단일 핸들러로 통합, `syncStatusBarRef` 패턴으로 안전하게 참조
+- AI 스마트 저장 중 이탈 시 불필요한 setState 방지 (`cancelled` 플래그 추가)
+
+#### Google OAuth "확인하지 않은 앱" 경고 제거
+- 스코프 교체: `auth/calendar` (민감) → `auth/calendar.app.created` (비민감)
+- `ensureBrioDoCalendar`: `calendarList` API 제거 → GET `/calendars/{id}` 직접 검증 방식으로 변경
+- 기존 사용자는 재로그인 시 새 스코프 적용
+
+#### 설정 서브화면 뒤로가기 버그 수정
+- `modalStateRef`를 `useEffect`로 업데이트하면 렌더~effect 실행 사이에 백버튼 누를 경우 stale 값 읽힘
+- → `useEffect` 제거, 렌더 중 직접 동기 할당으로 변경
+- 알림 설정/외형/기능 등 모든 서브화면에서 재현되던 버그 해결
+
+---
+
 ## 2026-04-09 — v1.0.6: 탭 스와이프 UX 완성 + 캘린더 동기화 개선 (세션 42)
 
 ### 배경
