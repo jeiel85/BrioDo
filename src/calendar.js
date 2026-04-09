@@ -138,26 +138,22 @@ export const ensureBrioDoCalendar = async () => {
         if (savedId) localStorage.setItem('briodo-calendar-id', savedId)
       }
 
-      // 2. 전체 캘린더 목록 조회 (페이지네이션 포함, 증식 방지)
-      const allCals = await fetchAllCalendars(token)
-      const matchingCals = allCals.filter(cal => cal.summary === 'BrioDo')
-
-      // 3. 저장된 ID가 목록에 있으면 재사용
-      if (savedId && matchingCals.some(cal => cal.id === savedId)) {
-        _sessionCalendarId = savedId
-        return savedId
+      // 2. 저장된 ID가 있으면 직접 GET으로 유효성 검증
+      //    (calendar.app.created 스코프는 calendarList 접근 불가 → 직접 ID 검증)
+      if (savedId) {
+        const verifyRes = await fetch(
+          `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(savedId)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        if (verifyRes.ok) {
+          _sessionCalendarId = savedId
+          return savedId
+        }
+        // 404/403이면 캐시 무효화 → 새로 생성
+        localStorage.removeItem('briodo-calendar-id')
       }
 
-      // 4. 기존 BrioDo 캘린더가 있으면 첫 번째 선택 (가장 오래된 것)
-      if (matchingCals.length >= 1) {
-        const calId = matchingCals[0].id
-        localStorage.setItem('briodo-calendar-id', calId)
-        if (userId) await saveCalendarIdToFirestore(userId, calId)
-        _sessionCalendarId = calId
-        return calId
-      }
-
-      // 5. 없으면 새로 생성 후 Firestore에도 저장
+      // 3. 없거나 무효하면 새로 생성 후 Firestore에도 저장
       const newCal = await createBrioDoCalendar(token)
       localStorage.setItem('briodo-calendar-id', newCal.id)
       if (userId) await saveCalendarIdToFirestore(userId, newCal.id)

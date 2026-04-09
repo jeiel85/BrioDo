@@ -17,8 +17,7 @@ export const auth = getAuth(fbApp)
 export const db = getFirestore(fbApp)
 
 export const googleProvider = new GoogleAuthProvider()
-googleProvider.addScope('https://www.googleapis.com/auth/calendar.events')
-googleProvider.addScope('https://www.googleapis.com/auth/calendar')
+googleProvider.addScope('https://www.googleapis.com/auth/calendar.app.created')
 
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 export const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null
