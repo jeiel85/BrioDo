@@ -211,6 +211,7 @@ function App() {
   const setInputModePersisted = (mode) => { setInputMode(mode); localStorage.setItem('inputMode', mode) }
 
   const toastTimerRef = useRef(null)
+  const smartSaveCancelRef = useRef(null)
   const [toastMsg, setToastMsg] = useState('')
 
   const showToastMsg = (msg, duration = 3000) => {
@@ -502,22 +503,9 @@ function App() {
     }
   }, [isLockScreen, showLockPreview])
 
-  // 앱 포그라운드 복귀 시 상태바 재동기화 (#51 #48)
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return
-    let listener = null
-    let cancelled = false
-    CapApp.addListener('appStateChange', ({ isActive }) => {
-      if (isActive) setTimeout(() => syncStatusBar(), 300)
-    }).then(l => {
-      if (cancelled) { l.remove(); return }
-      listener = l
-    })
-    return () => {
-      cancelled = true
-      listener?.remove()
-    }
-  }, [syncStatusBar])
+  // 앱 포그라운드 복귀 시 상태바 재동기화는 아래 [] useEffect의 appStateChange 핸들러에서 통합 처리
+  const syncStatusBarRef = useRef(syncStatusBar)
+  useEffect(() => { syncStatusBarRef.current = syncStatusBar }, [syncStatusBar])
 
   const handleLockToggleTorch = async (on) => {
     try { await LockScreenNative?.toggleTorch({ on }) } catch(e) {}
@@ -641,6 +629,8 @@ function App() {
           setViewMode('date')
           const today = new Date().toISOString().slice(0, 10)
           setSelectedDate(today)
+          // 상태바 재동기화 (중복 리스너 방지를 위해 여기서 통합 처리)
+          setTimeout(() => syncStatusBarRef.current?.(), 300)
           // 잠금화면 활성화 상태면 overlay 권한 재확인
           if (LockScreenNative && localStorage.getItem('lockScreenEnabled') === 'true') {
             LockScreenNative.canDrawOverlays().then(({ value }) => {
@@ -870,10 +860,14 @@ function App() {
 
     if (isOnline) {
       await setDoc(newDocRef, { ...initialData, createdAt: serverTimestamp() })
+      let cancelled = false
+      const cancelRef = { cancel: () => { cancelled = true } }
+      smartSaveCancelRef.current = cancelRef
       setTimeout(async () => {
         try {
           let finalData = { text: savedText, date: today, time: '', tags: [], reminderOffset: savedReminderOffset }
           const ai = await getAiFullAnalysis(savedText)
+          if (cancelled) return
           if (ai) {
             finalData = {
               text: ai.refinedText || savedText,
@@ -886,13 +880,16 @@ function App() {
             await saveLocalTodo({ ...localPayload, ...finalData })
             await setDoc(newDocRef, { ...finalData, updatedAt: serverTimestamp() }, { merge: true })
           }
+          if (cancelled) return
           // AI 분석 완료 후 알림 스케줄 (날짜가 확정된 시점)
           scheduleNotification({ ...localPayload, ...finalData, id: newId })
           const gId = await syncEventToGoogle({ ...localPayload, ...finalData })
           if (gId) {
             await setDoc(newDocRef, { googleEventId: gId, updatedAt: serverTimestamp() }, { merge: true })
-            setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId: gId } : t))
-            await saveLocalTodo({ ...localPayload, ...finalData, googleEventId: gId })
+            if (!cancelled) {
+              setTodos(prev => prev.map(t => t.id === newId ? { ...t, googleEventId: gId } : t))
+              await saveLocalTodo({ ...localPayload, ...finalData, googleEventId: gId })
+            }
           }
         } catch (e) { console.error("Smart Save Error:", e) }
       }, 300)
