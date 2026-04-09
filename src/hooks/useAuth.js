@@ -40,8 +40,7 @@ export function useAuth() {
         scopes: [
           'profile',
           'email',
-          'https://www.googleapis.com/auth/calendar.events',
-          'https://www.googleapis.com/auth/calendar'
+          'https://www.googleapis.com/auth/calendar.app.created'
         ],
         grantOfflineAccess: true,
       })
