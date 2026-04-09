@@ -71,6 +71,30 @@ export function SettingsModal({
   const L = (ko, en, ja, zh) => lang === 'ko' ? ko : lang === 'ja' ? (ja ?? en) : lang === 'zh' ? (zh ?? en) : en
   const [licensesExpanded, setLicensesExpanded] = useState(false)
   const hasCalendarToken = !!localStorage.getItem('googleAccessToken')
+  const [updateStatus, setUpdateStatus] = useState('idle') // 'idle' | 'checking' | 'up-to-date' | 'available'
+  const [latestVersion, setLatestVersion] = useState(null)
+
+  const checkForUpdate = async () => {
+    setUpdateStatus('checking')
+    try {
+      const res = await fetch('https://api.github.com/repos/jeiel85/BrioDo/releases/latest', {
+        headers: { Accept: 'application/vnd.github+json' }
+      })
+      const data = await res.json()
+      const latest = data.tag_name?.replace(/^v/, '') // "v1.0.7" → "1.0.7"
+      if (!latest) { setUpdateStatus('idle'); return }
+      setLatestVersion(latest)
+      const current = appVersion ?? '0.0.0'
+      const isNewer = latest.localeCompare(current, undefined, { numeric: true, sensitivity: 'base' }) > 0
+      setUpdateStatus(isNewer ? 'available' : 'up-to-date')
+    } catch {
+      setUpdateStatus('idle')
+    }
+  }
+
+  const openPlayStore = () => {
+    window.open('market://details?id=app.briodo', '_system')
+  }
 
   const close = () => setShowSettings(false)
   const goBack = () => setScreen('main')
@@ -753,6 +777,29 @@ export function SettingsModal({
                   <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--color-on-surface)', marginBottom: '3px' }}>BrioDo</div>
                   <div>v{appVersion ?? '1.0.0'}</div>
                   <div style={{ fontSize: '10px', marginTop: '3px', opacity: 0.6 }}>Do it with brio.</div>
+                  <div style={{ marginTop: '10px' }}>
+                    {updateStatus === 'idle' && (
+                      <button onClick={checkForUpdate} style={{ fontSize: '11px', padding: '4px 14px', borderRadius: '20px', border: '1px solid var(--color-outline)', background: 'transparent', color: 'var(--color-on-surface-variant)', cursor: 'pointer' }}>
+                        {L('업데이트 확인', 'Check for updates', 'アップデート確認', '检查更新')}
+                      </button>
+                    )}
+                    {updateStatus === 'checking' && (
+                      <span style={{ fontSize: '11px', opacity: 0.6 }}>{L('확인 중...', 'Checking...', '確認中...', '检查中...')}</span>
+                    )}
+                    {updateStatus === 'up-to-date' && (
+                      <span style={{ fontSize: '11px', color: 'var(--color-primary)' }}>✓ {L('최신 버전이에요', 'You\'re up to date', '最新バージョンです', '已是最新版本')}</span>
+                    )}
+                    {updateStatus === 'available' && (
+                      <div>
+                        <div style={{ fontSize: '11px', marginBottom: '6px', color: 'var(--color-on-surface-variant)' }}>
+                          v{latestVersion} {L('업데이트 가능', 'available', '利用可能', '可更新')}
+                        </div>
+                        <button onClick={openPlayStore} style={{ fontSize: '12px', fontWeight: 700, padding: '6px 18px', borderRadius: '20px', border: 'none', background: 'var(--color-primary)', color: 'var(--color-on-primary)', cursor: 'pointer' }}>
+                          {L('Play Store에서 업데이트', 'Update on Play Store', 'Play Storeで更新', '在Play Store更新')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
