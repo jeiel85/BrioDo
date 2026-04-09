@@ -580,10 +580,9 @@ function App() {
   }
 
   // 뒤로가기 처리 (Android)
-  const modalStateRef = useRef({ showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen })
-  useEffect(() => {
-    modalStateRef.current = { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen }
-  }, [showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen])
+  // 렌더 중 직접 동기 업데이트 — useEffect로 하면 렌더~효과 실행 사이에 백버튼이 눌릴 경우 stale 값 읽힘
+  const modalStateRef = useRef({})
+  modalStateRef.current = { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen }
 
   // 설정 모달 닫힐 때 서브화면 리셋
   useEffect(() => {
