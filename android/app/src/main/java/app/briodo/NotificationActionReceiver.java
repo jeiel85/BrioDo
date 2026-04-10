@@ -3,7 +3,6 @@ package app.briodo;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
 
@@ -46,14 +45,16 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         CameraManager cm = (CameraManager) ctx.getSystemService(Context.CAMERA_SERVICE);
         if (cm == null) return;
         try {
-            String camId = cm.getCameraIdList()[0];
+            String[] cameraIds = cm.getCameraIdList();
+            if (cameraIds.length == 0) return;
+            String camId = cameraIds[0];
             StatusBarNotificationService.torchOn = !StatusBarNotificationService.torchOn;
             cm.setTorchMode(camId, StatusBarNotificationService.torchOn);
             // 버튼 라벨 갱신 (켜기 ↔ 끄기)
             if (StatusBarNotificationService.instance != null) {
                 StatusBarNotificationService.instance.refresh();
             }
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
             StatusBarNotificationService.torchOn = false;
         }
     }

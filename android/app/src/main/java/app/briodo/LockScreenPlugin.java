@@ -4,7 +4,6 @@ import android.app.KeyguardManager;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -89,14 +88,23 @@ public class LockScreenPlugin extends Plugin {
             return;
         }
         CameraManager cm = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
+        if (cm == null) {
+            call.reject("Camera service not available");
+            return;
+        }
         try {
-            String cameraId = cm.getCameraIdList()[0];
+            String[] cameraIds = cm.getCameraIdList();
+            if (cameraIds.length == 0) {
+                call.reject("No camera found");
+                return;
+            }
+            String cameraId = cameraIds[0];
             torchOn = !torchOn;
             cm.setTorchMode(cameraId, torchOn);
             JSObject ret = new JSObject();
             ret.put("on", torchOn);
             call.resolve(ret);
-        } catch (CameraAccessException e) {
+        } catch (Exception e) {
             call.reject("Torch error: " + e.getMessage());
         }
     }

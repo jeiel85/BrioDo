@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-04-10 — v1.0.7: 손전등 크래시 버그 수정 — Issue #126 (세션 44)
+
+### 변경 내용
+
+#### "앱이 계속 중단됩니다" 크리티컬 버그 수정
+- **원인**: 상태바 알림 🔦 손전등 버튼 클릭 시 `BroadcastReceiver`에서 uncaught exception 발생
+  - `getCameraIdList()[0]` — 빈 배열 체크 없이 인덱스 접근 → `ArrayIndexOutOfBoundsException`
+  - `catch (CameraAccessException e)` 만으로는 `ArrayIndexOutOfBoundsException`, `SecurityException` 등 미처리
+  - 처리되지 않은 예외 → `BroadcastReceiver` 크래시 → Android 시스템 "앱이 계속 중단됩니다" 팝업
+- **수정**: `NotificationActionReceiver.java` + `LockScreenPlugin.java` 두 곳 동일 패턴 수정
+  - `getCameraIdList()` 결과 배열 길이 체크 후 인덱스 접근
+  - `LockScreenPlugin.java`: `CameraManager` null 체크 추가
+  - `catch (CameraAccessException e)` → `catch (Exception e)` 로 확장
+
+---
+
 ## 2026-04-09 — v1.0.7: 안정성 개선 + OAuth 경고 제거 (세션 43)
 
 ### 변경 내용
