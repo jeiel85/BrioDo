@@ -61,6 +61,9 @@ export function SettingsModal({
   calendarSyncNoTime, setCalendarSyncNoTime,
   weatherEnabled, setWeatherEnabled,
   weatherLocation, setWeatherLocation,
+  briefingEnabled, setBriefingEnabled,
+  morningBriefingTime, setMorningBriefingTime,
+  eveningBriefingTime, setEveningBriefingTime,
   onPreviewLockScreen,
   statusBarNotifEnabled, setStatusBarNotifEnabled,
   statusBarContentStyle, setStatusBarContentStyle,
@@ -479,6 +482,62 @@ export function SettingsModal({
                         ? '💡 要显示中文地名，请直接输入。例如: 北京, 上海'
                         : '💡 For localized city names, type directly. e.g. Gwangmyeong, Seoul'}
                     </p>
+                  </div>
+                )}
+              </div>
+
+              {/* ─── AI 브리핑 설정 ─── */}
+              <div className="settings-section">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <h3 style={{ margin: 0 }}>{L('🤖 AI 브리핑', '🤖 AI Briefing', '🤖 AIブリーフィング', '🤖 AI简报')}</h3>
+                  <label className="settings-toggle">
+                    <input type="checkbox" checked={briefingEnabled} onChange={e => setBriefingEnabled(e.target.checked)} />
+                    <span className="settings-toggle-track" />
+                  </label>
+                </div>
+                <p style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', marginBottom: briefingEnabled ? '12px' : 0, lineHeight: '1.4' }}>
+                  {L('매일 아침·저녁 AI가 일정을 요약해 알려드립니다.', 'AI summarizes your schedule every morning and evening.', '毎朝・毎晩AIがスケジュールを要約してお知らせします。', 'AI每天早晚为您总结日程。')}
+                </p>
+                {briefingEnabled && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>
+                        {L('☀️ 아침 브리핑', '☀️ Morning', '☀️ 朝', '☀️ 早间')}
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input
+                          type="time"
+                          value={morningBriefingTime}
+                          onChange={e => setMorningBriefingTime(e.target.value)}
+                          style={{ flex: 1, padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--color-outline)', background: 'var(--color-surface-variant)', color: 'var(--color-on-surface)', fontSize: '14px' }}
+                        />
+                        <button
+                          onClick={() => setMorningBriefingTime('08:00')}
+                          style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
+                        >
+                          {L('기본값', 'Reset', 'リセット', '重置')}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px', display: 'block' }}>
+                        {L('🌙 저녁 브리핑', '🌙 Evening', '🌙 夜', '🌙 晚间')}
+                      </label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <input
+                          type="time"
+                          value={eveningBriefingTime}
+                          onChange={e => setEveningBriefingTime(e.target.value)}
+                          style={{ flex: 1, padding: '8px 10px', borderRadius: '10px', border: '1px solid var(--color-outline)', background: 'var(--color-surface-variant)', color: 'var(--color-on-surface)', fontSize: '14px' }}
+                        />
+                        <button
+                          onClick={() => setEveningBriefingTime('21:00')}
+                          style={{ fontSize: '12px', color: 'var(--color-on-surface-variant)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
+                        >
+                          {L('기본값', 'Reset', 'リセット', '重置')}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

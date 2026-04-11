@@ -9,9 +9,11 @@ import { syncEventToGoogle } from './calendar'
 import { formatTime, matchesRecurrence } from './utils/helpers'
 import { useAchievements, trackEngagement } from './hooks/useAchievements'
 import { LocalNotifications } from '@capacitor/local-notifications'
-import { scheduleNotification, cancelNotification, initNotificationChannels } from './hooks/useNotifications'
+import { scheduleNotification, cancelNotification, initNotificationChannels, scheduleBriefingNotifications } from './hooks/useNotifications'
 import { initAdMob } from './hooks/useAdMob'
 import { fetchWeather } from './hooks/useWeather'
+import { useBriefing } from './hooks/useBriefing'
+import { BriefingModal } from './components/BriefingModal'
 
 import { useLanguage } from './hooks/useLanguage'
 import { useAuth } from './hooks/useAuth'
@@ -64,12 +66,36 @@ function App() {
     setAllDayReminderTime(val)
     localStorage.setItem('allDayReminderTime', val)
   }
+  const [briefingEnabled, setBriefingEnabled] = useState(
+    () => localStorage.getItem('briodo-briefingEnabled') === 'true'
+  )
+  const setBriefingEnabledPersisted = (val) => {
+    setBriefingEnabled(val)
+    localStorage.setItem('briodo-briefingEnabled', String(val))
+  }
+  const [morningBriefingTime, setMorningBriefingTime] = useState(
+    () => localStorage.getItem('briodo-morningBriefingTime') || '08:00'
+  )
+  const setMorningBriefingTimePersisted = (val) => {
+    setMorningBriefingTime(val)
+    localStorage.setItem('briodo-morningBriefingTime', val)
+  }
+  const [eveningBriefingTime, setEveningBriefingTime] = useState(
+    () => localStorage.getItem('briodo-eveningBriefingTime') || '21:00'
+  )
+  const setEveningBriefingTimePersisted = (val) => {
+    setEveningBriefingTime(val)
+    localStorage.setItem('briodo-eveningBriefingTime', val)
+  }
+  const [showBriefingModal, setShowBriefingModal] = useState(false)
+  const [briefingType, setBriefingType] = useState('morning')
   const setCompletionCalendarModePersisted = (mode) => {
     setCompletionCalendarMode(mode)
     localStorage.setItem('completionCalendarMode', mode)
   }
 
   const { todos, setTodos, isOnline, isAiAnalyzing, toggleComplete, toggleSubtaskComplete, deleteTodo, getAiFullAnalysis } = useTodosData(user, { completionCalendarMode, lang })
+  const { briefingText, briefingLoading, generateBriefing } = useBriefing()
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevWeek, nextWeek, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
@@ -268,6 +294,22 @@ function App() {
         localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
       }
     } catch(e) {}
+  }, [])
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      scheduleBriefingNotifications(morningBriefingTime, eveningBriefingTime, briefingEnabled)
+    }
+  }, [briefingEnabled, morningBriefingTime, eveningBriefingTime])
+
+  useEffect(() => {
+    const listener = LocalNotifications.addListener('localNotificationActionPerformed', (event) => {
+      if (event.notification?.extra?.action === 'briefing') {
+        setBriefingType(event.notification.extra.type || 'morning')
+        setShowBriefingModal(true)
+      }
+    })
+    return () => { listener.then(l => l.remove()).catch(() => {}) }
   }, [])
 
   // 할 일 입력 모달 상태
@@ -1299,12 +1341,26 @@ function App() {
           calendarSyncNoTime={calendarSyncNoTime} setCalendarSyncNoTime={setCalendarSyncNoTimePersisted}
           weatherEnabled={weatherEnabled} setWeatherEnabled={setWeatherEnabledPersisted}
           weatherLocation={weatherLocation} setWeatherLocation={setWeatherLocationPersisted}
+          briefingEnabled={briefingEnabled} setBriefingEnabled={setBriefingEnabledPersisted}
+          morningBriefingTime={morningBriefingTime} setMorningBriefingTime={setMorningBriefingTimePersisted}
+          eveningBriefingTime={eveningBriefingTime} setEveningBriefingTime={setEveningBriefingTimePersisted}
           onPreviewLockScreen={() => { setShowSettings(false); setShowLockPreview(true) }}
           statusBarNotifEnabled={statusBarNotifEnabled} setStatusBarNotifEnabled={setStatusBarNotifEnabledPersisted}
           statusBarContentStyle={statusBarContentStyle} setStatusBarContentStyle={setStatusBarContentStylePersisted}
           setShowSettings={setShowSettings}
           appVersion={APP_VERSION}
           screen={settingsScreen} setScreen={setSettingsScreen}
+        />
+      )}
+
+      {showBriefingModal && (
+        <BriefingModal
+          type={briefingType}
+          briefingText={briefingText}
+          briefingLoading={briefingLoading}
+          onClose={() => setShowBriefingModal(false)}
+          onGenerate={() => generateBriefing(todos, briefingType, lang)}
+          lang={lang}
         />
       )}
 

@@ -88,6 +88,52 @@ export async function cancelNotification(todoId) {
   }
 }
 
+// ── 브리핑 알림 스케줄링 ─────────────────────────────────────────────
+const MORNING_BRIEFING_NOTIF_ID = 2147483001
+const EVENING_BRIEFING_NOTIF_ID = 2147483002
+
+export async function scheduleBriefingNotifications(morningTime, eveningTime, enabled) {
+  try {
+    await LocalNotifications.cancel({ notifications: [
+      { id: MORNING_BRIEFING_NOTIF_ID },
+      { id: EVENING_BRIEFING_NOTIF_ID }
+    ] })
+
+    if (!enabled) return
+
+    const ok = await ensurePermission()
+    if (!ok) { console.warn('[Briefing] 권한 없음'); return }
+
+    const [mh, mm] = morningTime.split(':').map(Number)
+    const [eh, em] = eveningTime.split(':').map(Number)
+
+    await LocalNotifications.schedule({
+      notifications: [
+        {
+          id: MORNING_BRIEFING_NOTIF_ID,
+          title: 'BrioDo',
+          body: '☀️ 오늘의 일정을 확인하세요',
+          schedule: { on: { hour: mh, minute: mm }, every: 'day', allowWhileIdle: true },
+          channelId: 'briodo_medium',
+          smallIcon: 'ic_launcher',
+          extra: { action: 'briefing', type: 'morning' }
+        },
+        {
+          id: EVENING_BRIEFING_NOTIF_ID,
+          title: 'BrioDo',
+          body: '🌙 오늘 하루를 돌아보세요',
+          schedule: { on: { hour: eh, minute: em }, every: 'day', allowWhileIdle: true },
+          channelId: 'briodo_medium',
+          smallIcon: 'ic_launcher',
+          extra: { action: 'briefing', type: 'evening' }
+        }
+      ]
+    })
+  } catch (e) {
+    console.error('[Briefing] schedule error:', e)
+  }
+}
+
 // 우선순위별 채널 4개 생성
 const CHANNELS = [
   { id: 'briodo_low',    name: 'BrioDo 알림 (낮음)',  importance: 2, vibration: false, lights: false },
