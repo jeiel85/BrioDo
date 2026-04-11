@@ -98,7 +98,8 @@ function App() {
   const { briefingText, briefingLoading, generateBriefing } = useBriefing()
   const { todayStr, selectedDate, setSelectedDate, calendarExpanded, setCalendarExpanded, viewMonth, viewMonthLabel, currentWeekDates, monthGridDates, weekdayNames, prevWeek, nextWeek, prevMonth, nextMonth, goToMonth, handleGoToToday } = useCalendarNav(lang)
 
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-viewMode') || 'date')
+  const [defaultView, setDefaultViewState] = useState(() => localStorage.getItem('briodo-defaultView') || localStorage.getItem('briodo-viewMode') || 'date')
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('briodo-defaultView') || localStorage.getItem('briodo-viewMode') || 'date')
   const [allViewPeriod, setAllViewPeriod] = useState(() => localStorage.getItem('briodo-allViewPeriod') || 'all')
   const [settingsScreen, setSettingsScreen] = useState('main')
   const [headerCollapsed, setHeaderCollapsed] = useState(false)
@@ -110,6 +111,7 @@ function App() {
   const swipeAdjacentBaseRef = useRef(0) // 인접 패널 시작 오프셋 (+/- window.innerWidth)
   const [swipingToTab, setSwipingToTab] = useState(null) // 스와이프 중 보여줄 인접 탭
   const setAllViewPeriodPersisted = (v) => { setAllViewPeriod(v); localStorage.setItem('briodo-allViewPeriod', v) }
+  const setDefaultViewPersisted = (v) => { setDefaultViewState(v); localStorage.setItem('briodo-defaultView', v) }
   const [selectedTag, setSelectedTag] = useState(null)
   const [tagExpanded, setTagExpanded] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -1323,6 +1325,7 @@ function App() {
           fontScale={fontScale} setFontScale={setFontScale}
           theme={theme} setTheme={setTheme} generateRandomTheme={generateRandomTheme}
           viewMode={viewMode} setViewMode={setViewMode}
+          defaultView={defaultView} setDefaultView={setDefaultViewPersisted}
           setSelectedDate={setSelectedDate}
           inputMode={inputMode} setInputMode={setInputModePersisted}
           onAiLimitToast={(msg) => showToastMsg(msg)}
