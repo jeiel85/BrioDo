@@ -43,7 +43,7 @@ export function SettingsModal({
   lang, langPref, setLangPref,
   fontScale, setFontScale,
   theme, setTheme, generateRandomTheme,
-  viewMode, setViewMode, setSelectedDate,
+  viewMode, setViewMode, defaultView, setDefaultView, setSelectedDate,
   inputMode, setInputMode,
   onAiLimitToast,
   completionCalendarMode, setCompletionCalendarMode,
@@ -369,13 +369,13 @@ export function SettingsModal({
                 <h3>{L('기본 보기', 'Default View', 'デフォルト表示', '默认视图')}</h3>
                 <div className="font-size-selector">
                   <button
-                    className={viewMode === 'date' ? 'active' : ''}
-                    onClick={() => { setViewMode('date'); setSelectedDate(getLocalDateString(new Date())) }}
+                    className={defaultView === 'date' ? 'active' : ''}
+                    onClick={() => { setDefaultView('date'); setViewMode('date'); setSelectedDate(getLocalDateString(new Date())) }}
                   >
                     <span>📅</span>
                     <span>{L('날짜별', 'By Date', '日付別', '按日期')}</span>
                   </button>
-                  <button className={viewMode === 'all' ? 'active' : ''} onClick={() => setViewMode('all')}>
+                  <button className={defaultView === 'all' ? 'active' : ''} onClick={() => { setDefaultView('all'); setViewMode('all') }}>
                     <span>📋</span>
                     <span>{L('전체', 'All', 'すべて', '全部')}</span>
                   </button>
