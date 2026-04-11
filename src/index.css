@@ -4319,6 +4319,59 @@ body.modal-open { overflow: hidden; }
   }
 }
 
+/* ─── Landscape 3-Column Layout (orientation: landscape + min-width: 600px) ─── */
+@media (orientation: landscape) and (min-width: 600px) {
+  /* Wider card to accommodate 3-column layout */
+  .card {
+    max-width: 1100px;
+  }
+
+  /* Move bottom nav to a static vertical right-side column */
+  .bottom-nav {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    width: 72px;
+    flex-shrink: 0;
+    padding: 16px 4px;
+    border-radius: 0;
+    box-shadow: none;
+    border-left: 1px solid var(--color-outline-variant);
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    height: 100vh;
+    overflow-y: auto;
+    /* Override tablet overrides */
+    max-width: none;
+    left: auto;
+    transform: none;
+    right: auto;
+  }
+
+  /* Adjust nav items for vertical layout */
+  .bottom-nav-item {
+    padding: 12px 0;
+    width: 100%;
+  }
+
+  /* Smaller label text for narrow column */
+  .bottom-nav-item span {
+    font-size: 9px;
+  }
+
+  /* No bottom nav clearance needed */
+  .todo-list-section {
+    padding-bottom: 24px;
+  }
+
+  /* Reposition FAB for landscape layout */
+  .fab {
+    right: calc(50% - 1100px / 2 + 72px + 28px);
+    bottom: 28px;
+  }
+}
+
 /* ─── Collapsing Header: Compact Bar + Collapsible Section ─── */
 
 /* Compact bar: 기본 숨김 → 스크롤 시 나타남 */
