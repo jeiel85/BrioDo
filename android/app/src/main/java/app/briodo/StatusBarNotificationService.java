@@ -31,10 +31,11 @@ public class StatusBarNotificationService extends Service {
     // 일정 추가 탭 동작 — MainActivity로 전달하는 extra
     static final String EXTRA_OPEN_INPUT = "briodo_open_input";
 
-    // SharedPreferences 키 (StatusBarNotificationPlugin과 공유)
+    // SharedPreferences 키 (StatusBarNotificationPlugin / BootReceiver와 공유)
     static final String PREFS_NAME        = "briodo_statusbar_notif";
     static final String PREF_ENABLED      = "enabled";
     static final String PREF_TAP_ACTION   = "tap_action";
+    static final String PREF_CONTENT_TEXT = "content_text"; // 마지막 알림 본문 (프로세스 재시작 후 복원)
     static final String TAP_ACTION_INPUT  = "input";   // SmartInputModal 열기
     static final String TAP_ACTION_APP    = "app";     // 메인 화면 열기 (기본)
 
@@ -51,6 +52,13 @@ public class StatusBarNotificationService extends Service {
     public void onCreate() {
         super.onCreate();
         instance = this;
+        // 프로세스 재시작(배터리 최적화로 인한 종료 + START_STICKY 복원, BootReceiver 기동) 시
+        // 정적 필드 notifContentText가 null로 초기화되므로 SharedPreferences에서 복원한다.
+        if (notifContentText == null) {
+            String saved = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+                .getString(PREF_CONTENT_TEXT, null);
+            if (saved != null && !saved.isEmpty()) notifContentText = saved;
+        }
         createChannel();
     }
 

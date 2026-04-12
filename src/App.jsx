@@ -480,6 +480,11 @@ function App() {
     localStorage.setItem('briodo-statusBarNotifEnabled', String(val))
     if (val) {
       StatusBarNotifNative?.start({}).catch(() => {})
+      // 상태바 알림 서비스가 배터리 최적화로 종료되지 않도록 예외 등록 요청
+      // 이미 등록된 경우 다이얼로그 없이 즉시 반환됨
+      if (Capacitor.isNativePlatform()) {
+        StatusBarNotifNative?.requestIgnoreBatteryOptimizations?.().catch(() => {})
+      }
     } else {
       StatusBarNotifNative?.stop().catch(() => {})
     }
@@ -490,11 +495,18 @@ function App() {
     localStorage.setItem('briodo-statusBarContentStyle', val)
   }
 
-  // 앱 시작 시 알림 서비스 시작
+  // 앱 시작 시 알림 서비스 시작 + 배터리 최적화 예외 1회 요청
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     if (localStorage.getItem('briodo-statusBarNotifEnabled') === 'false') return
     StatusBarNotifNative?.start({}).catch(() => {})
+    // 기기 제조사 배터리 최적화가 서비스를 종료하는 것을 방지.
+    // 이미 예외 처리된 경우 다이얼로그 없이 즉시 반환. 앱 설치 후 최초 1회만 표시.
+    if (!localStorage.getItem('briodo-batteryOptAsked')) {
+      StatusBarNotifNative?.requestIgnoreBatteryOptimizations?.()
+        .then(() => localStorage.setItem('briodo-batteryOptAsked', '1'))
+        .catch(() => {})
+    }
   }, [])
 
   // 상태바 알림 ➕ 버튼 → SmartInputModal 열기
