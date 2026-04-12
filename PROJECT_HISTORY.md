@@ -4,6 +4,38 @@
 
 ---
 
+## 2026-04-12 — 알림 영속성 개선: BootReceiver + 배터리 최적화 대응 (세션 46)
+
+### 변경 내용
+
+#### 기기 재시작 후 상태바 알림 서비스 자동 복원 (Issue: 재시작 후 알림 소멸)
+- `BootReceiver.java` 신규 생성 — `BOOT_COMPLETED` / `QUICKBOOT_POWERON` 수신 후
+  SharedPreferences의 `enabled=true` 값 확인 시 `StatusBarNotificationService` 자동 재시작
+- `AndroidManifest.xml` — BootReceiver 등록 (exported=true, BOOT_COMPLETED/QUICKBOOT_POWERON)
+- `StatusBarNotificationPlugin.start()` — SharedPreferences에 `enabled=true` 저장
+- `StatusBarNotificationPlugin.stop()` — SharedPreferences에 `enabled=false` 저장
+
+#### 상태바 알림 텍스트 간헐적 초기화 버그 수정
+- `StatusBarNotificationPlugin.updateContent()` — 알림 본문을 SharedPreferences에도 저장
+- `StatusBarNotificationService.onCreate()` — 프로세스 재시작(배터리 최적화 강제 종료 후
+  START_STICKY 복원 포함) 시 SharedPreferences에서 마지막 텍스트(날씨 등) 복원
+- 날씨 선택 후 폰 재시작해도 앱 열리기 전까지 마지막 날씨 텍스트 유지
+
+#### 배터리 최적화 예외 요청 (제조사 커스텀 최적화 대응)
+- `AndroidManifest.xml` — `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` 권한 추가
+- `StatusBarNotificationPlugin.requestIgnoreBatteryOptimizations()` 메서드 추가 — 이미 예외 처리된
+  경우 다이얼로그 없이 즉시 반환; 미등록 기기는 시스템 다이얼로그 표시
+- `StatusBarNotificationPlugin.isIgnoringBatteryOptimizations()` 메서드 추가
+- `App.jsx` — 상태바 알림 활성화 시 배터리 최적화 예외 요청 호출
+- `App.jsx` — 앱 최초 1회(`briodo-batteryOptAsked` 플래그) 기존 사용자 포함 자동 요청
+
+#### 일정 푸시 알림 안정성
+- Capacitor `LocalNotifications` 플러그인의 내장 BootReceiver가 재부팅 후 AlarmManager 알림을
+  자동 재스케줄링함 (기존 `allowWhileIdle: true` 유지로 Doze 모드 대응 이미 완료)
+- 배터리 최적화 예외 등록으로 AlarmManager 알람 차단 가능성 추가 감소
+
+---
+
 ## 2026-04-11 — v1.0.8: AI 브리핑 + 가로 3열 레이아웃 + 버그 수정 (세션 45)
 
 ### 변경 내용
