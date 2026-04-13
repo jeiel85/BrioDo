@@ -38,7 +38,6 @@ google-services.json
 android/app/*.jks
 android/app/*.keystore
 GoogleService-Info.plist
-firebase.json
 .firebase/
 
 # Capacitor & Native Builds
