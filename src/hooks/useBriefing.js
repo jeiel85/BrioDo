@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
-import { genAI } from '../firebase'
+import { functions } from '../firebase'
+import { httpsCallable } from 'firebase/functions'
 
 const AI_MODELS = [
   'gemini-2.5-flash-lite',
@@ -9,10 +10,11 @@ const AI_MODELS = [
 ]
 
 const generateWithFallback = async (prompt) => {
+  const generateGeminiContent = httpsCallable(functions, 'generateGeminiContent')
   for (const model of AI_MODELS) {
     try {
-      const response = await genAI.models.generateContent({ model, contents: prompt })
-      if (response?.text) return response.text
+      const response = await generateGeminiContent({ model, prompt })
+      if (response?.data?.text) return response.data.text
     } catch (e) {
       console.warn(`[Briefing AI] ${model} failed:`, e?.message || String(e))
     }
@@ -176,7 +178,6 @@ export function useBriefing() {
   const [briefingLoading, setBriefingLoading] = useState(false)
 
   const generateBriefing = useCallback(async (todos, type, lang) => {
-    if (!genAI) return null
     setBriefingLoading(true)
     setBriefingText('')
     try {

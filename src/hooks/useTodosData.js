@@ -4,7 +4,8 @@ import {
   collection, onSnapshot, query, where,
   doc, updateDoc, serverTimestamp, setDoc, deleteDoc
 } from "firebase/firestore"
-import { db, genAI } from '../firebase'
+import { db, functions } from '../firebase'
+import { httpsCallable } from 'firebase/functions'
 import { getLocalTodos, saveLocalTodosBatch, saveLocalTodo, deleteLocalTodo, addSyncQueue, getSyncQueue, clearSyncQueue } from '../db'
 import { syncEventToGoogle, deleteEventFromGoogle, fetchEventsFromGoogle } from '../calendar'
 import { cancelNotification, scheduleNotification } from './useNotifications'
@@ -172,10 +173,11 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
   ]
 
   const generateWithFallback = async (prompt) => {
+    const generateGeminiContent = httpsCallable(functions, 'generateGeminiContent')
     for (const model of AI_MODELS) {
       try {
-        const response = await genAI.models.generateContent({ model, contents: prompt })
-        if (response?.text) return response.text
+        const response = await generateGeminiContent({ model, prompt })
+        if (response?.data?.text) return response.data.text
       } catch (e) {
         console.warn(`[AI] ${model} failed:`, e?.message || String(e))
       }
@@ -185,7 +187,6 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
   }
 
   const getAiTagsOnly = async (text) => {
-    if (!genAI) return null
     try {
       setIsAiAnalyzing(true)
       const tagExamples = lang === 'ja' ? '仕事, 個人, 健康, 学習' : lang === 'zh' ? '工作, 个人, 健康, 学习' : lang === 'en' ? 'work, personal, health, study' : '업무, 개인, 건강, 학습'
@@ -206,7 +207,6 @@ export function useTodosData(user, { completionCalendarMode = 'status', lang = '
   }
 
   const getAiFullAnalysis = async (text) => {
-    if (!genAI) return null
     try {
       const now = new Date()
       const year = now.getFullYear()

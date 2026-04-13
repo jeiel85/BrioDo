@@ -4,6 +4,24 @@
 
 ---
 
+## 2026-04-13 — 보안 강화: Gemini API Cloud Functions 마이그레이션 (세션 47)
+
+### 변경 내용
+
+#### 치명적 보안 결함 수정 (Gemini API 키 노출 방어)
+- 기존 클라이언트 빌드(`.env`의 `VITE_GEMINI_API_KEY`)에 평문으로 포함되던 구글 API 키 제거
+- 클라이언트 내부에서의 `genAI` 패키지 직접 호출 의존성 전면 제거 (`firebase.js`, `useTodosData.js`, `useBriefing.js`)
+- **Proxy 백엔드 구조(Firebase Cloud Functions) 도입**
+  - `functions/index.js`에 `generateGeminiContent` HTTPS Callable 함수 신규 추가
+  - 클라이언트는 `httpsCallable()`을 통해 백엔드로 프롬프트를 전송하도록 재설계
+  - 백엔드 서버가 환경변수에 은닉된 API Key를 꺼내어 대신 AI 호출을 수행하므로 앱 소스 코드를 탈취해도 키 노출 불가
+  - 함수 배포 서버(리전)를 `asia-northeast3` (서울)로 설정해 지연시간(Latency) 최소화
+
+#### 개발 환경 파일 정리
+- `.env.example` 및 `README.md` 가이드라인에서 `VITE_GEMINI_API_KEY` 항목 일괄 삭제
+
+---
+
 ## 2026-04-12 — 알림 영속성 개선: BootReceiver + 배터리 최적화 대응 (세션 46)
 
 ### 변경 내용
