@@ -203,7 +203,6 @@ Android: @codetrix-studio/capacitor-google-auth
 루트에 `.env` 파일 생성 (`.gitignore`에 포함):
 
 ```env
-VITE_GEMINI_API_KEY=your_gemini_api_key
 VITE_FIREBASE_API_KEY=your_firebase_api_key
 VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
 VITE_FIREBASE_PROJECT_ID=your_project_id

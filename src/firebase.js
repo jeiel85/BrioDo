@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app"
 import { getAuth, GoogleAuthProvider } from "firebase/auth"
 import { getFirestore } from "firebase/firestore"
-import { GoogleGenAI } from '@google/genai'
+import { getFunctions } from "firebase/functions"
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -15,9 +15,7 @@ const firebaseConfig = {
 export const fbApp = initializeApp(firebaseConfig)
 export const auth = getAuth(fbApp)
 export const db = getFirestore(fbApp)
+export const functions = getFunctions(fbApp, "asia-northeast3")
 
 export const googleProvider = new GoogleAuthProvider()
 googleProvider.addScope('https://www.googleapis.com/auth/calendar.app.created')
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-export const genAI = GEMINI_API_KEY ? new GoogleGenAI({ apiKey: GEMINI_API_KEY }) : null
