@@ -4,6 +4,35 @@
 
 ---
 
+## 2026-04-15 — 잔디 심기(GrassGrid) + 업적 달성 공유 기능 (세션 48)
+
+### 변경 내용
+
+#### 잔디 심기 — GrassGrid 컴포넌트 (Issue #138)
+- `CollectionsScreen.jsx`의 Stats 섹션에 GitHub 스타일 Contribution Heatmap 추가
+- 최근 16주(112일) 완료 데이터를 7행×N열 그리드로 시각화
+- 완료 수 기반 4단계 색상 강도 (0 / 1~2 / 3~4 / 5+)
+- 오늘 셀 강조 outline, 탭 시 날짜·완료 수 툴팁 표시
+- 월 레이블·요일 레이블·범례 포함
+- streak > 0이면 "🔥 N일 연속 달성 중" 배지 표시
+- 새 패키지 미사용 — 기존 React + CSS만으로 구현
+
+#### 업적 달성 공유 — Canvas Share Card (Issue #135)
+- `AchievementUnlockModal.jsx`에 "공유하기 ↗" 버튼 추가
+- `shareAchievementCard()` 함수: Canvas API로 800×480px 공유 카드 생성
+  - 현재 테마 CSS 변수(`--color-primary`, `--color-surface`)를 읽어 테마 반영
+  - 업적 이모지·이름·설명·별점·BrioDo 브랜딩 렌더링
+- Web Share API(`navigator.share({ files: [...] })`) 우선 시도 → 미지원 시 텍스트 공유 → 최종 폴백 이미지 다운로드
+- `html2canvas`, `@capacitor/share` 추가 패키지 없이 구현 (canvas-confetti 사례로 WebView Canvas 안정성 확인)
+- 공유 중 버튼 비활성화 처리로 중복 탭 방지
+
+### 수정 파일
+- `src/components/CollectionsScreen.jsx` — GrassGrid 컴포넌트 + grassData useMemo
+- `src/components/AchievementUnlockModal.jsx` — shareAchievementCard 함수 + 공유 버튼
+- `src/index.css` — `.grass-*` 스타일 + `.ach-share-btn` 스타일
+
+---
+
 ## 2026-04-13 — 보안 강화: Gemini API Cloud Functions 마이그레이션 (세션 47)
 
 ### 변경 내용
