@@ -1,5 +1,152 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { calcStreak } from '../utils/helpers'
+
+// ─── GrassGrid 컴포넌트 ───
+function GrassGrid({ grassData, todayStr, streak, lang }) {
+  const tooltipRef = useRef(null)
+  const [tooltip, setTooltip] = useState(null) // { date, completed, x, y }
+
+  // grassData를 주 단위로 묶기
+  // 오늘이 속한 주의 마지막 날까지 포함되도록 패딩
+  const weeks = useMemo(() => {
+    if (!grassData || grassData.length === 0) return []
+    // 첫 날의 요일(0=일, 1=월, ...) 기준으로 앞에 빈 셀 패딩
+    const firstDate = new Date(grassData[0].date + 'T00:00:00')
+    // 월요일 기준(0=월, 6=일)
+    const firstDow = (firstDate.getDay() + 6) % 7 // Mon=0, Sun=6
+    const padded = []
+    for (let i = 0; i < firstDow; i++) padded.push(null)
+    padded.push(...grassData)
+    // 뒤에도 일요일까지 채우기
+    while (padded.length % 7 !== 0) padded.push(null)
+    const result = []
+    for (let w = 0; w < padded.length / 7; w++) {
+      result.push(padded.slice(w * 7, w * 7 + 7))
+    }
+    return result
+  }, [grassData])
+
+  // 각 주 첫 날 기준 월 레이블
+  const monthLabels = useMemo(() => {
+    return weeks.map(week => {
+      const firstDay = week.find(d => d !== null)
+      if (!firstDay) return ''
+      const d = new Date(firstDay.date + 'T00:00:00')
+      if (d.getDate() <= 7) {
+        return (d.getMonth() + 1) + (lang === 'ko' ? '월' : lang === 'ja' ? '月' : lang === 'zh' ? '月' : '')
+      }
+      return ''
+    })
+  }, [weeks, lang])
+
+  const dayLabels = lang === 'ko' ? ['월', '', '수', '', '금', '', '일']
+    : lang === 'ja' ? ['月', '', '水', '', '金', '', '日']
+    : lang === 'zh' ? ['一', '', '三', '', '五', '', '日']
+    : ['M', '', 'W', '', 'F', '', 'S']
+
+  const getCellLevel = (completed) => {
+    if (!completed || completed === 0) return 0
+    if (completed <= 2) return 1
+    if (completed <= 4) return 2
+    return 3
+  }
+
+  const handleCellTap = (day, e) => {
+    if (!day) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    setTooltip(prev =>
+      prev?.date === day.date ? null : { date: day.date, completed: day.completed, x: rect.left, y: rect.top }
+    )
+  }
+
+  const streakText = streak > 0
+    ? (lang === 'ko' ? `🔥 ${streak}일 연속 달성 중`
+      : lang === 'ja' ? `🔥 ${streak}日連続達成中`
+      : lang === 'zh' ? `🔥 连续${streak}天达成`
+      : `🔥 ${streak}-day streak`)
+    : (lang === 'ko' ? '오늘부터 연속 달성을 시작해보세요!'
+      : lang === 'ja' ? '今日から連続達成を始めましょう！'
+      : lang === 'zh' ? '从今天开始连续达成！'
+      : 'Start your streak today!')
+
+  return (
+    <div className="grass-section" onClick={() => setTooltip(null)}>
+      <div className="grass-section-header">
+        <span className="grass-streak-badge">{streakText}</span>
+      </div>
+      <div className="grass-scroll-wrap">
+        <div className="grass-grid-container">
+          {/* 월 레이블 행 */}
+          <div className="grass-month-row">
+            {weeks.map((_, wi) => (
+              <div key={wi} className="grass-month-label">{monthLabels[wi]}</div>
+            ))}
+          </div>
+          {/* 요일 레이블 + 잔디 셀 */}
+          <div className="grass-body">
+            <div className="grass-day-labels">
+              {dayLabels.map((d, i) => (
+                <div key={i} className="grass-day-label">{d}</div>
+              ))}
+            </div>
+            <div className="grass-columns">
+              {weeks.map((week, wi) => (
+                <div key={wi} className="grass-col">
+                  {week.map((day, di) => {
+                    if (!day) return <div key={di} className="grass-cell" style={{ opacity: 0 }} />
+                    const level = getCellLevel(day.completed)
+                    const isToday = day.date === todayStr
+                    return (
+                      <div
+                        key={di}
+                        className={`grass-cell level-${level}${isToday ? ' is-today' : ''}`}
+                        onClick={e => { e.stopPropagation(); handleCellTap(day, e) }}
+                      />
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* 툴팁 */}
+      {tooltip && (
+        <div
+          ref={tooltipRef}
+          style={{
+            position: 'fixed',
+            top: Math.max(8, tooltip.y - 44),
+            left: Math.min(tooltip.x - 20, window.innerWidth - 160),
+            background: 'var(--color-surface-container-highest)',
+            color: 'var(--color-on-surface)',
+            borderRadius: 8,
+            padding: '5px 10px',
+            fontSize: 12,
+            fontWeight: 600,
+            zIndex: 9999,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+            pointerEvents: 'none',
+          }}
+        >
+          {tooltip.date} · {tooltip.completed > 0
+            ? (lang === 'ko' ? `${tooltip.completed}개 완료` : lang === 'ja' ? `${tooltip.completed}件完了` : lang === 'zh' ? `完成${tooltip.completed}项` : `${tooltip.completed} done`)
+            : (lang === 'ko' ? '완료 없음' : lang === 'ja' ? '完了なし' : lang === 'zh' ? '无完成' : 'None')}
+        </div>
+      )}
+      {/* 범례 */}
+      <div className="grass-legend">
+        <span className="grass-legend-label">{lang === 'ko' ? '적음' : lang === 'ja' ? '少' : lang === 'zh' ? '少' : 'Less'}</span>
+        <div className="grass-legend-cells">
+          {[0,1,2,3].map(lv => (
+            <div key={lv} className={`grass-legend-cell grass-cell level-${lv}`} />
+          ))}
+        </div>
+        <span className="grass-legend-label">{lang === 'ko' ? '많음' : lang === 'ja' ? '多' : lang === 'zh' ? '多' : 'More'}</span>
+      </div>
+    </div>
+  )
+}
 
 const ACCENT_COLORS = [
   { cls: 'coll-indigo',  emoji: '💼' },
@@ -59,6 +206,19 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
     const streak = calcStreak(todos, todayStr)
     return { todayDone, weekDone, streak }
   }, [todos, todayStr, weeklyPulse])
+
+  // 잔디 데이터: 최근 16주(112일)
+  const grassData = useMemo(() => {
+    const days = []
+    for (let i = 111; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().slice(0, 10)
+      const completed = todos.filter(t => t.completed && t.date === dateStr).length
+      days.push({ date: dateStr, completed })
+    }
+    return days
+  }, [todos])
 
   const allRate = allTotal > 0 ? allDone / allTotal : 0
   const circum = 2 * Math.PI * 28
@@ -215,6 +375,14 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
             </div>
           </div>
         )}
+
+        {/* 잔디 심기 */}
+        <GrassGrid
+          grassData={grassData}
+          todayStr={todayStr}
+          streak={stats.streak}
+          lang={lang}
+        />
 
       </div>
 
