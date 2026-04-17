@@ -225,7 +225,7 @@ export function SettingsModal({
                 onClick={() => setScreen('about')}
               />
 
-              {/* Ko-fi 후원 버튼 — 메인 화면 노출 */}
+              {/* Ko-fi 후원 버튼 — 현재 비활성화 (릴리즈 시 활성화 예정)
               <div className="settings-support-section">
                 <a
                   className="settings-kofi-btn"
@@ -242,6 +242,7 @@ export function SettingsModal({
                   ☕ {L('개발자에게 커피 한잔', 'Buy me a coffee', '開発者にコーヒーを', '给开发者买杯咖啡')}
                 </a>
               </div>
+              */}
             </div>
           )}
 

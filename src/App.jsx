@@ -3,7 +3,7 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { App as CapApp } from '@capacitor/app'
 import { collection, doc, setDoc, serverTimestamp } from "firebase/firestore"
-import { db, initAppCheck } from './firebase'
+import { db } from './firebase'
 import { addSyncQueue, saveLocalTodo } from './db'
 import { syncEventToGoogle } from './calendar'
 import { formatTime, matchesRecurrence } from './utils/helpers'
@@ -271,7 +271,8 @@ function App() {
   useEffect(() => {
     initNotificationChannels()
     initAdMob()
-    initAppCheck() // Firebase App Check - Cloud Functions 보호
+    // App Check - 현재 비활성화 (릴리즈 시 활성화 예정)
+    // initAppCheck()
 
     // 일일 접속 및 연속 접속 트래킹
     trackEngagement('totalOpens', true)
