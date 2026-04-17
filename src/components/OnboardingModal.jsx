@@ -159,11 +159,11 @@ const SCREENS = [
 
       const requestMic = async () => {
         if (!isNative) return
-        try { await SpeechRecognition.requestPermissions() } catch (e) {}
+        try { await SpeechRecognition.requestPermissions() } catch { /* ignore */ }
       }
       const requestNotif = async () => {
         if (!isNative) return
-        try { await LocalNotifications.requestPermissions() } catch (e) {}
+        try { await LocalNotifications.requestPermissions() } catch { /* ignore */ }
       }
 
       const perms = [
@@ -295,6 +295,7 @@ export function OnboardingModal({ lang, setLangPref, handleLogin, onDone }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function shouldShowOnboarding() {
   return !localStorage.getItem(ONBOARDING_KEY)
 }

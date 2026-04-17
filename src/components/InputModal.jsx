@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef } from 'react'
 import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 
 const PRIORITY_LABELS = {
