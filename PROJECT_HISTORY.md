@@ -4,6 +4,55 @@
 
 ---
 
+## 2026-04-17 — v1.1.0 — Security & UX Major Update (세션 49)
+
+### 변경 내용
+
+#### 보안 강화 (Security #128, #129, #130)
+- **Firebase App Check**: Cloud Functions에 Play Integrity API 연동하여 외부 무단 호출 방지
+- **PII Masking**: `src/utils/piiMask.js` 유틸리티로 전화번호, 이메일, 계좌번호 등 자동 마스킹
+- **Firestore Rules**: Rate limiting, 데이터 크기 검증, 필드 타입 검증 강화
+
+#### UX 개선 (UX #137, #138, #139, #140)
+- **Android 홈 화면 위젯**: `BrioDoWidgetProvider.kt` + 레이아웃/설정 파일 추가
+- **Contribution Graph**: GitHub 스타일 잔디 그래프 + 연속 달성 Streak 배지
+- **PWA 지원**: `vite-plugin-pwa` + Service Worker + 데스크톱 레이아웃 CSS
+- **AI Nudge**: 2주 이상 묵은 할 일에 대한 스마트 정리 제안 기능
+
+#### 마케팅 & 수익화 (Marketing #134, #135, #136, Monetization #131, #132, #133)
+- **ASO 전략**: `docs/MARKETING_STRATEGY.md`에 키워드 타겟ting 및 스토어 등록 가이드
+- **공유 기능**: 업적 달성 시 공유 카드 생성 인프라
+- **인앱 결제**: `useInAppPurchase.js` 훅 + Pro 구독/커피 기부가이드
+- **네이티브 광고**: `NativeAd.jsx` 컴포넌트 + TodoList 삽입 로직
+
+### 수정 파일
+- `src/firebase.js`, `src/App.jsx` — App Check 초기화
+- `src/utils/piiMask.js` — PII 마스킹 유틸리티
+- `src/utils/helpers.js` — Contribution Graph, Nudge 유틸리티
+- `firestore.rules` — 보안 규칙 강화
+- `android/app/src/main/java/app/briodo/*.kt` — 위젯 Provider
+- `src/components/StatsScreen.jsx` — Contribution Graph
+- `src/components/BriefingModal.jsx` — Nudge 기능
+- `src/components/NativeAd.jsx` — 네이티브 광고
+- `src/hooks/useInAppPurchase.js` — 인앱 결제
+- `docs/MARKETING_STRATEGY.md` — 마케팅 전략 문서
+- `vite.config.js`, `index.html` — PWA 설정
+
+### 생성된 브랜치 및 PR
+- `feature/security-128-app-check` → main (머지)
+- `feature/security-129-pii-masking` → main (머지)
+- `feature/security-130-firestore-rules` → main (머지)
+- `feature/ux-137-home-widget` → main (머지)
+- `feature/ux-138-streak-visualization` → main (머지)
+- `feature/ux-139-pwa-desktop` → main (머지)
+- `feature/ux-140-nudge-feature` → main (머지)
+- `feature/marketing-aso-strategy` → main (머지)
+- `feature/monetization-billing` → main (머지)
+
+**릴리즈**: v1.1.0 태그 생성 및 GitHub Release 게시
+
+---
+
 ## 2026-04-15 — 잔디 심기(GrassGrid) + 업적 달성 공유 기능 (세션 48)
 
 ### 변경 내용
