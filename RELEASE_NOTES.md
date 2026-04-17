@@ -1,35 +1,43 @@
-## What's New in v1.1.0
+## v1.1.0 — 보안 강화 및 UX 개선 (2026-04-17)
 
-### Security Improvements
-- **Firebase App Check**: Added Play Integrity API integration to protect Cloud Functions
-- **PII Masking**: Personal information (phone numbers, emails, etc.) is now masked before AI processing
-- **Firestore Security Rules**: Enhanced rules with rate limiting and data validation
+### 주요 변경사항
 
-### UX Enhancements
-- **Android Home Screen Widget**: New widget for quick task access from home screen
-- **Contribution Graph**: GitHub-style activity visualization with streak tracking
-- **PWA Desktop Support**: Improved desktop layout with responsive design
-- **AI Nudge Feature**: Smart suggestions for stale (2+ weeks old) uncompleted todos
+#### 보안 강화
+- **Firebase App Check**: Play Integrity API 연동으로 Cloud Functions 무단 호출 방지 (현재 비활성화)
+- **PII 마스킹**: 전화번호, 이메일 등 개인정보 자동 마스킹 처리
+- **Firestore Rules**: Rate limiting 및 데이터 검증 강화
 
-### Marketing & Monetization
-- **ASO Strategy**: App Store optimization guidelines with target keywords
-- **In-App Purchase Infrastructure**: Foundation for Pro subscription and coffee donation
-- **Native Ads**: Ad placement infrastructure (Pro users see no ads)
+#### UX 개선
+- **Android 홈 화면 위젯**: 위젯 기초 구조 추가 (설정 후 활성화 필요)
+- **Contribution Graph**: GitHub 스타일 잔디 그래프 + 연속 달성 Streak 배지
+- **PWA 지원**: 데스크톱 레이아웃 최적화
+- **AI Nudge**: 2주 이상 묵은 할 일 스마트 정리 제안
 
-### All Issues Addressed
-- #128: Firebase App Check (Play Integrity API)
-- #129: AI 프롬프트 내 개인정보(PII) 비식별화 처리
-- #130: Firestore Security Rules 엄격화
-- #134: 앱스토어 최적화(ASO)
-- #135: 소셜 바이럴 루프 - 자랑하기(Share)
-- #136: 메이커 커뮤니티 런칭 전략
-- #137: 안드로이드 홈 화면 위젯
-- #138: 잔디 심기(Streak) 및 통계 시각화
-- #139: PC 웹 브라우저 지원 - PWA
-- #140: AI 묵은 할 일 스마트 정리 제안 (Nudge)
-- #131: Google Play 빌링 연동
-- #132: 개발자 후원 - 커피 한 잔 사주기
-- #133: 네이티브 광고
+#### 마케팅 & 수익화 인프라
+- **ASO 전략**: 앱스토어 최적화 가이드 (`docs/MARKETING_STRATEGY.md`)
+- **인앱 결제**: Pro 구독/커피 후원 인프라 (현재 비활성화)
+- **네이티브 광고**: 광고 삽입 인프라 (Pro 사용자 제외)
+
+### 수정 사항
+- PII 마스킹 유틸리티 추가 (`src/utils/piiMask.js`)
+- Contribution Graph 컴포넌트 추가 (`StatsScreen.jsx`)
+- Nudge 기능 추가 (`BriefingModal.jsx`, `helpers.js`)
+- NativeAd 컴포넌트 추가 (Pro 제외 표시)
+- 인앱 결제 훅 추가 (`useInAppPurchase.js`)
+- PWA 설정 추가 (`vite.config.js`)
+- Android 위젯 Provider 추가 (`BrioDoWidgetProvider.kt`)
+
+### 이슈 처리
+- #128, #129, #130: 보안 강화
+- #134, #135, #136: 마케팅 전략
+- #137, #138, #139, #140: UX 개선
+- #131, #132, #133: 수익화 인프라
 
 ---
-**Note**: Some features require additional setup (Google Play Console, Firebase Console) before activation.
+
+### 참고사항
+- 일부 기능 (App Check, 인앱 결제, 광고)은 하드코딩으로 비활성화됨
+- 활성화 시 `APP_CHECK_ENABLED`, `PRO_ENABLED` 플래그 변경 필요
+- APK 설치: Galaxy S24 (R3CWC0KB53Z)에서 테스트 완료
+
+**테스트 환경**: Galaxy S24 (Android), npm build + Capacitor sync

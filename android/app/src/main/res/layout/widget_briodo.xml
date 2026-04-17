@@ -59,7 +59,8 @@
             android:layout_height="36dp"
             android:text="@string/widget_add_task"
             android:textSize="12sp"
-            style="@style/Widget.Material3.Button.TextButton" />
+            android:background="?android:attr/selectableItemBackground"
+            android:textColor="?android:attr/textColorPrimary" />
 
     </LinearLayout>
 
