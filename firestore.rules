@@ -4,11 +4,56 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // =============================================
+    // Helper Functions
+    // =============================================
+
+    // 사용자 인증 확인
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // 본인 데이터 확인
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Rate Limiting: 분당 최대 쓰기 횟수
+    // Note: Firestore Security Rules는 완벽한 rate limiting에 제한적이므로
+    // Cloud Functions에서 추가적인 검증 권장
+    function isValidWriteRate() {
+      // 분당 최대 60회 쓰기 (1초에 1회)
+      return resource == null || resource.data.updatedAt == null
+        || request.time - resource.data.updatedAt > duration.value(1, 's');
+    }
+
+    // 데이터 크기 검증 (총 문서 크기 1MB 제한의 일부)
+    function isValidDocumentSize() {
+      return request.resource.size < 1048576; // 1MB
+    }
+
+    // 유효한 태그 배열 검증
+    function isValidTags(tags) {
+      return tags is list
+        && tags.size() <= 10
+        && tags.size() >= 0
+        && tags.hasAll(tags.map(t, t is string && t.size() <= 50));
+    }
+
+    // =============================================
     // 유저 설정 (userSettings)
     // =============================================
     match /userSettings/{userId} {
-      // 본인 데이터만 읽기/쓰기 허용
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && isValidDocumentSize()
+        && request.resource.data.keys().hasAll(['theme', 'lang']);
+
+      allow update: if isOwner(userId)
+        && isValidDocumentSize()
+        // uid 변경 방지
+        && request.resource.data.uid == request.auth.uid;
+
+      allow delete: if false; // 설정은 삭제 불가 (앱이 손상될 수 있음)
     }
 
     // =============================================
@@ -16,40 +61,59 @@ service cloud.firestore {
     // =============================================
     match /todos/{todoId} {
       // 읽기: 본인 uid가 일치하는 문서만
-      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
 
       // 생성: 인증된 사용자 + uid가 본인과 일치 + 필수 필드 존재
-      allow create: if request.auth != null
+      allow create: if isAuthenticated()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.text is string
         && request.resource.data.text.size() > 0
-        && request.resource.data.text.size() <= 500;
+        && request.resource.data.text.size() <= 500
+        && isValidDocumentSize()
+        && isValidTags(request.resource.data.tags)
+        // date 형식 검증
+        && (request.resource.data.date == null
+            || (request.resource.data.date is string && request.resource.data.date.size() == 10))
+        // priority 유효값
+        && (request.resource.data.priority == null
+            || request.resource.data.priority in ['low', 'medium', 'high', 'urgent']);
 
       // 수정: 본인 데이터 + uid 변경 불가
-      allow update: if request.auth != null
+      allow update: if isAuthenticated()
         && resource.data.uid == request.auth.uid
-        && request.resource.data.uid == request.auth.uid;
+        && request.resource.data.uid == request.auth.uid
+        && isValidDocumentSize()
+        && isValidTags(request.resource.data.tags)
+        && (request.resource.data.date == null
+            || (request.resource.data.date is string && request.resource.data.date.size() == 10))
+        && (request.resource.data.priority == null
+            || request.resource.data.priority in ['low', 'medium', 'high', 'urgent']);
 
       // 삭제: 본인 데이터만
-      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
     // =============================================
     // 업적 (achievements)
     // =============================================
     match /achievements/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidDocumentSize();
+      allow update: if isOwner(userId)
+        && isValidDocumentSize()
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if false; // 업적은 삭제 불가
     }
 
     // =============================================
-    // AI 사용량 (aiUsage) - 기기당 일일 제한
+    // AI 사용량 (aiUsage) - 일일 제한
     // =============================================
     match /aiUsage/{docId} {
       // 읽기: 본인 uid 포함 문서만
-      allow read: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
 
       // 쓰기: 본인 uid + 카운트 0~10 범위
-      allow write: if request.auth != null
+      allow write: if isAuthenticated()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.count is int
         && request.resource.data.count >= 0
@@ -60,8 +124,14 @@ service cloud.firestore {
     // 동기화 큐 (syncQueue) - 오프라인 큐 처리용
     // =============================================
     match /syncQueue/{docId} {
-      allow read, write: if request.auth != null && resource.data.uid == request.auth.uid;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && isValidDocumentSize();
+      allow update: if isAuthenticated()
+        && resource.data.uid == request.auth.uid
+        && isValidDocumentSize();
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
     }
 
     // =============================================
