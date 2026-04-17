@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react'
-import { findStaleTodos, buildNudgePrompt } from '../utils/helpers'
+import { findStaleTodos } from '../utils/helpers'
 
 export function BriefingModal({
   type,

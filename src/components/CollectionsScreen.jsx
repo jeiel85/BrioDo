@@ -166,7 +166,7 @@ function getAccent(tag) {
 
 const INCOMPLETE_KEY = '__incomplete__'
 
-export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplete, todayStr, weeklyPulse, unlockedIds, unlockedSortedByDifficulty, onShowAllAchievements }) {
+export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplete, todayStr, weeklyPulse, unlockedSortedByDifficulty, onShowAllAchievements }) {
   const [expandedTag, setExpandedTag] = useState(null)
   const [showAllTagsModal, setShowAllTagsModal] = useState(false)
   const [modalExpandedTag, setModalExpandedTag] = useState(null)

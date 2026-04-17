@@ -57,21 +57,6 @@ export const fetchCalendars = async (token) => {
   return res.json()
 }
 
-// 페이지네이션을 포함한 전체 캘린더 목록 조회
-const fetchAllCalendars = async (token) => {
-  const items = []
-  let pageToken = null
-  do {
-    const url = 'https://www.googleapis.com/calendar/v3/users/me/calendarList' +
-      (pageToken ? `?pageToken=${pageToken}` : '')
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } })
-    if (!res.ok) throw new Error(`Failed to fetch calendars (${res.status})`)
-    const data = await res.json()
-    items.push(...(data.items || []))
-    pageToken = data.nextPageToken || null
-  } while (pageToken)
-  return items
-}
 
 // Firestore에서 캘린더 ID 저장/조회 (다중 기기 공유)
 const FIRESTORE_CAL_COLLECTION = 'userSettings'

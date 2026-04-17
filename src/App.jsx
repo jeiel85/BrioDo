@@ -348,7 +348,7 @@ function App() {
             localStorage.setItem('lockScreenEnabled', 'false')
             return
           }
-        } catch (_) {}
+        } catch { /* ignore */ }
       }
 
       // ── Step 2: 포어그라운드 서비스 시작 ──
@@ -363,7 +363,7 @@ function App() {
             LockScreenNative?.openFullScreenIntentSettings().catch(() => {})
           }, 500)
         }
-      } catch (_) {}
+      } catch { /* ignore */ }
 
       // ── Step 4: SYSTEM_ALERT_WINDOW 권한 확인 ──
       // 신뢰할 수 있는 장소 등 잠금 해제 상태에서도 잠금화면 위젯 표시에 필요
@@ -375,7 +375,7 @@ function App() {
             LockScreenNative?.openDrawOverlaysSettings().catch(() => {})
           }, 1500)
         }
-      } catch (_) {}
+      } catch { /* ignore */ }
     } else {
       // 잠금화면 비활성화: 서비스 종료 + 알림 제거
       LockScreenNative?.stopLockScreenService().catch(() => {})

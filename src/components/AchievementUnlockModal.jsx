@@ -167,7 +167,7 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
     }
   }, [])
 
-  const dismiss = (ach) => {
+  const dismiss = (_ach) => {
     // confetti.reset() 제거 — 캔버스 유지, 파티클은 자연 소멸 (~2s)
     // reset() 호출 시 캔버스가 DOM에서 제거 → 다음 업적 시 재생성 → 흰 플래시 원인
     setVisible(false)
