@@ -20,25 +20,29 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
 
-  projects: [
-    // Desktop Chrome
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-
-    // Mobile Chrome (Pixel 5)
-    {
-      name: 'Android Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-
-    // Mobile Safari (iPhone 12)
-    {
-      name: 'iOS Safari',
-      use: { ...devices['iPhone 12'] },
-    },
-  ],
+  projects: process.env.CI
+    ? [
+        // CI: Desktop Chrome only (mobile emulation is unreliable in headless CI)
+        {
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
+        },
+      ]
+    : [
+        // Local: all browsers
+        {
+          name: 'chromium',
+          use: { ...devices['Desktop Chrome'] },
+        },
+        {
+          name: 'Android Chrome',
+          use: { ...devices['Pixel 5'] },
+        },
+        {
+          name: 'iOS Safari',
+          use: { ...devices['iPhone 12'] },
+        },
+      ],
 
   webServer: {
     command: 'npm run dev',

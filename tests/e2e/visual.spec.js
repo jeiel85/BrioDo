@@ -25,20 +25,12 @@ const __dirname = path.dirname(__filename)
 
 // 온보딩 스킵 헬퍼
 async function skipOnboarding(page) {
-  await page.goto('/')
-  await page.waitForLoadState('domcontentloaded')
-
-  const isDone = await page.evaluate(() => {
-    return localStorage.getItem('briodo-onboarding-done') === 'true'
+  // Set flag before navigation so onboarding never renders
+  await page.addInitScript(() => {
+    localStorage.setItem('briodo-onboarding-done', 'true')
   })
-
-  if (!isDone) {
-    await page.evaluate(() => {
-      localStorage.setItem('briodo-onboarding-done', 'true')
-    })
-    await page.reload()
-    await page.waitForLoadState('networkidle')
-  }
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
 }
 
 // ============================================
@@ -314,6 +306,8 @@ test.describe('반응형 레이아웃 테스트', () => {
 
   test('모바일 small (320px) 레이아웃', async ({ page }) => {
     await page.setViewportSize({ width: 320, height: 568 })
+    // Wait for layout to stabilize after viewport change
+    await page.waitForFunction(() => document.getElementById('root')?.getBoundingClientRect().height > 0)
 
     await captureScreenshot(page, 'responsive-mobile-small')
 
@@ -323,7 +317,7 @@ test.describe('반응형 레이아웃 테스트', () => {
 
     // 작은 화면에서도 주요 요소가 보여야 함
     const root = page.locator('#root')
-    await expect(root).toBeVisible()
+    await expect(root).toBeVisible({ timeout: 10000 })
   })
 
   test('모바일 standard (375px) 레이아웃', async ({ page }) => {
@@ -375,8 +369,10 @@ test.describe('반응형 레이아웃 테스트', () => {
   BREAKPOINTS.forEach(({ name, width, height }) => {
     test(`${name} (${width}x${height}) 모든 요소 가시성`, async ({ page }) => {
       await page.setViewportSize({ width, height })
+      // Let the layout stabilize after viewport change
+      await page.waitForTimeout(500)
 
-      // 주요 요소들 가시성 检测
+      // 주요 요소들 가시성 检测 (toBeVisible auto-retries unlike isVisible)
       const elements = [
         '#root',
         '.header-wrapper',
@@ -384,11 +380,12 @@ test.describe('반응형 레이아웃 테스트', () => {
       ]
 
       for (const selector of elements) {
-        const isVisible = await page.locator(selector).first().isVisible().catch(() => false)
-        if (!isVisible) {
+        try {
+          await expect(page.locator(selector).first()).toBeVisible({ timeout: 5000 })
+        } catch {
           await captureScreenshot(page, `visibility-${name}-${selector.replace(/[^a-z]/g, '')}`)
+          throw new Error(`${selector} 가 ${name}에서 보여야 함`)
         }
-        expect(isVisible, `${selector} 가 ${name}에서 보여야 함`).toBe(true)
       }
     })
   })

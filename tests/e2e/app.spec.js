@@ -9,23 +9,12 @@ import { test, expect } from '@playwright/test'
  * 온보딩 스킵 - localStorage 플래그 설정으로 온보딩 우회
  */
 async function skipOnboarding(page) {
-  await page.goto('/')
-  await page.waitForLoadState('domcontentloaded')
-
-  // 이미 온보딩 완료 상태인지 확인
-  const isDone = await page.evaluate(() => {
-    return localStorage.getItem('briodo-onboarding-done') === 'true'
+  // Set flag before initial navigation so onboarding never renders
+  await page.addInitScript(() => {
+    localStorage.setItem('briodo-onboarding-done', 'true')
   })
-
-  if (!isDone) {
-    // localStorage로 온보딩 완료 플래그 설정
-    await page.evaluate(() => {
-      localStorage.setItem('briodo-onboarding-done', 'true')
-    })
-    // 페이지 리로드
-    await page.reload()
-    await page.waitForLoadState('networkidle')
-  }
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
 }
 
 test.describe('BrioDo 앱 기본 동작', () => {
