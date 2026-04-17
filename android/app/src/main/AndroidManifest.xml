@@ -87,6 +87,32 @@
             </intent-filter>
         </receiver>
 
+        <!-- BrioDo 홈 화면 위젯 -->
+        <receiver
+            android:name=".BrioDoWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="app.briodo.widget.ACTION_REFRESH" />
+                <action android:name="app.briodo.widget.ACTION_TOGGLE_TASK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/briodo_widget_info" />
+        </receiver>
+
+        <!-- 위젯 데이터 업데이트를 위한 브로드캐스트 수신 -->
+        <receiver
+            android:name=".WidgetActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="app.briodo.ACTION_TASK_TOGGLED" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -5,4 +5,13 @@
     <string name="package_name">app.briodo</string>
     <string name="custom_url_scheme">app.briodo</string>
     <string name="default_web_client_id">758825654936-hbi2uo4u34gqn8okvnnaqlm1ic43hfbc.apps.googleusercontent.com</string>
+
+    <!-- Widget Strings -->
+    <string name="widget_name">BrioDo Tasks</string>
+    <string name="widget_description">오늘의 할 일을 홈 화면에서 확인하세요</string>
+    <string name="widget_refresh">새로고침</string>
+    <string name="widget_add_task">추가</string>
+    <string name="widget_loading">로딩 중...</string>
+    <string name="widget_no_tasks">오늘 완료할 일이 없습니다</string>
+    <string name="widget_tasks_count">%d개 남은 할 일</string>
 </resources>
