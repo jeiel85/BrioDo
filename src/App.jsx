@@ -43,7 +43,7 @@ function App() {
   const { lang, langPref, setLangPref, t } = useLanguage()
   const { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired } = useAuth()
   const [showOnboarding, setShowOnboarding] = useState(() => shouldShowOnboarding())
-  const { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar } = useTheme()
+  const { theme, setTheme, fontScale, setFontScale, generateRandomTheme, syncStatusBar } = useTheme()
 
   // 완료 시 캘린더 처리 방식: 'status' | 'delete' (기본값: status)
   const [completionCalendarMode, setCompletionCalendarMode] = useState(
@@ -297,7 +297,7 @@ function App() {
         flags.lastOpenDate = today
         localStorage.setItem('briodo_engagement_flags', JSON.stringify(flags))
       }
-    } catch(e) {}
+    } catch { /* ignore */ }
   }, [])
 
   useEffect(() => {
@@ -547,7 +547,7 @@ function App() {
       // isKeyguardLocked()=false는 Samsung One UI에서 즉시 반환되어 신뢰할 수 없음.
       // 잠금화면 닫기는 사용자 액션(onOpen) 또는 keyguardDismissed 이벤트로만 처리.
       if (locked) setIsLockScreen(true)
-    } catch(e) {}
+    } catch { /* ignore */ }
   }
 
   // 잠금화면 표시 시 상태바 아이콘을 흰색으로, 닫을 때 테마 복원
@@ -566,35 +566,35 @@ function App() {
   useEffect(() => { syncStatusBarRef.current = syncStatusBar }, [syncStatusBar])
 
   const handleLockToggleTorch = async (on) => {
-    try { await LockScreenNative?.toggleTorch({ on }) } catch(e) {}
+    try { await LockScreenNative?.toggleTorch({ on }) } catch { /* ignore */ }
   }
 
   const handleLockOpenCamera = async () => {
-    try { await LockScreenNative?.openCamera() } catch(e) {}
+    try { await LockScreenNative?.openCamera() } catch { /* ignore */ }
   }
 
   const handleLockOpenQrScanner = async () => {
-    try { await LockScreenNative?.openQrScanner() } catch(e) {}
+    try { await LockScreenNative?.openQrScanner() } catch { /* ignore */ }
   }
 
   const handleLockOpenTimer = async () => {
-    try { await LockScreenNative?.openTimer() } catch(e) {}
+    try { await LockScreenNative?.openTimer() } catch { /* ignore */ }
   }
 
   const handleLockOpenCalculator = async () => {
-    try { await LockScreenNative?.openCalculator() } catch(e) {}
+    try { await LockScreenNative?.openCalculator() } catch { /* ignore */ }
   }
 
   const handleLockToggleMediaPlayPause = async () => {
-    try { await LockScreenNative?.toggleMediaPlayPause() } catch(e) {}
+    try { await LockScreenNative?.toggleMediaPlayPause() } catch { /* ignore */ }
   }
 
   const handleLockOpenAlarm = async () => {
-    try { await LockScreenNative?.openAlarm() } catch(e) {}
+    try { await LockScreenNative?.openAlarm() } catch { /* ignore */ }
   }
 
   const handleLockOpenStopwatch = async () => {
-    try { await LockScreenNative?.openStopwatch() } catch(e) {}
+    try { await LockScreenNative?.openStopwatch() } catch { /* ignore */ }
   }
 
   const handleLockToggleTodo = (id) => {

@@ -95,6 +95,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+
       - name: Build Android APK
         working-directory: android
         run: ./gradlew assembleDebug --quiet
