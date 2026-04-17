@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { functions } from '../firebase'
 import { httpsCallable } from 'firebase/functions'
+import { buildNudgePrompt } from '../utils/helpers'
 
 const AI_MODELS = [
   'gemini-2.5-flash-lite',
@@ -176,6 +177,8 @@ Keep it within 5-8 lines total.`
 export function useBriefing() {
   const [briefingText, setBriefingText] = useState('')
   const [briefingLoading, setBriefingLoading] = useState(false)
+  const [nudgeText, setNudgeText] = useState('')
+  const [nudgeLoading, setNudgeLoading] = useState(false)
 
   const generateBriefing = useCallback(async (todos, type, lang) => {
     setBriefingLoading(true)
@@ -189,7 +192,7 @@ export function useBriefing() {
         : buildEveningPrompt(todayTodos, lang)
 
       const result = await generateWithFallback(prompt)
-      const text = result || (lang === 'ko' ? '브리핑을 생성할 수 없습니다.' : lang === 'ja' ? 'ブリーフィングを生成できませんでした。' : lang === 'zh' ? '无法生成简报。' : 'Could not generate briefing.')
+      const text = result || (lang === 'ko' ? '브리핑을 생성할 수 없습니다.' : lang === 'ja' ? '브리핑을 생성할 수 없습니다。' : lang === 'zh' ? '无法生成简报。' : 'Could not generate briefing.')
       setBriefingText(text)
       return text
     } catch (e) {
@@ -201,5 +204,32 @@ export function useBriefing() {
     }
   }, [])
 
-  return { briefingText, briefingLoading, generateBriefing }
+  const generateNudge = useCallback(async (staleTodos, lang) => {
+    if (!staleTodos || staleTodos.length === 0) return null
+
+    setNudgeLoading(true)
+    setNudgeText('')
+    try {
+      const prompt = buildNudgePrompt(staleTodos, lang)
+      const result = await generateWithFallback(prompt)
+      const text = result || (lang === 'ko' ? '정리 제안 생성 실패' : lang === 'ja' ? '整理提案の生成に失敗' : lang === 'zh' ? '整理建议生成失败' : 'Failed to generate cleanup suggestion')
+      setNudgeText(text)
+      return text
+    } catch (e) {
+      console.error('[Nudge] generation error:', e)
+      setNudgeText('')
+      return null
+    } finally {
+      setNudgeLoading(false)
+    }
+  }, [])
+
+  return {
+    briefingText,
+    briefingLoading,
+    generateBriefing,
+    nudgeText,
+    nudgeLoading,
+    generateNudge
+  }
 }

@@ -4627,141 +4627,123 @@ body.modal-open { overflow: hidden; }
 }
 .week-strip { overflow: hidden; }
 
-/* ─── Grass Grid (잔디 심기) ─── */
-.grass-section {
-  margin: 12px 0 4px;
-}
-.grass-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-.grass-streak-badge {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-  border-radius: 20px;
-  padding: 3px 10px;
-  letter-spacing: -0.2px;
-}
-.grass-scroll-wrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 4px;
-}
-.grass-scroll-wrap::-webkit-scrollbar { display: none; }
-.grass-grid-container {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0;
-  min-width: max-content;
-}
-.grass-month-row {
-  display: flex;
-  gap: 3px;
-  margin-bottom: 3px;
-  padding-left: 18px;
-}
-.grass-month-label {
-  font-size: 9px;
-  color: var(--color-on-surface-variant);
-  opacity: 0.6;
-  min-width: 14px;
-  text-align: left;
-  letter-spacing: -0.3px;
-}
-.grass-body {
-  display: flex;
-  gap: 3px;
-}
-.grass-day-labels {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-right: 0;
-}
-.grass-day-label {
-  width: 16px;
-  height: 14px;
-  font-size: 9px;
-  color: var(--color-on-surface-variant);
-  opacity: 0.5;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 2px;
-}
-.grass-columns {
-  display: flex;
-  gap: 3px;
-}
-.grass-col {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.grass-cell {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  background: var(--color-surface-container-high);
-  transition: transform 0.1s;
-}
-.grass-cell.level-1 {
-  background: color-mix(in srgb, var(--color-primary) 28%, transparent);
-}
-.grass-cell.level-2 {
-  background: color-mix(in srgb, var(--color-primary) 58%, transparent);
-}
-.grass-cell.level-3 {
-  background: var(--color-primary);
-}
-.grass-cell.is-today {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -1px;
-}
-.grass-legend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 6px;
-  justify-content: flex-end;
-}
-.grass-legend-label {
-  font-size: 10px;
-  color: var(--color-on-surface-variant);
-  opacity: 0.55;
-}
-.grass-legend-cells {
-  display: flex;
-  gap: 3px;
-  align-items: center;
-}
-.grass-legend-cell {
-  width: 11px;
-  height: 11px;
-  border-radius: 2px;
+/* ─── Desktop PWA Layout ─── */
+@media (min-width: 768px) {
+  :root {
+    --content-max-width: 600px;
+  }
+
+  /* Center content on desktop */
+  .app-container {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.08);
+    min-height: 100vh;
+  }
+
+  /* Desktop-specific adjustments */
+  .todo-card {
+    margin: 8px 0;
+  }
+
+  /* Wider modal on desktop */
+  .input-overlay .input-modal,
+  .input-overlay .smart-input-modal {
+    max-width: 560px;
+    border-radius: 24px;
+  }
+
+  /* Settings modal wider */
+  .settings-overlay .settings-modal {
+    max-width: 480px;
+    border-radius: 24px;
+  }
+
+  /* Better typography spacing on desktop */
+  .header-date {
+    font-size: 1.3rem;
+  }
+
+  .header-greeting {
+    font-size: 0.95rem;
+  }
+
+  /* Desktop bottom nav adjustment */
+  .bottom-nav {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+  }
+
+  /* Desktop stats grid */
+  .stats-numbers-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  /* Contribution graph scrollable on desktop */
+  .contribution-graph-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
-/* ─── Achievement Share Button ─── */
-.ach-share-btn {
-  margin-top: 8px;
-  padding: 8px 24px;
-  border-radius: 20px;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: background 0.15s, transform 0.1s;
+@media (min-width: 1024px) {
+  :root {
+    --content-max-width: 720px;
+  }
+
+  /* Larger touch targets on desktop */
+  .bottom-nav-btn {
+    padding: 12px 20px;
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.5rem;
+  }
+
+  /* Side panel for stats on wide screens */
+  @media (min-height: 600px) {
+    .stats-side-panel {
+      position: fixed;
+      right: 20px;
+      top: 80px;
+      width: 280px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      background: var(--color-surface);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      z-index: 50;
+    }
+  }
 }
-.ach-share-btn:active {
-  transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.25);
+
+@media (min-width: 1280px) {
+  :root {
+    --content-max-width: 800px;
+  }
+
+  /* Multi-column layout for very wide screens */
+  .app-layout-desktop {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .app-layout-desktop .main-content {
+    min-width: 0;
+  }
+
+  .app-layout-desktop .side-panel {
+    position: sticky;
+    top: 24px;
+    height: fit-content;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
 }
