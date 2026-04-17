@@ -5,9 +5,19 @@ exports.generateGeminiContent = onCall(
   {
     region: "asia-northeast3", // Seoul region to minimize latency
     cors: true,
+    enforceAppCheck: true, // Require valid App Check token
   },
   async (request) => {
-    // 1. Verify Authentication
+    // 1. Verify App Check token (enforceAppCheck: true auto-validates)
+    if (!request.app) {
+      throw new HttpsError(
+        "failed-precondition",
+        "The function must be called with a valid App Check token. " +
+        "Please ensure the app is registered in Firebase Console App Check."
+      );
+    }
+
+    // 2. Verify Authentication
     if (!request.auth) {
       throw new HttpsError(
         "unauthenticated",
@@ -15,7 +25,7 @@ exports.generateGeminiContent = onCall(
       );
     }
 
-    // 2. Validate Request Payload
+    // 3. Validate Request Payload
     const { model, prompt } = request.data;
     if (!model || !prompt) {
       throw new HttpsError(
@@ -25,21 +35,21 @@ exports.generateGeminiContent = onCall(
     }
 
     try {
-      // 3. Initialize Gemini SDK with Environment Variable
+      // 4. Initialize Gemini SDK with Environment Variable
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
         throw new HttpsError("internal", "GEMINI_API_KEY is not configured on the server.");
       }
-      
+
       const genAI = new GoogleGenAI({ apiKey });
-      
-      // 4. Generate Content
+
+      // 5. Generate Content
       const response = await genAI.models.generateContent({
         model: model,
         contents: prompt,
       });
 
-      // 5. Return result to client
+      // 6. Return result to client
       if (response && response.text) {
         return { text: response.text };
       } else {
