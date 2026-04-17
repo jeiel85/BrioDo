@@ -2978,6 +2978,133 @@ body.modal-open { overflow: hidden; }
   opacity: 0.85;
 }
 
+/* Stats Section Header */
+.stats-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.stats-section-header .stats-section-title {
+  margin-bottom: 0;
+}
+
+/* Streak Badge */
+.streak-badge {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+}
+
+/* Contribution Graph */
+.contribution-graph-section {
+  background: var(--color-surface-container-lowest);
+  border-radius: 20px;
+  padding: 18px 16px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 16px;
+}
+
+.contribution-stats {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 12px;
+}
+
+.contribution-graph-wrapper {
+  position: relative;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.contribution-months {
+  position: relative;
+  height: 16px;
+  margin-bottom: 4px;
+  margin-left: 28px;
+}
+
+.contribution-month-label {
+  position: absolute;
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+}
+
+.contribution-graph-content {
+  display: flex;
+  gap: 4px;
+}
+
+.contribution-days {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9px;
+  color: var(--color-on-surface-variant);
+  padding-top: 1px;
+}
+
+.contribution-days span {
+  height: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.contribution-grid {
+  display: flex;
+  gap: 3px;
+}
+
+.contribution-week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contribution-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  transition: transform 0.1s ease;
+}
+
+.contribution-cell:hover {
+  transform: scale(1.2);
+}
+
+.contribution-cell.future {
+  opacity: 0.3;
+}
+
+.contribution-cell.today {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* Contribution Legend */
+.contribution-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 10px;
+  color: var(--color-on-surface-variant);
+}
+
+.contribution-legend-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
 /* Weekly pulse in stats */
 .stats-pulse-section {
   background: var(--color-surface-container-lowest);

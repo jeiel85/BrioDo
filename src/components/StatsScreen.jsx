@@ -1,6 +1,104 @@
 import { useMemo } from 'react'
-import { calcStreak } from '../utils/helpers'
+import { calcStreak, calcContributionGraph, getContributionMonths } from '../utils/helpers'
 import { ACHIEVEMENT_DEFS } from '../hooks/useAchievements'
+
+// Contribution Graph Level colors (GitHub-style)
+const LEVEL_COLORS = {
+  0: 'var(--color-surface-container-high)',
+  1: '#9be9a8',
+  2: '#40c463',
+  3: '#30a14e',
+  4: '#216e39'
+}
+
+function ContributionGraph({ todos, todayStr, lang }) {
+  const { grid, stats } = useMemo(() =>
+    calcContributionGraph(todos, 20), // Show 20 weeks
+  [todos])
+
+  const months = useMemo(() => getContributionMonths(20, todayStr), [todayStr])
+
+  const streak = useMemo(() => calcStreak(todos, todayStr), [todos, todayStr])
+
+  const levelLabels = lang === 'ko' ? ['없음', '낮음', '보통', '높음', '최고'] :
+    lang === 'ja' ? ['なし', '低', '中', '高', '最高'] :
+    lang === 'zh' ? ['无', '低', '中', '高', '最高'] :
+    ['None', 'Low', 'Medium', 'High', 'Max']
+
+  return (
+    <div className="contribution-graph-section">
+      <div className="stats-section-header">
+        <div className="stats-section-title">{lang === 'ko' ? '잔디 심기' : lang === 'ja' ? '芝生グラフ' : lang === 'zh' ? '种草日历' : 'Contribution Graph'}</div>
+        <div className="streak-badge">
+          🔥 {streak > 0 ? `${streak}${lang === 'ko' ? '일 연속' : lang === 'ja' ? '日連続' : lang === 'zh' ? '天连续' : ' day streak'}` : '-'}
+        </div>
+      </div>
+
+      {/* Contribution stats summary */}
+      <div className="contribution-stats">
+        <span>{stats.totalCompleted} {lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'completed'}</span>
+        <span>·</span>
+        <span>{stats.activeDays} {lang === 'ko' ? '활동일' : lang === 'ja' ? '活動日' : lang === 'zh' ? '活动日' : 'active days'}</span>
+        <span>·</span>
+        <span>Ø {stats.avgPerActiveDay}/{lang === 'ko' ? '일' : lang === 'ja' ? '日' : lang === 'zh' ? '天' : 'day'}</span>
+      </div>
+
+      {/* Graph */}
+      <div className="contribution-graph-wrapper">
+        {/* Month labels */}
+        <div className="contribution-months">
+          {months.map((m, i) => (
+            <div key={i} className="contribution-month-label" style={{ left: `${m.weekIndex * 14}px` }}>
+              {m.month}
+            </div>
+          ))}
+        </div>
+
+        <div className="contribution-graph-content">
+          {/* Day labels */}
+          <div className="contribution-days">
+            <span></span>
+            <span>Mon</span>
+            <span></span>
+            <span>Wed</span>
+            <span></span>
+            <span>Fri</span>
+            <span></span>
+          </div>
+
+          {/* Grid */}
+          <div className="contribution-grid">
+            {grid.map((weekData, weekIndex) => (
+              <div key={weekIndex} className="contribution-week">
+                {weekData.week.map((day, dayIndex) => (
+                  <div
+                    key={dayIndex}
+                    className={`contribution-cell ${day.isFuture ? 'future' : ''} ${day.isToday ? 'today' : ''}`}
+                    style={{ backgroundColor: LEVEL_COLORS[day.level] }}
+                    title={`${day.date}: ${day.count} ${lang === 'ko' ? '완료' : lang === 'ja' ? '完了' : lang === 'zh' ? '完成' : 'completed'}`}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="contribution-legend">
+        <span>{lang === 'ko' ? '적음' : lang === 'ja' ? '少ない' : lang === 'zh' ? '少' : 'Less'}</span>
+        {[0, 1, 2, 3, 4].map(level => (
+          <div
+            key={level}
+            className="contribution-legend-cell"
+            style={{ backgroundColor: LEVEL_COLORS[level] }}
+          />
+        ))}
+        <span>{lang === 'ko' ? '많음' : lang === 'ja' ? '多い' : lang === 'zh' ? '多' : 'More'}</span>
+      </div>
+    </div>
+  )
+}
 
 export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse, unlockedIds, onShowAllAchievements }) {
   const stats = useMemo(() => {
@@ -48,6 +146,9 @@ export function StatsScreen({ todos, todayStr, t, lang, weeklyPulse, unlockedIds
           <div className="stat-label">{t.allDone}</div>
         </div>
       </div>
+
+      {/* Contribution Graph (GitHub-style) */}
+      <ContributionGraph todos={todos} todayStr={todayStr} lang={lang} />
 
       {/* Completion Ring */}
       <div className="stats-ring-section">
