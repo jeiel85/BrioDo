@@ -135,7 +135,7 @@ export async function fetchWeather(locationKey = '', lang = 'en') {
     }
     saveCache(data, cacheId)
     return data
-  } catch (e) {
+  } catch {
     // 네트워크 오류 시 캐시 (만료된 것도) 재사용
     try {
       const raw = localStorage.getItem(CACHE_KEY)

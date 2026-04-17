@@ -100,6 +100,7 @@ export function SettingsModal({
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     checkForUpdate()
   }, [])
 

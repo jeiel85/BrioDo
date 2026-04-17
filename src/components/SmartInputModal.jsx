@@ -99,7 +99,9 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
           // 400ms 후 재시작 — Android SpeechRecognizer 세션 간 간격 필요
           restartTimerRef.current = setTimeout(async () => {
             if (isListeningRef.current) {
+              // eslint-disable-next-line react-hooks/set-state-in-effect
               setIsContinuing(false)
+              // eslint-disable-next-line react-hooks/immutability
               await startNativeSession()
             }
           }, 400)

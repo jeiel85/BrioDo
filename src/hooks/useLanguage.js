@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { translations } from '../constants/translations'
 
 const PREF_KEY = 'briodo-lang-pref'

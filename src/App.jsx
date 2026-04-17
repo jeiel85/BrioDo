@@ -640,7 +640,16 @@ function App() {
   // 뒤로가기 처리 (Android)
   // 렌더 중 직접 동기 업데이트 — useEffect로 하면 렌더~효과 실행 사이에 백버튼이 눌릴 경우 stale 값 읽힘
   const modalStateRef = useRef({})
+  // eslint-disable-next-line react-hooks/refs
   modalStateRef.current = { showInputModal, showSmartModal, showSettings, showAchievementsModal, showNotificationsModal, settingsScreen }
+
+  const resetForm = () => {
+    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset, subtasks: [], recurrence: { type: 'none', endDate: null } })
+    setShowDescInput(false)
+    setEditingTodoId(null)
+    setShowInputModal(false)
+    document.body.classList.remove('modal-open')
+  }
 
   // 설정 모달 닫힐 때 서브화면 리셋
   useEffect(() => {
@@ -749,14 +758,6 @@ function App() {
   useEffect(() => {
     if (!loading) handleGoToToday()
   }, [loading])
-
-  const resetForm = () => {
-    setNewTodo({ text: '', description: '', date: todayStr, time: '', tagInput: '', priority: 'medium', reminderOffset: defaultReminderOffset, subtasks: [], recurrence: { type: 'none', endDate: null } })
-    setShowDescInput(false)
-    setEditingTodoId(null)
-    setShowInputModal(false)
-    document.body.classList.remove('modal-open')
-  }
 
   const openEditModal = (todo) => {
     setEditingTodoId(todo.id)

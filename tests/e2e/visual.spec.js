@@ -220,7 +220,7 @@ test.describe('텍스트 잘림 检测', () => {
 
     await captureScreenshot(page, 'text-truncation-tags')
 
-    const tagTruncation = await checkTextTruncation(page, '.tag-label, .tag-item')
+    const _tagTruncation = await checkTextTruncation(page, '.tag-label, .tag-item')
 
     await page.keyboard.press('Escape')
   })

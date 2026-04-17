@@ -80,7 +80,7 @@ export function useAuth() {
     }
 
     if (Capacitor.isNativePlatform()) {
-      const handleDeepLink = CapApp.addListener('appUrlOpen', (_data) => {
+      const handleDeepLink = CapApp.addListener('appUrlOpen', () => {
         // deep link handled silently
       })
       return () => {

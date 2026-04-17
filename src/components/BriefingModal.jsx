@@ -25,6 +25,7 @@ export function BriefingModal({
   useEffect(() => {
     onGenerate()
     if (staleTodos.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowNudge(true)
       onGenerateNudge(staleTodos)
     }

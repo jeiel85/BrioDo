@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { calcStreak } from '../utils/helpers'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../firebase'
@@ -251,8 +251,6 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
   const [notifications, setNotifications] = useState([])
   const [unlockQueue, setUnlockQueue] = useState([])
   const [currentUnlock, setCurrentUnlock] = useState(null)
-  const isFirstMount = useRef(true)
-
   const stats = useMemo(() => {
     const streak = calcStreak(todos, todayStr)
     const totalCompleted = todos.filter(t => t.completed).length

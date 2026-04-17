@@ -179,6 +179,7 @@ export function AchievementUnlockModal({ achievement, onDismiss, lang }) {
 
   useEffect(() => {
     if (achievement) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalAchievement(achievement)
 
       // double-rAF: 첫 rAF는 레이아웃 계산 프레임, 두 번째 rAF에서 paint 완료 후 transition 시작

@@ -349,7 +349,7 @@ async function scanTextElements(page) {
 
       const issues = []
       elements.forEach((el, index) => {
-        const rect = el.getBoundingClientRect()
+        const _rect = el.getBoundingClientRect()
         const style = window.getComputedStyle(el)
 
         if (el.scrollWidth > el.clientWidth && (style.overflow === 'hidden' || style.overflowX === 'hidden')) {
