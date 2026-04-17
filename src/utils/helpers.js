@@ -62,3 +62,104 @@ export function calcStreak(todos, todayStr) {
   }
   return streak
 }
+
+/**
+ * Calculate contribution graph data (GitHub-style grass)
+ * @param {Array} todos - All todos
+ * @param {number} weeks - Number of weeks to display (default 52 = 1 year)
+ * @returns {Object} - { grid: 2D array of { date, count, level }, stats }
+ */
+export function calcContributionGraph(todos, weeks = 52) {
+  const grid = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Calculate start date (beginning of week, weeks ago)
+  const startDate = new Date(today)
+  startDate.setDate(startDate.getDate() - (weeks * 7) - startDate.getDay())
+
+  // Build date -> completed count map
+  const dateCountMap = {}
+  todos.forEach(todo => {
+    if (todo.completed && todo.date) {
+      dateCountMap[todo.date] = (dateCountMap[todo.date] || 0) + 1
+    }
+  })
+
+  // Find max count for level calculation
+  const counts = Object.values(dateCountMap)
+  const maxCount = Math.max(...counts, 1)
+
+  // Generate grid (weeks x 7 days)
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  let currentDate = new Date(startDate)
+
+  for (let w = 0; w < weeks; w++) {
+    const week = []
+    for (let d = 0; d < 7; d++) {
+      const dateStr = currentDate.toISOString().slice(0, 10)
+      const count = dateCountMap[dateStr] || 0
+      const isFuture = currentDate > today
+      const isToday = dateStr === today.toISOString().slice(0, 10)
+
+      // Level 0-4 based on activity intensity
+      let level = 0
+      if (!isFuture && count > 0) {
+        const ratio = count / maxCount
+        if (ratio >= 0.75) level = 4
+        else if (ratio >= 0.5) level = 3
+        else if (ratio >= 0.25) level = 2
+        else level = 1
+      }
+
+      week.push({ date: dateStr, count, level, isFuture, isToday })
+      currentDate.setDate(currentDate.getDate() + 1)
+    }
+    grid.push({ week, dayNames })
+  }
+
+  // Calculate stats
+  const totalDays = weeks * 7
+  const activeDays = counts.length
+  const totalCompleted = counts.reduce((a, b) => a + b, 0)
+  const avgPerActiveDay = activeDays > 0 ? (totalCompleted / activeDays).toFixed(1) : 0
+
+  return {
+    grid,
+    stats: {
+      totalDays,
+      activeDays,
+      totalCompleted,
+      avgPerActiveDay,
+      maxCount
+    }
+  }
+}
+
+/**
+ * Calculate monthly breakdown for contribution graph
+ */
+export function getContributionMonths(weeks, todayStr) {
+  const months = []
+  const today = new Date(todayStr)
+  const startDate = new Date(today)
+  startDate.setDate(startDate.getDate() - (weeks * 7))
+
+  let currentMonth = -1
+  let weekIndex = 0
+
+  while (weekIndex < weeks) {
+    const weekDate = new Date(startDate)
+    weekDate.setDate(weekDate.getDate() + (weekIndex * 7))
+    const month = weekDate.getMonth()
+
+    if (month !== currentMonth) {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      months.push({ month: monthNames[month], weekIndex })
+      currentMonth = month
+    }
+    weekIndex++
+  }
+
+  return months
+}
