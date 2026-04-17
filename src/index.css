@@ -4626,3 +4626,124 @@ body.modal-open { overflow: hidden; }
   animation: weekSlideFromLeft 0.22s ease;
 }
 .week-strip { overflow: hidden; }
+
+/* ─── Desktop PWA Layout ─── */
+@media (min-width: 768px) {
+  :root {
+    --content-max-width: 600px;
+  }
+
+  /* Center content on desktop */
+  .app-container {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.08);
+    min-height: 100vh;
+  }
+
+  /* Desktop-specific adjustments */
+  .todo-card {
+    margin: 8px 0;
+  }
+
+  /* Wider modal on desktop */
+  .input-overlay .input-modal,
+  .input-overlay .smart-input-modal {
+    max-width: 560px;
+    border-radius: 24px;
+  }
+
+  /* Settings modal wider */
+  .settings-overlay .settings-modal {
+    max-width: 480px;
+    border-radius: 24px;
+  }
+
+  /* Better typography spacing on desktop */
+  .header-date {
+    font-size: 1.3rem;
+  }
+
+  .header-greeting {
+    font-size: 0.95rem;
+  }
+
+  /* Desktop bottom nav adjustment */
+  .bottom-nav {
+    max-width: var(--content-max-width);
+    margin: 0 auto;
+  }
+
+  /* Desktop stats grid */
+  .stats-numbers-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  /* Contribution graph scrollable on desktop */
+  .contribution-graph-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --content-max-width: 720px;
+  }
+
+  /* Larger touch targets on desktop */
+  .bottom-nav-btn {
+    padding: 12px 20px;
+  }
+
+  .bottom-nav-icon {
+    font-size: 1.5rem;
+  }
+
+  /* Side panel for stats on wide screens */
+  @media (min-height: 600px) {
+    .stats-side-panel {
+      position: fixed;
+      right: 20px;
+      top: 80px;
+      width: 280px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      background: var(--color-surface);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      z-index: 50;
+    }
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --content-max-width: 800px;
+  }
+
+  /* Multi-column layout for very wide screens */
+  .app-layout-desktop {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .app-layout-desktop .main-content {
+    min-width: 0;
+  }
+
+  .app-layout-desktop .side-panel {
+    position: sticky;
+    top: 24px;
+    height: fit-content;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+}

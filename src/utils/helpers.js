@@ -163,3 +163,89 @@ export function getContributionMonths(weeks, todayStr) {
 
   return months
 }
+
+/**
+ * Find stale (old) uncompleted todos for Nudge feature
+ * Returns todos that are:
+ * - Not completed
+ * - Created more than specified days ago
+ *
+ * @param {Array} todos - All todos
+ * @param {number} daysThreshold - Days threshold (default 14 = 2 weeks)
+ * @returns {Array} - Stale todos
+ */
+export function findStaleTodos(todos, daysThreshold = 14) {
+  const now = new Date()
+  const thresholdDate = new Date(now)
+  thresholdDate.setDate(thresholdDate.getDate() - daysThreshold)
+  const thresholdStr = thresholdDate.toISOString().slice(0, 10)
+
+  return todos.filter(todo => {
+    if (todo.completed) return false
+
+    const createdDate = todo.createdAt
+    if (!createdDate) return false
+
+    // Handle timestamp (number) or date string
+    let createdDateStr
+    if (typeof createdDate === 'number') {
+      createdDateStr = new Date(createdDate).toISOString().slice(0, 10)
+    } else if (typeof createdDate === 'string') {
+      createdDateStr = createdDate.slice(0, 10)
+    } else if (createdDate?.toDate) {
+      // Firebase Timestamp
+      createdDateStr = createdDate.toDate().toISOString().slice(0, 10)
+    } else {
+      return false
+    }
+
+    return createdDateStr < thresholdStr
+  }).slice(0, 5) // Limit to 5 items
+}
+
+/**
+ * Build Nudge prompt for stale todos
+ */
+export function buildNudgePrompt(staleTodos, lang) {
+  const taskList = staleTodos.map(t => `- "${t.text}"`).join('\n')
+  const count = staleTodos.length
+
+  if (lang === 'ko') {
+    return `다음 할 일들이 2주 이상 방치되어 있습니다. 사용자에게 정리 제안을 해주세요.
+
+방치된 할 일 (${count}개):
+${taskList}
+
+해당 할 일들을 오늘로 미루거나 삭제할 것을 부드럽게 권유해주세요.
+"이 일정을 오늘로 미룰까요, 아니면 과감히 삭제할까요?" 같은 형식으로 응답해주세요.
+마크다운 금지, 순수 텍스트만, 3-5줄 이내.`
+  }
+  if (lang === 'ja') {
+    return `以下のタスクが2週間以上放置されています。整理を提案してください。
+
+放置されたタスク (${count}個):
+${taskList}
+
+これらのタスクを今日の予定に延期するか、削除することを優しく勧めてください。
+「このタスクを今日に延期しますか？それとも思い切って削除しますか？」のような形式で応答してください。
+マークダウン禁止、テキストのみ、3-5行以内。`
+  }
+  if (lang === 'zh') {
+    return `以下任务已闲置2周以上。请建议整理。
+
+闲置任务 (${count}个):
+${taskList}
+
+请温和地建议将任务延期到今天或删除。
+以"将这些任务延期到今天，还是果断删除？"的格式回复。
+禁用markdown，纯文本，3-5行以内。`
+  }
+  return `These tasks have been neglected for 2+ weeks. Please suggest cleanup.
+
+Neglected tasks (${count}):
+${taskList}
+
+Gently suggest rescheduling to today or deleting.
+Respond in format like "Would you like to reschedule these tasks to today, or boldly delete them?"
+No markdown, plain text only, 3-5 lines.`
+}
