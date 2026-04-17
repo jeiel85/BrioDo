@@ -9,6 +9,7 @@ export default defineConfig({
   reporter: [
     ['list'],
     ['html', { open: 'never' }],
+    ['json', { outputFile: 'test-results/test-results.json' }],
   ],
 
   use: {
