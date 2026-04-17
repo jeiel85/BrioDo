@@ -30,7 +30,8 @@ async function skipOnboarding(page) {
     localStorage.setItem('briodo-onboarding-done', 'true')
   })
   await page.goto('/')
-  await page.waitForLoadState('networkidle')
+  // Wait for main app UI (Firebase auth loading state resolves before header renders)
+  await page.waitForSelector('.header-wrapper', { timeout: 20000 })
 }
 
 // ============================================
