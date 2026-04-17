@@ -4497,6 +4497,17 @@ body.modal-open { overflow: hidden; }
     right: calc(50% - 1100px / 2 + 72px + 28px);
     bottom: 28px;
   }
+
+  /* Always show expanded calendar in landscape mode */
+  .week-view {
+    display: none !important;
+  }
+  .month-calendar {
+    display: block !important;
+  }
+  .calendar-expand-btn {
+    display: none !important;
+  }
 }
 
 /* ─── Collapsing Header: Compact Bar + Collapsible Section ─── */
@@ -4716,8 +4727,140 @@ body.modal-open { overflow: hidden; }
       padding: 20px;
       box-shadow: var(--card-shadow);
       z-index: 50;
-    }
   }
+}
+}
+
+/* ─── Grass Grid (잔디 심기) ─── */
+.grass-section {
+  margin: 12px 0 4px;
+}
+.grass-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.grass-streak-badge,
+span.grass-streak-badge {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #4285F4 !important;
+  background: rgba(66, 133, 244, 0.18) !important;
+  border-radius: 20px !important;
+  padding: 5px 12px !important;
+  letter-spacing: -0.2px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 4px;
+  border: 1.5px solid rgba(66, 133, 244, 0.35) !important;
+  margin: 4px 0;
+}
+.grass-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.grass-scroll-wrap::-webkit-scrollbar { display: none; }
+.grass-grid-container {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: max-content;
+}
+.grass-month-row {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 3px;
+  padding-left: 18px;
+}
+.grass-month-label {
+  font-size: 9px;
+  color: #9EA3B8;
+  min-width: 14px;
+  text-align: left;
+  letter-spacing: -0.3px;
+}
+.grass-body {
+  display: flex;
+  gap: 3px;
+}
+.grass-day-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-right: 0;
+}
+.grass-day-label {
+  width: 16px;
+  height: 14px;
+  font-size: 9px;
+  color: #9EA3B8;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;
+}
+.grass-columns {
+  display: flex;
+  gap: 3px;
+}
+.grass-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.grass-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--color-surface-container-high);
+  transition: transform 0.1s;
+}
+.grass-cell.level-1 {
+  background: rgba(66, 133, 244, 0.28);
+}
+.grass-cell.level-2 {
+  background: rgba(66, 133, 244, 0.58);
+}
+.grass-cell.level-3 {
+  background: var(--color-primary);
+}
+.grass-cell.is-today {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+.grass-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  justify-content: flex-end;
+}
+.grass-legend-label {
+  font-size: 10px;
+  color: #9EA3B8;
+}
+.grass-legend-cells {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+.grass-legend-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--color-surface-container-high);
+}
+.grass-legend-cell.level-1 {
+  background: rgba(66, 133, 244, 0.28);
+}
+.grass-legend-cell.level-2 {
+  background: rgba(66, 133, 244, 0.58);
+}
+.grass-legend-cell.level-3 {
+  background: var(--color-primary);
 }
 
 @media (min-width: 1280px) {
