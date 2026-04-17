@@ -54,6 +54,16 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: Create .env for E2E (dummy Firebase config — app loads as guest)
+        run: |
+          echo "VITE_FIREBASE_API_KEY=ci-placeholder-key" >> .env
+          echo "VITE_FIREBASE_AUTH_DOMAIN=ci-placeholder.firebaseapp.com" >> .env
+          echo "VITE_FIREBASE_PROJECT_ID=ci-placeholder" >> .env
+          echo "VITE_FIREBASE_STORAGE_BUCKET=ci-placeholder.appspot.com" >> .env
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=000000000000" >> .env
+          echo "VITE_FIREBASE_APP_ID=1:000000000000:web:ci-placeholder" >> .env
+          echo "VITE_GEMINI_API_KEY=ci-placeholder-key" >> .env
+
       - name: Run E2E tests
         run: npx playwright test
 
