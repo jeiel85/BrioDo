@@ -376,13 +376,13 @@ export function CollectionsScreen({ todos, t, lang, openEditModal, toggleComplet
           </div>
         )}
 
-        {/* 잔디 심기 */}
+        {/* 잔디 심기 — 임시 비활성화
         <GrassGrid
           grassData={grassData}
           todayStr={todayStr}
           streak={stats.streak}
           lang={lang}
-        />
+        /> */}
 
       </div>
 
