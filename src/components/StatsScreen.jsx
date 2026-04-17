@@ -20,10 +20,6 @@ function ContributionGraph({ todos, todayStr, lang }) {
 
   const streak = useMemo(() => calcStreak(todos, todayStr), [todos, todayStr])
 
-  const levelLabels = lang === 'ko' ? ['없음', '낮음', '보통', '높음', '최고'] :
-    lang === 'ja' ? ['なし', '低', '中', '高', '最高'] :
-    lang === 'zh' ? ['无', '低', '中', '高', '最高'] :
-    ['None', 'Low', 'Medium', 'High', 'Max']
 
   return (
     <div className="contribution-graph-section">

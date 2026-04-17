@@ -8,7 +8,7 @@ import { useSwipeToDismiss } from '../hooks/useSwipeToDismiss'
 // 묵음 감지 후 자동 재시작 최대 횟수 — 이 이상이면 완전 종료
 const MAX_AUTO_RESTARTS = 5
 
-export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice, reminderOffset, setReminderOffset, defaultReminderOffset }) {
+export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, onClose, onSave, autoStartVoice }) {
   const textareaRef = useRef(null)
   const webRecognitionRef = useRef(null)
   const retryingRef = useRef(false)
@@ -32,8 +32,8 @@ export function SmartInputModal({ lang, smartText, setSmartText, isAiAnalyzing, 
   const canRecord = isNative || !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
   const cleanupNativeListeners = useCallback(async () => {
-    try { partialListenerRef.current?.remove() } catch {}
-    try { stateListenerRef.current?.remove() } catch {}
+    try { partialListenerRef.current?.remove() } catch { /* ignore */ }
+    try { stateListenerRef.current?.remove() } catch { /* ignore */ }
     partialListenerRef.current = null
     stateListenerRef.current = null
   }, [])

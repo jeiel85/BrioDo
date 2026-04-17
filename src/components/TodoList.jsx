@@ -8,7 +8,7 @@ const PRIORITY_LABELS = {
   en: { low: 'Low', medium: 'Med', high: 'High', urgent: 'Urgent' },
 }
 
-export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, showAllIncomplete, todayStr, openEditModal, toggleComplete, toggleSubtaskComplete, deleteTodo }) {
+export function TodoList({ t, lang, activeTodos, completedTodos, viewMode, showAllIncomplete, todayStr, openEditModal, toggleComplete, toggleSubtaskComplete, deleteTodo }) {
   const [showCompleted, setShowCompleted] = useState(true)
   const [expandedSubtasks, setExpandedSubtasks] = useState(new Set())
 

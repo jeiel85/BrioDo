@@ -333,7 +333,7 @@ export function useAchievements({ todos, todayStr, weeklyPulse, user }) {
     }
 
     let flags = {}
-    try { flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}') } catch(e){}
+    try { flags = JSON.parse(localStorage.getItem('briodo_engagement_flags') || '{}') } catch { /* ignore */ }
 
     return {
       streak, totalCompleted, todayCompleted, todayActive, todayTotal,

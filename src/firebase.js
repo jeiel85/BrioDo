@@ -8,7 +8,7 @@ import { getFunctions } from "firebase/functions"
 const APP_CHECK_ENABLED = false // TODO: 환경 변수로 전환 예정
 
 if (APP_CHECK_ENABLED) {
-  import('firebase/app-check').then(({ initializeAppCheck, ReCaptchaEnterpriseProvider }) => {
+  import('firebase/app-check').then(() => {
     console.log('[AppCheck] App Check is disabled for now')
   }).catch(() => {})
 }

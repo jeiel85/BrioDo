@@ -132,7 +132,7 @@ export function useTheme() {
           const { bg, style } = getStatusBarColors(theme, randomColors)
           await StatusBar.setBackgroundColor({ color: bg })
           await StatusBar.setStyle({ style })
-        } catch (e) {}
+        } catch { /* ignore */ }
       }, 100)
     }
   }, [theme, randomColors, getStatusBarColors])
@@ -152,7 +152,7 @@ export function useTheme() {
       const { bg, style } = getStatusBarColors(t, rc)
       await StatusBar.setBackgroundColor({ color: bg })
       await StatusBar.setStyle({ style })
-    } catch (e) {}
+    } catch { /* ignore */ }
   }, [getStatusBarColors])
 
   return { theme, setTheme, fontScale, setFontScale, randomColors, generateRandomTheme, syncStatusBar }

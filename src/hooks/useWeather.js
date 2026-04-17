@@ -77,7 +77,7 @@ function loadCache() {
 function saveCache(data, location) {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data, location }))
-  } catch {}
+  } catch { /* ignore */ }
 }
 
 export async function fetchWeather(locationKey = '', lang = 'en') {
@@ -119,7 +119,7 @@ export async function fetchWeather(locationKey = '', lang = 'en') {
             const nd = await nr.json()
             area = nd.address?.city || nd.address?.town || nd.address?.county || nd.address?.state || ''
           }
-        } catch {}
+        } catch { /* ignore */ }
       }
     }
 
@@ -143,7 +143,7 @@ export async function fetchWeather(locationKey = '', lang = 'en') {
         const { data } = JSON.parse(raw)
         return data
       }
-    } catch {}
+    } catch { /* ignore */ }
     return null
   }
 }

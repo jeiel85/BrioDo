@@ -43,7 +43,7 @@ export function SettingsModal({
   lang, langPref, setLangPref,
   fontScale, setFontScale,
   theme, setTheme, generateRandomTheme,
-  viewMode, setViewMode, defaultView, setDefaultView, setSelectedDate,
+  setViewMode, defaultView, setDefaultView, setSelectedDate,
   inputMode, setInputMode,
   onAiLimitToast,
   completionCalendarMode, setCompletionCalendarMode,
