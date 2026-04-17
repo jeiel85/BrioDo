@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { formatTime } from '../utils/helpers'
+import { NativeAdCard, intersperseAds } from './NativeAd'
 
 const PRIORITY_LABELS = {
   ko: { low: '낮음', medium: '보통', high: '높음', urgent: '긴급' },
@@ -11,6 +12,9 @@ const PRIORITY_LABELS = {
 export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode, showAllIncomplete, todayStr, openEditModal, toggleComplete, toggleSubtaskComplete, deleteTodo }) {
   const [showCompleted, setShowCompleted] = useState(true)
   const [expandedSubtasks, setExpandedSubtasks] = useState(new Set())
+
+  // Intersperse ads into active todos (every 5 items)
+  const activeTodosWithAds = intersperseAds(activeTodos, 5)
 
   const pLabels = PRIORITY_LABELS[lang] || PRIORITY_LABELS.en
 
@@ -163,9 +167,14 @@ export function TodoList({ user, t, lang, activeTodos, completedTodos, viewMode,
 
   return (
     <>
-      {/* Active todos */}
+      {/* Active todos with native ads */}
       <div className="active-list">
-        {activeTodos.map(todo => renderTodoCard(todo, false))}
+        {activeTodosWithAds.map(item => {
+          if (item.isAd) {
+            return <NativeAdCard key={item.id} position={item.position} />
+          }
+          return renderTodoCard(item, false)
+        })}
         {activeTodos.length === 0 && (
           <p className="empty-message">{t.doneAll}</p>
         )}
