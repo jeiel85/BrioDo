@@ -13,6 +13,19 @@
 # Keep R8 from stripping Capacitor plugin interfaces
 -keep class com.getcapacitor.** { *; }
 -keepclassmembers class com.getcapacitor.** { *; }
+
+# Firebase SDK
+-keep class com.google.firebase.** { *; }
+-dontwarn com.google.firebase.**
+
+# Google API Client
+-keep class com.google.api.** { *; }
+-dontwarn com.google.api.**
+
+# Gson serialization
+-keepattributes Signature
+-keepattributes *Annotation*
+-keep class com.briodo.** { *; }
 # You can control the set of applied configuration files using the
 # proguardFiles setting in build.gradle.
 #

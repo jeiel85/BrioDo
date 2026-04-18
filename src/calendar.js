@@ -2,9 +2,10 @@
 import { Capacitor } from '@capacitor/core'
 import { db, auth } from './firebase.js'
 import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { storage } from './utils/storage.js'
 
 export const getCalendarAccessToken = () => {
-  return localStorage.getItem('googleAccessToken')
+  return storage.get(storage.keys.GOOGLE_ACCESS_TOKEN)
 }
 
 export const isCalendarSyncEnabled = () =>
@@ -18,7 +19,7 @@ export const getCalendarSyncNoTime = () =>
 // 반환: { success: boolean, expired: boolean }
 export const refreshAccessTokenIfNeeded = async () => {
   if (!Capacitor.isNativePlatform()) return { success: true, expired: false }
-  const savedAt = parseInt(localStorage.getItem('googleAccessTokenSavedAt') || '0')
+  const savedAt = parseInt(localStorage.getItem(storage.keys.GOOGLE_TOKEN_SAVED_AT) || '0')
   if (!savedAt) return { success: false, expired: true }
   const age = Date.now() - savedAt
   if (age < 50 * 60 * 1000) return { success: true, expired: false }  // 50분 미만이면 skip
@@ -30,12 +31,12 @@ export const refreshAccessTokenIfNeeded = async () => {
     // Sometimes GoogleAuth.refresh() itself doesn't return accessToken but it updates internal state.
     // Try to get token via signIn or similar if needed, but for now just getting the refreshed info.
     if (refreshed?.authentication?.accessToken) {
-      localStorage.setItem('googleAccessToken', refreshed.authentication.accessToken)
-      localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
+      storage.set(storage.keys.GOOGLE_ACCESS_TOKEN, refreshed.authentication.accessToken)
+      localStorage.setItem(storage.keys.GOOGLE_TOKEN_SAVED_AT, Date.now().toString())
       return { success: true, expired: false }
     } else if (refreshed?.accessToken) {
-      localStorage.setItem('googleAccessToken', refreshed.accessToken)
-      localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
+      storage.set(storage.keys.GOOGLE_ACCESS_TOKEN, refreshed.accessToken)
+      localStorage.setItem(storage.keys.GOOGLE_TOKEN_SAVED_AT, Date.now().toString())
       return { success: true, expired: false }
     }
     return { success: false, expired: true }
@@ -248,7 +249,7 @@ export const syncEventToGoogle = async (todo) => {
     })
 
     if (!res.ok) {
-      if (res.status === 401) localStorage.removeItem('googleAccessToken')
+      if (res.status === 401) storage.remove(storage.keys.GOOGLE_ACCESS_TOKEN)
       if (res.status === 404 && method === 'POST') {
         console.warn('syncEventToGoogle: calendar not found, resetting cache and retrying...')
         localStorage.removeItem('briodo-calendar-id')

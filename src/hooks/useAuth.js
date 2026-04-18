@@ -12,6 +12,7 @@ import {
 } from "firebase/auth"
 import { auth, googleProvider } from '../firebase'
 import { resetCalendarSession, refreshAccessTokenIfNeeded } from '../calendar'
+import { storage } from '../utils/storage'
 
 // Android/iOS: @codetrix-studio/capacitor-google-auth 플러그인으로 OAuth2 accessToken 획득
 // Web: signInWithPopup 사용
@@ -20,6 +21,7 @@ export function useAuth() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tokenExpired, setTokenExpired] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // 로딩이 5초 이상 지속되면 강제 해제
   useEffect(() => {
@@ -55,9 +57,19 @@ export function useAuth() {
       }
     }, 3000)
 
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
+    const unsubscribe = onAuthStateChanged(auth, async (u) => {
       clearTimeout(checkTimer)
       setUser(u)
+      if (u) {
+        try {
+          const tokenResult = await u.getIdTokenResult()
+          setIsAdmin(tokenResult.claims.admin === true)
+        } catch {
+          setIsAdmin(false)
+        }
+      } else {
+        setIsAdmin(false)
+      }
       setLoading(false)
     })
 
@@ -69,7 +81,8 @@ export function useAuth() {
           if (result) {
             const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
             if (oauthCredential?.accessToken) {
-              localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
+              storage.set(storage.keys.GOOGLE_ACCESS_TOKEN, oauthCredential.accessToken)
+              localStorage.setItem(storage.keys.GOOGLE_TOKEN_SAVED_AT, Date.now().toString())
             }
           }
         } catch (e) {
@@ -112,8 +125,8 @@ export function useAuth() {
         await signInWithCredential(auth, credential)
 
         if (accessToken) {
-          localStorage.setItem('googleAccessToken', accessToken)
-          localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
+          storage.set(storage.keys.GOOGLE_ACCESS_TOKEN, accessToken)
+          localStorage.setItem(storage.keys.GOOGLE_TOKEN_SAVED_AT, Date.now().toString())
           setTokenExpired(false)
         } else {
           console.warn("Native: accessToken not returned")
@@ -123,8 +136,8 @@ export function useAuth() {
         const result = await signInWithPopup(auth, googleProvider)
         const oauthCredential = GoogleAuthProvider.credentialFromResult(result)
         if (oauthCredential?.accessToken) {
-          localStorage.setItem('googleAccessToken', oauthCredential.accessToken)
-          localStorage.setItem('googleAccessTokenSavedAt', Date.now().toString())
+          storage.set(storage.keys.GOOGLE_ACCESS_TOKEN, oauthCredential.accessToken)
+          localStorage.setItem(storage.keys.GOOGLE_TOKEN_SAVED_AT, Date.now().toString())
         }
       }
     } catch (e) {
@@ -139,8 +152,8 @@ export function useAuth() {
         await GoogleAuth.signOut()
       }
       await signOut(auth)
-      localStorage.removeItem('googleAccessToken')
-      localStorage.removeItem('googleAccessTokenSavedAt')
+      storage.remove(storage.keys.GOOGLE_ACCESS_TOKEN)
+      localStorage.removeItem(storage.keys.GOOGLE_TOKEN_SAVED_AT)
       localStorage.removeItem('briodo-calendar-id')
       resetCalendarSession()
     } catch (e) {
@@ -148,5 +161,5 @@ export function useAuth() {
     }
   }
 
-  return { user, loading, handleLogin, handleLogout, tokenExpired, setTokenExpired }
+  return { user, loading, isAdmin, handleLogin, handleLogout, tokenExpired, setTokenExpired }
 }

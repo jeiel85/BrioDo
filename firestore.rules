@@ -17,6 +17,11 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    // Firebase Custom Claims 기반 관리자 확인
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+
     // Rate Limiting: 분당 최대 쓰기 횟수
     // Note: Firestore Security Rules는 완벽한 rate limiting에 제한적이므로
     // Cloud Functions에서 추가적인 검증 권장
@@ -37,6 +42,14 @@ service cloud.firestore {
         && tags.size() <= 10
         && tags.size() >= 0
         && tags.hasAll(tags.map(t, t is string && t.size() <= 50));
+    }
+
+    // =============================================
+    // 유저 정보 (users) - 관리자 전용
+    // =============================================
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow write: if false; // 관리자도 유저 데이터 직접 수정은 불가 (보안상 안전)
     }
 
     // =============================================
