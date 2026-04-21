@@ -1541,6 +1541,37 @@ Android에서 잠금화면 위에 앱을 자동으로 띄우는 유일한 신뢰
 ---
 ---
 
+## 세션 33 — 2026-04-21: GitHub Actions 빌드 자동화 완성
+
+### 변경 내용
+
+#### CI/CD 파이프라인 구축
+- **GitHub Actions 워크플로우 전면 개선** (`.github/workflows/ci.yml`)
+  - `workflow_dispatch` 수동 트리거 추가
+  - 릴리즈 AAB 빌드 잡 추가 (`build_release=true` 또는 `v*` 태그 시 실행)
+  - APK 아티팩트 보존 14일, AAB 30일
+
+#### 자동 릴리즈 APK 배포
+- **main 푸시마다 GitHub Releases 자동 업데이트**
+  - `latest-debug` 태그 고정 URL로 항상 최신 APK 접근 가능
+  - 릴리즈 키스토어 서명 (`assembleRelease`) — Play Store 버전과 동일 서명
+  - 기존 앱 삭제 없이 바로 덮어쓰기 설치 가능
+- **GitHub Secrets 등록**: `ANDROID_KEYSTORE_BASE64`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_PASSWORD`
+
+#### 테스트 자동화
+- **Vitest 유닛 테스트** (`src/utils/helpers.test.js`) — 35개 테스트
+  - `matchesRecurrence`, `getNextOccurrence`, `getLangLocale`, `formatTime`, `calcStreak`, `findStaleTodos`, `buildNudgePrompt`
+- **E2E 테스트 구조 정리**: `tests/todo.spec.js` → `tests/e2e/` 이동, CI 호환 수정
+- **CI 잡 5개**: Build / Lint / Unit Tests / E2E Tests / Android Build (Signed APK) 전체 녹색
+
+### 현재 상태
+- main 푸시 → 서명된 APK가 GitHub Releases에 자동 배포되는 파이프라인 완성
+- 다운로드: `https://github.com/jeiel85/BrioDo/releases/tag/latest-debug`
+
+*최종 업데이트: 2026-04-21 (세션 33 — GitHub Actions 빌드 자동화)*
+
+---
+
 ## 세션 18 — 2026-03-27: 업적 시스템 200개 확장 + 브리오 보상 연동
 
 ### 변경 내용
