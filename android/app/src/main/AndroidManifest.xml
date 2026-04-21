@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -10,10 +9,6 @@
     <!-- 포어그라운드 서비스 (잠금화면 + 상태바 알림) -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-    <!-- 잠금화면 위 자동 실행 (레거시 — 현재 비활성) -->
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!-- 잠금화면 위젯 오버레이 권한 (레거시 — 현재 비활성) -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- 상태바 알림 손전등 버튼 -->
     <uses-permission android:name="android.permission.FLASHLIGHT" />
     <!-- 배터리 최적화 예외 요청 (상태바 알림 서비스 유지, 일정 알림 정시 발송) -->

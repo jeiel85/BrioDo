@@ -66,6 +66,7 @@ export function containsPII(text) {
   if (!text || typeof text !== 'string') return false
 
   for (const { regex } of PII_PATTERNS) {
+    regex.lastIndex = 0
     if (regex.test(text)) return true
   }
   return false

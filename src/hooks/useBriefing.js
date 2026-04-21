@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { functions } from '../firebase'
 import { httpsCallable } from 'firebase/functions'
 import { buildNudgePrompt } from '../utils/helpers'
+import { maskPII } from '../utils/piiMask'
 
 const AI_MODELS = [
   'gemini-2.5-flash-lite',
@@ -25,7 +26,7 @@ const generateWithFallback = async (prompt) => {
 
 function buildMorningPrompt(todos, lang) {
   const taskList = todos.map(t => {
-    let line = `- ${t.text}`
+    let line = `- ${maskPII(t.text)}`
     if (t.time) line += ` (${t.time})`
     if (t.priority === 'high' || t.priority === 'urgent') line += ' [!]'
     if (t.tags?.length) line += ` #${t.tags.join(' #')}`
@@ -94,8 +95,8 @@ Keep it within 5-8 lines total.`
 function buildEveningPrompt(todos, lang) {
   const completed = todos.filter(t => t.completed)
   const remaining = todos.filter(t => !t.completed)
-  const completedList = completed.map(t => `- ${t.text}`).join('\n')
-  const remainingList = remaining.map(t => `- ${t.text}`).join('\n')
+  const completedList = completed.map(t => `- ${maskPII(t.text)}`).join('\n')
+  const remainingList = remaining.map(t => `- ${maskPII(t.text)}`).join('\n')
   const rate = todos.length > 0 ? Math.round((completed.length / todos.length) * 100) : 0
 
   if (lang === 'ko') {

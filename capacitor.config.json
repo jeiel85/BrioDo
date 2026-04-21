@@ -21,7 +21,6 @@
       "scopes": [
         "profile",
         "email",
-        "https://www.googleapis.com/auth/calendar.events",
         "https://www.googleapis.com/auth/calendar"
       ],
       "serverClientId": "758825654936-hbi2uo4u34gqn8okvnnaqlm1ic43hfbc.apps.googleusercontent.com",

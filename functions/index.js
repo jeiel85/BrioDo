@@ -1,23 +1,22 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { GoogleGenAI } = require("@google/genai");
 
+const ALLOWED_MODELS = new Set([
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-flash',
+]);
+const MAX_PROMPT_LENGTH = 4000;
+
 exports.generateGeminiContent = onCall(
   {
-    region: "asia-northeast3", // Seoul region to minimize latency
+    region: "asia-northeast3",
     cors: true,
-    enforceAppCheck: true, // Require valid App Check token
+    enforceAppCheck: false,
   },
   async (request) => {
-    // 1. Verify App Check token (enforceAppCheck: true auto-validates)
-    if (!request.app) {
-      throw new HttpsError(
-        "failed-precondition",
-        "The function must be called with a valid App Check token. " +
-        "Please ensure the app is registered in Firebase Console App Check."
-      );
-    }
-
-    // 2. Verify Authentication
+    // 1. Verify Authentication
     if (!request.auth) {
       throw new HttpsError(
         "unauthenticated",
@@ -25,13 +24,19 @@ exports.generateGeminiContent = onCall(
       );
     }
 
-    // 3. Validate Request Payload
+    // 2. Validate Request Payload
     const { model, prompt } = request.data;
     if (!model || !prompt) {
       throw new HttpsError(
         "invalid-argument",
         "The function must be called with 'model' and 'prompt'."
       );
+    }
+    if (!ALLOWED_MODELS.has(model)) {
+      throw new HttpsError("invalid-argument", "Invalid model.");
+    }
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      throw new HttpsError("invalid-argument", "Prompt too long.");
     }
 
     try {
