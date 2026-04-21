@@ -5,6 +5,14 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      build_release:
+        description: '릴리즈 AAB 빌드 포함 여부'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
 
 jobs:
   # 1. 웹 빌드 테스트
@@ -33,7 +41,27 @@ jobs:
           name: dist
           path: dist/
 
-  # 2. E2E 테스트 (웹)
+  # 2. ESLint lint
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run ESLint
+        run: npm run lint
+
+  # 3. E2E 테스트 (웹)
   e2e-web:
     name: E2E Tests (Web)
     runs-on: ubuntu-latest
@@ -52,7 +80,7 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Create .env for E2E (dummy Firebase config — app loads as guest)
         run: |
@@ -66,6 +94,8 @@ jobs:
 
       - name: Run E2E tests
         run: npx playwright test
+        env:
+          CI: true
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -75,9 +105,9 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # 3. Android 빌드 테스트
+  # 4. Android 디버그 APK 빌드
   android-build:
-    name: Android Build
+    name: Android Build (Debug APK)
     runs-on: ubuntu-latest
     needs: build
 
@@ -125,11 +155,16 @@ jobs:
         with:
           name: app-debug.apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
 
-  # 4. ESLint lint
-  lint:
-    name: Lint
+  # 5. Android 릴리즈 AAB 빌드 (수동 트리거 또는 v* 태그 푸시 시)
+  android-release:
+    name: Android Build (Release AAB)
     runs-on: ubuntu-latest
+    needs: [build, lint]
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build_release == 'true') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
 
     steps:
       - uses: actions/checkout@v4
@@ -137,11 +172,62 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Run ESLint
-        run: npm run lint
+      - name: Patch node_modules for Android
+        run: |
+          sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" \
+            node_modules/@capacitor-community/speech-recognition/android/build.gradle \
+            node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle
+          sed -i "s/jcenter()/mavenCentral()/g" \
+            node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Sync to Android
+        run: npx cap sync android
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Create local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/blenddo-release.jks
+          else
+            echo "ANDROID_KEYSTORE_BASE64 secret not set"
+            exit 1
+          fi
+
+      - name: Create keystore.properties
+        run: |
+          cat > keystore.properties << EOF
+          storeFile=blenddo-release.jks
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=blenddo
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Build Release AAB
+        working-directory: android
+        run: ./gradlew bundleRelease --quiet
+
+      - name: Upload Release AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30

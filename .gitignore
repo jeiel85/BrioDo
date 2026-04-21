@@ -58,3 +58,6 @@ keystore.properties
 
 # Test artifacts
 test-results/
+
+# Temp/debug screenshots (root-level)
+screenshot_*.png
