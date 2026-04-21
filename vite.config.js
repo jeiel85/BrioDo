@@ -4,6 +4,15 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.js', 'src/**/*.spec.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/utils/**', 'src/hooks/**'],
+    },
+  },
   plugins: [
     react(),
     VitePWA({

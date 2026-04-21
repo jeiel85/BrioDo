@@ -61,7 +61,27 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
-  # 3. E2E 테스트 (웹)
+  # 3. 유닛 테스트 (Vitest)
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+  # 4. E2E 테스트 (웹)
   e2e-web:
     name: E2E Tests (Web)
     runs-on: ubuntu-latest
