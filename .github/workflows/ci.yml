@@ -125,9 +125,9 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # 4. Android 디버그 APK 빌드
+  # 4. Android 릴리즈 서명 APK 빌드 (Play Store 버전과 동일 서명)
   android-build:
-    name: Android Build (Debug APK)
+    name: Android Build (Signed APK)
     runs-on: ubuntu-latest
     needs: build
     permissions:
@@ -168,15 +168,27 @@ jobs:
       - name: Create local.properties
         run: echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
 
-      - name: Build Android APK
+      - name: Decode keystore
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/blenddo-release.jks
+
+      - name: Create keystore.properties
+        run: |
+          cat > keystore.properties << EOF
+          storeFile=blenddo-release.jks
+          storePassword=${{ secrets.ANDROID_STORE_PASSWORD }}
+          keyAlias=blenddo
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Build signed release APK
         working-directory: android
-        run: ./gradlew assembleDebug --quiet
+        run: ./gradlew assembleRelease --quiet
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug.apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
           retention-days: 14
 
       - name: Get version name
@@ -185,23 +197,20 @@ jobs:
         run: |
           VERSION=$(grep versionName android/app/build.gradle | sed "s/.*versionName[[:space:]]*['\"]//;s/['\"].*//")
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          echo "tag=latest-debug" >> $GITHUB_OUTPUT
-          echo "name=Debug Build v${VERSION} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+          echo "name=v${VERSION} (${SHORT_SHA})" >> $GITHUB_OUTPUT
 
-      - name: Release latest debug APK
+      - name: Release latest signed APK
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-debug
           name: ${{ steps.version.outputs.name }}
           body: |
-            자동 빌드된 디버그 APK입니다.
+            릴리즈 키스토어로 서명된 APK입니다. Play Store 버전과 동일 서명 — 기존 앱 삭제 없이 바로 설치 가능합니다.
             - 커밋: ${{ github.sha }}
             - 빌드 시각: ${{ github.event.head_commit.timestamp }}
             - 메시지: ${{ github.event.head_commit.message }}
-
-            > ⚠️ 디버그 빌드 — Play Store 릴리즈 버전과 서명이 달라 동시 설치 시 기존 앱을 먼저 삭제해야 합니다.
-          files: android/app/build/outputs/apk/debug/app-debug.apk
+          files: android/app/build/outputs/apk/release/app-release.apk
           prerelease: true
           make_latest: false
 
