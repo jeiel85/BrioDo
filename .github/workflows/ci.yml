@@ -192,11 +192,18 @@ jobs:
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           EOF
 
-      - name: Build Release AAB
+      - name: Build Release APK + AAB
         working-directory: android
-        run: ./gradlew bundleRelease --quiet
+        run: ./gradlew assembleRelease bundleRelease --quiet
 
-      - name: Upload Release AAB
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Upload Release AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release.aab
@@ -214,6 +221,8 @@ jobs:
 
             - 커밋: ${{ github.sha }}
             - 빌드 시각: ${{ github.event.head_commit.timestamp }}
-          files: android/app/build/outputs/bundle/release/app-release.aab
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
           prerelease: false
           make_latest: true
