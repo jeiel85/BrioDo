@@ -1,5 +1,16 @@
 # BrioDo 릴리즈 가이드
 
+## CI/CD 동작 방식
+
+| 액션 | 트리거되는 작업 |
+|------|----------------|
+| `git push origin main` (일반 푸시) | 웹 빌드 테스트 + ESLint만 실행. APK 빌드 없음. |
+| `git push origin v1.x.x` (태그 푸시) | Android 릴리즈 빌드 추가 실행 → 서명 APK 생성 + GitHub Release 자동 생성 |
+
+버전 올릴 때만 태그 푸시하면 된다.
+
+---
+
 ## 릴리즈 프로세스 요약
 
 버전 번호 수정 → 커밋 + 푸시 → 태그 푸시 → CI 자동 빌드 → GitHub Release 자동 생성
@@ -48,9 +59,10 @@ git push origin v1.x.x
 
 CI(`android-release` 잡)가 자동으로:
 1. 서명 APK (`app-release.apk`) 빌드
-2. 릴리즈 AAB (`app-release.aab`) 빌드
-3. GitHub Release 생성 (Latest, prerelease: false)
-4. 두 파일 에셋으로 첨부
+2. GitHub Release 생성 (Latest, prerelease: false)
+3. APK 에셋으로 첨부
+
+> **AAB는 릴리즈에 포함하지 않는다.** Play Store 업로드는 로컬 빌드 후 개발자 콘솔에서 직접 올린다.
 
 ---
 
@@ -70,8 +82,7 @@ gh release edit v1.x.x \
 - ...
 
 ### 📦 설치
-- **직접 설치 (Obtainium 등)**: \`app-release.apk\` 다운로드
-- **Play Store 업로드용**: \`app-release.aab\` 다운로드"
+- **직접 설치 (Obtainium 등)**: \`app-release.apk\` 다운로드"
 ```
 
 ---
@@ -90,12 +101,57 @@ gh release edit v1.x.x \
 
 ## 에셋 구성
 
-각 릴리즈에는 반드시 두 파일이 포함되어야 한다.
+각 릴리즈에는 APK 하나만 포함한다.
 
 | 파일 | 용도 |
 |------|------|
 | `app-release.apk` | Obtainium / 직접 설치 |
-| `app-release.aab` | Play Store 업로드 |
+
+AAB는 릴리즈 에셋에 올리지 않는다. Play Store용 AAB는 로컬에서 `./gradlew bundleRelease`로 빌드 후 개발자 콘솔에 직접 업로드한다.
+
+---
+
+## GitHub Secrets 설정
+
+CI 빌드 시 실제 API 키가 주입되려면 아래 시크릿이 GitHub 저장소에 등록되어 있어야 한다.
+
+| 시크릿 이름 | 내용 |
+|------------|------|
+| `VITE_FIREBASE_API_KEY` | Firebase API 키 |
+| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth 도메인 |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID |
+| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage 버킷 |
+| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase Sender ID |
+| `VITE_FIREBASE_APP_ID` | Firebase App ID |
+| `VITE_GEMINI_API_KEY` | Gemini API 키 |
+| `ANDROID_KEYSTORE_BASE64` | 키스토어 파일 base64 인코딩 값 |
+| `ANDROID_STORE_PASSWORD` | 키스토어 비밀번호 |
+| `ANDROID_KEY_PASSWORD` | 키 비밀번호 |
+
+등록 방법:
+```bash
+# 환경변수
+gh secret set VITE_FIREBASE_API_KEY --body "값"
+
+# 키스토어 파일
+base64 -w 0 android/app/blenddo-release.jks | gh secret set ANDROID_KEYSTORE_BASE64
+```
+
+---
+
+## 키스토어 백업
+
+`android/app/blenddo-release.jks` 파일은 분실 시 재서명이 불가능하므로 반드시 외부에 백업한다.
+
+**백업할 정보:**
+```
+파일: blenddo-release.jks
+storePassword: blenddo2024
+keyAlias: blenddo
+keyPassword: blenddo2024
+```
+
+권장 백업 위치: Google Drive (파일 + 비밀번호 메모 함께 보관)
 
 ---
 
