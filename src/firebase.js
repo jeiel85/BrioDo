@@ -22,10 +22,32 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
-export const fbApp = initializeApp(firebaseConfig)
-export const auth = getAuth(fbApp)
-export const db = getFirestore(fbApp)
-export const functions = getFunctions(fbApp, "asia-northeast3")
+// Firebase 설정 유효성 검사
+if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes('placeholder')) {
+  console.warn('[Firebase] Warning: Firebase API Key is missing or using a placeholder value.')
+  console.warn('[Firebase] Current Config:', { ...firebaseConfig, apiKey: '***' })
+}
+
+let fbApp
+let auth
+let db
+let functions
+
+try {
+  fbApp = initializeApp(firebaseConfig)
+  auth = getAuth(fbApp)
+  db = getFirestore(fbApp)
+  functions = getFunctions(fbApp, "asia-northeast3")
+} catch (error) {
+  console.error('[Firebase] Critical initialization error:', error)
+  // 폴백: 서비스 호출 시 에러가 나더라도 모듈 로딩은 성공하도록 설정
+  fbApp = fbApp || {}
+  auth = auth || { currentUser: null, onAuthStateChanged: (cb) => { cb(null); return () => {} } }
+  db = db || {}
+  functions = functions || {}
+}
+
+export { fbApp, auth, db, functions }
 
 export const googleProvider = new GoogleAuthProvider()
 googleProvider.addScope('https://www.googleapis.com/auth/calendar.app.created')

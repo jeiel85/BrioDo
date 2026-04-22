@@ -126,7 +126,7 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-  # 4. Android 릴리즈 AAB 빌드 (수동 트리거 또는 v* 태그 푸시 시)
+  # 4. Android 릴리즈 AAB 빌드 (수동 트리거, v* 태그 푸시, 또는 main 브랜치 푸시 시)
   android-release:
     name: Android Build (Release AAB)
     runs-on: ubuntu-latest
@@ -135,7 +135,7 @@ jobs:
       contents: write
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.build_release == 'true') ||
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')))
 
     steps:
       - uses: actions/checkout@v4
@@ -148,6 +148,16 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
+
+      - name: Create .env for Android Build
+        run: |
+          echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY || 'ci-placeholder-key' }}" >> .env
+          echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN || 'ci-placeholder.firebaseapp.com' }}" >> .env
+          echo "VITE_FIREBASE_PROJECT_ID=${{ secrets.VITE_FIREBASE_PROJECT_ID || 'ci-placeholder' }}" >> .env
+          echo "VITE_FIREBASE_STORAGE_BUCKET=${{ secrets.VITE_FIREBASE_STORAGE_BUCKET || 'ci-placeholder.appspot.com' }}" >> .env
+          echo "VITE_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID || '000000000000' }}" >> .env
+          echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID || '1:000000000000:web:ci-placeholder' }}" >> .env
+          echo "VITE_GEMINI_API_KEY=${{ secrets.VITE_GEMINI_API_KEY || 'ci-placeholder-key' }}" >> .env
 
       - name: Patch node_modules for Android
         run: |

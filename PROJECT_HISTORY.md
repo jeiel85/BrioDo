@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-04-22 — GitHub 빌드 APK 실행 시 회색 화면 이슈 수정 (세션 52)
+
+### 문제 현황
+- GitHub에서 빌드된 APK 실행 시 초기 화면에서 멈추고 회색 화면만 노출됨
+- **원인**: GitHub Actions의 `android-release` 잡에서 빌드 전 `.env` 파일(환경 변수)을 생성하는 단계가 누락되어 Firebase 설정값(`apiKey` 등)이 `undefined`로 주입됨
+
+### 수정 내용
+
+#### 1. GitHub Actions 워크플로우 수정 (`.github/workflows/ci.yml`)
+- `android-release` 잡에 `.env` 생성 단계 추가: GitHub Secrets(`VITE_FIREBASE_*`)를 주입하도록 설정
+- Secrets가 없는 경우에도 빌드가 성공하고 최소한 게스트 모드로 실행될 수 있도록 더미 플레이스홀더 값 주입
+- `main` 브랜치 푸시 시에도 Android 빌드가 수행되도록 트리거 조건 확장
+
+#### 2. Firebase 초기화 안정화 (`src/firebase.js`)
+- Firebase 설정값 유효성 검사 로직 추가 (누락되거나 플레이스홀더 사용 시 경고 출력)
+- 초기화 실패 시 전체 앱이 크래시(회색 화면)되지 않도록 `try-catch` 및 서비스(auth, db) 폴백 객체 처리 추가
+
+### 사용자 조치 권장
+- GitHub 저장소 설정(`Settings > Secrets and variables > Actions`)에 실제 Firebase API Key 및 관련 설정값들을 등록해야 정상적인 클라우드 동기화 기능을 사용할 수 있습니다.
+
+---
+
 ## 2026-04-18 — GitHub Actions CI 전면 복구 (세션 51)
 
 ### 작업 배경
