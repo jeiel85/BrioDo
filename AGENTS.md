@@ -155,6 +155,28 @@ keyPassword: blenddo2024
 
 ---
 
+## 릴리즈 후 에셋 확인
+
+태그 푸시 후 CI 완료되면 아래 명령으로 에셋이 정상 첨부됐는지 확인한다.
+
+```bash
+gh release view v1.x.x --json assets --jq '[.assets[].name] | join(", ")'
+```
+
+**정상 상태**: `app-release.apk` 하나만 있어야 함.
+- AAB가 있으면: `gh release delete-asset v1.x.x app-release.aab --yes`
+- APK가 없으면: 태그 재트리거 (아래 섹션 참고)
+
+전체 버전 일괄 확인:
+```bash
+gh release list --limit 20 | awk '{print $1}' | while read tag; do
+  assets=$(gh release view $tag --json assets --jq '[.assets[].name] | join(", ")')
+  echo "$tag: ${assets:-없음}"
+done
+```
+
+---
+
 ## 태그 재트리거 (실수로 잘못된 커밋에 태그 붙였을 때)
 
 ```bash
