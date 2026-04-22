@@ -13,11 +13,23 @@
 
 ## 릴리즈 프로세스 요약
 
-버전 번호 수정 → 커밋 + 푸시 → 태그 푸시 → CI 자동 빌드 → GitHub Release 자동 생성
+```bash
+npm run release 1.x.x
+```
+
+이 명령 하나로 아래를 자동 처리한다:
+1. `src/App.jsx` `APP_VERSION` 업데이트
+2. `android/app/build.gradle` `versionCode` + `versionName` 업데이트
+3. 두 파일 버전 일치 검증
+4. 커밋 + 푸시 + 태그 푸시 → CI 자동 빌드 트리거
+
+> 수동으로 하려면 아래 단계를 따른다.
 
 ---
 
-## 1단계: 버전 번호 수정
+## 수동 릴리즈 (참고용)
+
+### 1단계: 버전 번호 수정
 
 두 파일을 항상 함께 수정한다.
 
@@ -32,9 +44,7 @@ versionCode N        // 숫자 1 증가
 versionName "1.x.x"
 ```
 
----
-
-## 2단계: 커밋 + 푸시
+### 2단계: 커밋 + 푸시
 
 ```bash
 git add src/App.jsx android/app/build.gradle
@@ -42,9 +52,7 @@ git commit -m "bump: v1.x.x → v1.x.x (versionCode N → N+1)"
 git push origin main
 ```
 
----
-
-## 3단계: 태그 푸시 (릴리즈 트리거)
+### 3단계: 태그 푸시 (릴리즈 트리거)
 
 ```bash
 git tag v1.x.x
