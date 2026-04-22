@@ -15,7 +15,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:unit:coverage": "vitest run --coverage",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "release": "node scripts/release.js"
   },
   "dependencies": {
     "@capacitor-community/admob": "^8.0.0",
