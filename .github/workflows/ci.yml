@@ -213,9 +213,9 @@ jobs:
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           EOF
 
-      - name: Build Release APK + AAB
+      - name: Build Release APK
         working-directory: android
-        run: ./gradlew assembleRelease bundleRelease --quiet
+        run: ./gradlew assembleRelease --quiet
 
       - name: Upload Release APK artifact
         uses: actions/upload-artifact@v4
@@ -237,6 +237,5 @@ jobs:
             - 빌드 시각: ${{ github.event.head_commit.timestamp }}
           files: |
             android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/bundle/release/app-release.aab
           prerelease: false
           make_latest: true
