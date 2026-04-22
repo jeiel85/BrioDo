@@ -107,7 +107,22 @@ gh release edit v1.x.x \
 |------|------|
 | `app-release.apk` | Obtainium / 직접 설치 |
 
-AAB는 릴리즈 에셋에 올리지 않는다. Play Store용 AAB는 로컬에서 `./gradlew bundleRelease`로 빌드 후 개발자 콘솔에 직접 업로드한다.
+AAB는 릴리즈 에셋에 올리지 않는다. Play Store용 AAB는 로컬에서 아래 순서로 빌드 후 개발자 콘솔에 직접 업로드한다.
+
+```bash
+# node_modules 패치 먼저 (npm install 후 또는 빌드 오류 시)
+sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" \
+  node_modules/@capacitor-community/speech-recognition/android/build.gradle \
+  node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle \
+  node_modules/@capacitor-community/admob/android/build.gradle
+sed -i "s/jcenter()/mavenCentral()/g" \
+  node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle
+
+npm run build
+npx cap sync android
+cd android && ./gradlew bundleRelease --quiet
+# 출력: android/app/build/outputs/bundle/release/app-release.aab
+```
 
 ---
 
