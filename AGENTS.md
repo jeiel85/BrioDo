@@ -1,224 +1,82 @@
-# BrioDo 릴리즈 가이드
+# BrioDo — AI 에이전트 지침 및 워크플로우
 
-## CI/CD 동작 방식
+이 문서는 BrioDo 프로젝트의 AI 에이전트(Claude, Gemini 등)를 위한 핵심 개발 지침, 아키텍처 원칙 및 릴리즈 프로세스를 정의합니다. 에이전트는 모든 세션에서 이 규칙을 최우선으로 준수해야 합니다.
+
+---
+
+## ⚡ 개발 워크플로우 규칙
+
+> **이 규칙들은 사용자가 매번 요청하지 않아도 자동으로 적용한다.**
+
+1. **커밋 + 푸시 자동 세트**: 소스코드 변경 → 즉시 `git commit` + `git push` 함께 처리. (Git 커밋 메시지는 한국어로 작성한다.)
+2. **빌드 파이프라인은 명시 요청 시만 실행**: "빌드해줘" / "디바이스에 올려줘" 등 명시적 요청이 있을 때만 실행. Galaxy S24(`R3CWC0KB53Z`)에 설치까지 완료해야 빌드 작업이 끝난 것. gradle은 항상 `--quiet` 플래그 사용.
+3. **버전 이력 유지**: 기능 추가/버그 수정 시 `PROJECT_HISTORY.md`에 날짜·세션·내용 기록 후 커밋.
+4. **localStorage 키 네임스페이스**: 모든 키는 `briodo-*` 또는 `briodo_*` 접두사 사용.
+5. **버전 번호 동기화**: 버전 변경 시 아래 두 곳을 항상 함께 수정한다.
+   - `src/App.jsx` 상단 `const APP_VERSION = '...'`
+   - `android/app/build.gradle` 의 `versionName` + `versionCode`
+6. **GitHub 이슈 관리**: 모든 수정 요청 및 기능 추가 작업은 GitHub 이슈를 생성하여 관리한다. 작업 완료 후에는 버전을 올리고 GitHub에 릴리즈(태그 생성 등)를 수행한다.
+
+---
+
+## 🚀 릴리즈 및 배포 가이드
+
+### CI/CD 동작 방식
 
 | 액션 | 트리거되는 작업 |
 |------|----------------|
-| `git push origin main` (일반 푸시) | 웹 빌드 테스트 + ESLint만 실행. APK 빌드 없음. |
-| `git push origin v1.x.x` (태그 푸시) | Android 릴리즈 빌드 추가 실행 → 서명 APK 생성 + GitHub Release 자동 생성 |
+| `git push origin main` | 웹 빌드 테스트 + ESLint 실행. APK 빌드 없음. |
+| `git push origin v1.x.x` | Android 릴리즈 빌드 실행 → 서명 APK 생성 + GitHub Release 자동 생성 |
 
-버전 올릴 때만 태그 푸시하면 된다.
-
----
-
-## 릴리즈 프로세스 요약
-
+### 릴리즈 프로세스 (명령어 한 줄)
 ```bash
 npm run release 1.x.x
 ```
+이 명령은 버전 업데이트, 커밋, 푸시, 태그 생성을 모두 자동 처리합니다.
 
-이 명령 하나로 아래를 자동 처리한다:
-1. `src/App.jsx` `APP_VERSION` 업데이트
-2. `android/app/build.gradle` `versionCode` + `versionName` 업데이트
-3. 두 파일 버전 일치 검증
-4. 커밋 + 푸시 + 태그 푸시 → CI 자동 빌드 트리거
-
-> 수동으로 하려면 아래 단계를 따른다.
+### 릴리즈 제목 규칙
+- 형식: `v1.x.x — 설명` (예: `v1.1.8 — UI 밀도 개선`)
+- **앱 이름(`BrioDo`)을 제목 앞에 붙이지 않는다.** (Obtainium 파싱 호환성)
 
 ---
 
-## 수동 릴리즈 (참고용)
+## 🏗️ 아키텍처 및 기술 스택
 
-### 1단계: 버전 번호 수정
+### 핵심 원칙
+1. **오프라인 우선**: 항상 IndexedDB에 먼저 저장 → Firestore는 비동기 동기화.
+2. **데이터 무손실**: 게스트 모드 마이그레이션 및 캘린더 충돌 해결 로직 준수.
+3. **AI 비동기 처리**: AI 분석은 저장 완료 후 300ms 딜레이를 두고 비동기로 처리.
+4. **캘린더 싱글톤**: 레이스 컨디션 방지를 위한 Promise 싱글톤 패턴 유지.
 
-두 파일을 항상 함께 수정한다.
+### 기술 스택
+- **Frontend**: React 19 + Vite 8
+- **Mobile**: Capacitor 8 (Android)
+- **Backend**: Firebase Auth, Firestore, Cloud Functions (Gemini Proxy)
+- **Local DB**: IndexedDB (idb)
+- **AI**: Google Gemini (Flash 2.5)
+- **Calendar**: Google Calendar API v3
 
-**`src/App.jsx`**
-```js
-const APP_VERSION = '1.x.x'
-```
+---
 
-**`android/app/build.gradle`**
-```groovy
-versionCode N        // 숫자 1 증가
-versionName "1.x.x"
-```
+## 🛠️ 개발 환경 설정
 
-### 2단계: 커밋 + 푸시
+### 주요 환경 파일 (gitignore 대상)
+- `.env`: API 키 관리
+- `android/app/google-services.json`: Firebase 설정
+- `keystore.properties`: 릴리즈 서명 정보 (절대 커밋 금지)
 
+### node_modules 패치
+`npm install` 후 아래 명령을 통해 플러그인 버그를 수정해야 합니다.
 ```bash
-git add src/App.jsx android/app/build.gradle
-git commit -m "bump: v1.x.x → v1.x.x (versionCode N → N+1)"
-git push origin main
-```
-
-### 3단계: 태그 푸시 (릴리즈 트리거)
-
-```bash
-git tag v1.x.x
-git push origin v1.x.x
-```
-
-태그 푸시 즉시 GitHub Actions CI가 트리거된다.
-
----
-
-## 4단계: CI 자동 처리 (~5분 소요)
-
-CI(`android-release` 잡)가 자동으로:
-1. 서명 APK (`app-release.apk`) 빌드
-2. GitHub Release 생성 (Latest, prerelease: false)
-3. APK 에셋으로 첨부
-
-> **AAB는 릴리즈에 포함하지 않는다.** Play Store 업로드는 로컬 빌드 후 개발자 콘솔에서 직접 올린다.
-
----
-
-## 5단계: 릴리즈 노트 작성
-
-CI 완료 후 자동 생성된 릴리즈 제목/내용을 수정한다.
-
-```bash
-gh release edit v1.x.x \
-  --title "v1.x.x — 변경 내용 요약" \
-  --notes "## v1.x.x
-
-### ✨ 새 기능
-- ...
-
-### 🐛 버그 수정
-- ...
-
-### 📦 설치
-- **직접 설치 (Obtainium 등)**: \`app-release.apk\` 다운로드"
-```
-
----
-
-## 릴리즈 제목 규칙
-
-| 형식 | Obtainium 인식 |
-|------|---------------|
-| `v1.1.2 — 설명` | ✅ 정상 |
-| `BrioDo v1.1.2 — 설명` | ❌ 버전 파싱 실패 |
-| `v1.1.2` | ✅ 정상 |
-
-**앱 이름(`BrioDo`)을 제목 앞에 붙이지 않는다.**
-
----
-
-## 에셋 구성
-
-각 릴리즈에는 APK 하나만 포함한다.
-
-| 파일 | 용도 |
-|------|------|
-| `app-release.apk` | Obtainium / 직접 설치 |
-
-AAB는 릴리즈 에셋에 올리지 않는다. Play Store용 AAB는 로컬에서 아래 순서로 빌드 후 개발자 콘솔에 직접 업로드한다.
-
-```bash
-# node_modules 패치 먼저 (npm install 후 또는 빌드 오류 시)
 sed -i "s/getDefaultProguardFile('proguard-android.txt')/getDefaultProguardFile('proguard-android-optimize.txt')/g" \
   node_modules/@capacitor-community/speech-recognition/android/build.gradle \
   node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle \
   node_modules/@capacitor-community/admob/android/build.gradle
-sed -i "s/jcenter()/mavenCentral()/g" \
-  node_modules/@codetrix-studio/capacitor-google-auth/android/build.gradle
-
-npm run build
-npx cap sync android
-cd android && ./gradlew bundleRelease --quiet
-# 출력: android/app/build/outputs/bundle/release/app-release.aab
 ```
 
 ---
 
-## GitHub Secrets 설정
-
-CI 빌드 시 실제 API 키가 주입되려면 아래 시크릿이 GitHub 저장소에 등록되어 있어야 한다.
-
-| 시크릿 이름 | 내용 |
-|------------|------|
-| `VITE_FIREBASE_API_KEY` | Firebase API 키 |
-| `VITE_FIREBASE_AUTH_DOMAIN` | Firebase Auth 도메인 |
-| `VITE_FIREBASE_PROJECT_ID` | Firebase 프로젝트 ID |
-| `VITE_FIREBASE_STORAGE_BUCKET` | Firebase Storage 버킷 |
-| `VITE_FIREBASE_MESSAGING_SENDER_ID` | Firebase Sender ID |
-| `VITE_FIREBASE_APP_ID` | Firebase App ID |
-| `VITE_GEMINI_API_KEY` | Gemini API 키 |
-| `ANDROID_KEYSTORE_BASE64` | 키스토어 파일 base64 인코딩 값 |
-| `ANDROID_STORE_PASSWORD` | 키스토어 비밀번호 |
-| `ANDROID_KEY_PASSWORD` | 키 비밀번호 |
-
-등록 방법:
-```bash
-# 환경변수
-gh secret set VITE_FIREBASE_API_KEY --body "값"
-
-# 키스토어 파일
-base64 -w 0 android/app/blenddo-release.jks | gh secret set ANDROID_KEYSTORE_BASE64
-```
-
----
-
-## 키스토어 백업
-
-`android/app/blenddo-release.jks` 파일은 분실 시 재서명이 불가능하므로 반드시 외부에 백업한다.
-
-**백업할 정보:**
-```
-파일: blenddo-release.jks
-storePassword: blenddo2024
-keyAlias: blenddo
-keyPassword: blenddo2024
-```
-
-권장 백업 위치: Google Drive (파일 + 비밀번호 메모 함께 보관)
-
----
-
-## 릴리즈 후 에셋 확인
-
-태그 푸시 후 CI 완료되면 아래 명령으로 에셋이 정상 첨부됐는지 확인한다.
-
-```bash
-gh release view v1.x.x --json assets --jq '[.assets[].name] | join(", ")'
-```
-
-**정상 상태**: `app-release.apk` 하나만 있어야 함.
-- AAB가 있으면: `gh release delete-asset v1.x.x app-release.aab --yes`
-- APK가 없으면: 태그 재트리거 (아래 섹션 참고)
-
-전체 버전 일괄 확인:
-```bash
-gh release list --limit 20 | awk '{print $1}' | while read tag; do
-  assets=$(gh release view $tag --json assets --jq '[.assets[].name] | join(", ")')
-  echo "$tag: ${assets:-없음}"
-done
-```
-
----
-
-## 태그 재트리거 (실수로 잘못된 커밋에 태그 붙였을 때)
-
-```bash
-# GitHub Release 먼저 삭제 (이미 생성된 경우)
-gh release delete v1.x.x --yes
-
-# 원격 태그 삭제
-git push origin :refs/tags/v1.x.x
-
-# 로컬 태그 삭제 후 재생성
-git tag -d v1.x.x
-git tag v1.x.x <커밋 해시>
-git push origin v1.x.x
-```
-
----
-
-## 관련 파일
-
-- CI 워크플로우: `.github/workflows/ci.yml`
-- 스토어 배포 절차: `docs/play-store-submission.md`
-- 개발 히스토리: `PROJECT_HISTORY.md`
+## 📖 관련 문서
+- **전체 이력**: [PROJECT_HISTORY.md](PROJECT_HISTORY.md)
+- **시스템 설계 및 정책**: [DEVELOPMENT.md](DEVELOPMENT.md)
+- **메인 소개**: [README.md](README.md)

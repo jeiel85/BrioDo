@@ -16,6 +16,10 @@
    - `useTheme.js`에 `--spacing-scale` CSS 변수 추가. 폰트 스케일에 맞춰 여백도 함께 조절되도록 설정.
    - `index.css`의 주요 패딩, 마진, 요소 크기에 `calc(Xpx * var(--spacing-scale))` 적용.
 3. **버전 업데이트**: v1.1.8 (Android versionCode 20).
+4. **문서 구조 통합 및 정리**:
+   - `CLAUDE.md`를 `AGENTS.md`로 통합하여 AI 에이전트 지침 단일화.
+   - `BRIO_SYSTEM.md`, `SECURITY_REVIEW.md`, `STORE_DEPLOY.md` 등 파편화된 기술/정책 문서를 `DEVELOPMENT.md`로 통합.
+   - 기타 기획 문서(`ACHIEVEMENTS.md` 등)를 `docs/` 폴더로 이동하여 루트 디렉토리 정리.
 
 ### 결과
 - 폰트 크기를 작게 설정할 경우, 전체적인 UI 여백도 줄어들어 한 화면에 더 많은 정보를 표시할 수 있게 됨.
