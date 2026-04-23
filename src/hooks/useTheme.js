@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core'
 import { StatusBar, Style } from '@capacitor/status-bar'
 
 const fontScaleMap = { 1: 0.70, 2: 0.82, 3: 0.91, 4: 1.00, 5: 1.10, 6: 1.20, 7: 1.35 }
+const spacingScaleMap = { 1: 0.80, 2: 0.88, 3: 0.95, 4: 1.00, 5: 1.05, 6: 1.10, 7: 1.15 }
 
 // All CSS custom properties managed by random theme — must match index.css token names
 const RANDOM_THEME_PROPS = [
@@ -141,6 +142,7 @@ export function useTheme() {
     const root = document.documentElement
     root.classList.remove('font-small', 'font-medium', 'font-large')
     root.style.setProperty('--font-scale', fontScaleMap[fontScale] ?? 1)
+    root.style.setProperty('--spacing-scale', spacingScaleMap[fontScale] ?? 1)
     localStorage.setItem('briodo-font-scale', fontScale)
   }, [fontScale])
 
