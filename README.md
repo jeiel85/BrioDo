@@ -9,6 +9,7 @@
 <br>
 
 [![Google Play](https://img.shields.io/badge/Google_Play-다운로드-3DDC84?style=for-the-badge&logo=google-play&logoColor=white)](https://play.google.com/store/apps/details?id=app.briodo)
+[![ONE Store](https://img.shields.io/badge/ONE_Store-다운로드-E2002B?style=for-the-badge&logoColor=white)](https://m.onestore.co.kr/mobilepoc/apps/appsDetail.omp?prodId=OA01005559)
 [![GitHub Release](https://img.shields.io/github/v/release/jeiel85/BrioDo?style=for-the-badge&logo=github&color=181717)](https://github.com/jeiel85/BrioDo/releases/latest)
 [![CI](https://img.shields.io/github/actions/workflow/status/jeiel85/BrioDo/ci.yml?style=for-the-badge&logo=github-actions&logoColor=white&label=CI)](https://github.com/jeiel85/BrioDo/actions)
 
@@ -155,6 +156,10 @@ src/
 <a href="https://play.google.com/store/apps/details?id=app.briodo">
   <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 받기" height="70" />
 </a>
+&nbsp;&nbsp;
+<a href="https://m.onestore.co.kr/mobilepoc/apps/appsDetail.omp?prodId=OA01005559">
+  <img src="https://img.shields.io/badge/ONE_Store-다운로드-E2002B?style=for-the-badge&logoColor=white" alt="원스토어에서 받기" height="70" />
+</a>
 
 **또는 [GitHub Releases](https://github.com/jeiel85/BrioDo/releases/latest)에서 APK 직접 다운로드**
 
@@ -225,6 +230,7 @@ npx playwright test --project=chromium   # 특정 브라우저
 ## 🗺 로드맵
 
 - [x] Google Play Store 출시
+- [x] ONE Store 출시
 - [x] 잠금화면 위젯
 - [x] PWA 데스크톱 지원
 - [x] AI 브리핑 & Nudge
