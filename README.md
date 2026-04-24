@@ -154,11 +154,11 @@ src/
 <div align="center">
 
 <a href="https://play.google.com/store/apps/details?id=app.briodo">
-  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 받기" height="70" />
+  <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ko_badge_web_generic.png" alt="Google Play에서 받기" height="60" style="vertical-align:middle" />
 </a>
 &nbsp;&nbsp;
 <a href="https://m.onestore.co.kr/mobilepoc/apps/appsDetail.omp?prodId=OA01005559">
-  <img src="https://img.shields.io/badge/ONE_Store-다운로드-E2002B?style=for-the-badge&logoColor=white" alt="원스토어에서 받기" height="70" />
+  <img src="https://img.shields.io/badge/ONE%20store-다운로드-E2002B?style=for-the-badge&logoColor=white" alt="원스토어에서 받기" height="60" style="vertical-align:middle" />
 </a>
 
 **또는 [GitHub Releases](https://github.com/jeiel85/BrioDo/releases/latest)에서 APK 직접 다운로드**
