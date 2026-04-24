@@ -18,6 +18,7 @@ const generateWithFallback = async (prompt) => {
       const response = await generateGeminiContent({ model, prompt })
       if (response?.data?.text) return response.data.text
     } catch (e) {
+      if (e?.code === 'functions/resource-exhausted') throw e
       console.warn(`[Briefing AI] ${model} failed:`, e?.message || String(e))
     }
   }
@@ -198,7 +199,11 @@ export function useBriefing() {
       return text
     } catch (e) {
       console.error('[Briefing] generation error:', e)
-      setBriefingText(lang === 'ko' ? '브리핑 생성 중 오류가 발생했습니다.' : 'Briefing generation failed.')
+      const isLimit = e?.code === 'functions/resource-exhausted'
+      const msg = isLimit
+        ? (lang === 'ko' ? 'AI 사용 한도에 도달했습니다. 내일 다시 시도해 주세요.' : lang === 'ja' ? 'AI利用上限に達しました。明日再試行してください。' : lang === 'zh' ? 'AI使用已达上限，请明天再试。' : 'AI daily limit reached. Try again tomorrow.')
+        : (lang === 'ko' ? '브리핑 생성 중 오류가 발생했습니다.' : 'Briefing generation failed.')
+      setBriefingText(msg)
       return null
     } finally {
       setBriefingLoading(false)
@@ -218,7 +223,10 @@ export function useBriefing() {
       return text
     } catch (e) {
       console.error('[Nudge] generation error:', e)
-      setNudgeText('')
+      if (e?.code === 'functions/resource-exhausted') {
+        const msg = lang === 'ko' ? 'AI 사용 한도에 도달했습니다.' : lang === 'ja' ? 'AI利用上限に達しました。' : lang === 'zh' ? 'AI使用已达上限。' : 'AI daily limit reached.'
+        setNudgeText(msg)
+      }
       return null
     } finally {
       setNudgeLoading(false)

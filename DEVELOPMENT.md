@@ -1,6 +1,6 @@
-# BrioDo — 시스템 설계 및 개발 정책
+# BrioDo — 시스템 설계 및 개발 가이드
 
-이 문서는 BrioDo 프로젝트의 상세 시스템 설계, 보안 정책, 배포 전략 및 스토어 운영 가이드를 통합하여 관리합니다.
+이 문서는 BrioDo 프로젝트의 시스템 설계, 보안 정책, 개발 환경 설정 및 스토어 운영 가이드를 통합하여 관리합니다.
 
 ---
 
@@ -20,40 +20,55 @@
 
 ---
 
-## 🔒 보안 정책 (Security & Privacy)
+## 🔒 보안 및 키 관리 (Security & Keys)
 
-### 1. 데이터 보호
-- **PII Masking**: 개인정보(전화번호, 계좌번호 등)는 저장 전 자동으로 마스킹 처리됩니다.
-- **Gemini Proxy**: 클라이언트에서 직접 API 키를 노출하지 않고, Firebase Cloud Functions를 거쳐 AI를 호출합니다.
+### 1. 주요 환경 파일 (gitignore 대상)
+- `.env`: VITE_GEMINI_API_KEY, VITE_FIREBASE_* (각 PC에서 직접 생성)
+- `android/app/google-services.json`: Firebase 설정 파일
+- `keystore.properties`: 릴리즈 서명 자격증명
+- `android/app/blenddo-release.jks`: 키스토어 파일 (절대 분실 금지)
 
-### 2. 권한 관리
-- **Android Permissions**:
-  - `SCHEDULE_EXACT_ALARM`: 정확한 시간의 알림 발송.
-  - `USE_FULL_SCREEN_INTENT`: 잠금화면 위젯 표시.
-  - `RECORD_AUDIO`: 음성 인식 기능.
+### 2. Google 로그인 — SHA-1 핑거프린트 관리
+Google 로그인은 앱 서명 SHA-1이 Firebase Console에 등록된 값과 일치해야 동작합니다.
+**새 PC 추가 시 절차:**
+1. 현재 keystore SHA-1 확인:
+   ```bash
+   keytool -list -v -keystore android/keystore/debug.keystore -alias androiddebugkey -storepass android -keypass android
+   ```
+2. Firebase Console → 프로젝트 설정 → Android 앱 → 디지털 지문 추가.
+3. 새 `google-services.json` 다운로드 후 교체.
 
----
-
-## 🚀 배포 및 스토어 운영
-
-### 1. 배포 정책
-- **Main Branch**: 항상 출시 가능한 안정적인 상태를 유지합니다.
-- **Versioning**: `PROJECT_HISTORY.md`에 기록된 세션별 변경 사항을 기반으로 버전을 관리합니다.
-
-### 2. 스토어 배포 채널
-- **Google Play Store**: AAB 형식으로 배포, 비공개 테스트 과정을 거쳐 프로덕션 출시.
-- **Samsung Galaxy Store**: Galaxy 전용 기능(잠금화면 등) 최적화 버전 배포.
-- **직접 배포**: GitHub Releases를 통해 최신 APK 제공 (Obtainium 등 호환).
+### 3. GitHub Secrets 설정 (CI/CD용)
+CI 빌드 시 실제 API 키 주입을 위해 아래 시크릿이 필요합니다.
+- `VITE_FIREBASE_*`, `VITE_GEMINI_API_KEY`
+- `ANDROID_KEYSTORE_BASE64`, `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_PASSWORD`
 
 ---
 
-## 📝 개발 체크리스트
+## 🚀 릴리즈 및 배포 전략
 
-### 빌드 전 필수 확인 사항
-- [ ] `src/App.jsx` 버전 번호 업데이트 확인.
-- [ ] `android/app/build.gradle`의 `versionCode`, `versionName` 일치 확인.
-- [ ] `node_modules` 패치 적용 여부 확인.
-- [ ] 주요 기능(AI, 캘린더 동기화) 테스트 통과 여부.
+### 1. CI/CD 동작 방식
+- `main` 푸시: 웹 빌드 테스트 + ESLint (품질 검증용).
+- `v1.x.x` 태그 푸시: Android 릴리즈 빌드 실행 → 서명 APK 생성 및 GitHub Release 자동 업로드.
+
+### 2. 수동 릴리즈 절차 (상세)
+1. 버전 번호 수정 (`App.jsx`, `build.gradle`).
+2. 커밋 및 `main` 푸시.
+3. `git tag v1.x.x` 및 `git push origin v1.x.x`.
+4. CI 완료 후 GitHub Release 에셋(`app-release.apk`) 확인.
+
+---
+
+## 💻 개발 환경 설정 (New PC Setup)
+
+### 1. 초기 설정 체크리스트
+1. `git clone` 또는 `git pull`.
+2. `npm install --legacy-peer-deps`.
+3. `node_modules` 패치 적용 (AGENTS.md 참조).
+4. 환경 파일(`.env`, `google-services.json`, `keystore.properties`) 복사.
+
+### 2. Claude Code 자동 승인 권한
+`~/.claude/settings.json`에 빌드 및 ADB 실행 권한을 추가하여 업무 효율을 높입니다.
 
 ---
 
